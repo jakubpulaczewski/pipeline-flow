@@ -1,0 +1,4 @@
+
+# If a glueing a plugin to an existing core system is a pain due to having an incompatible interface, 
+# it is common to create an adapter between the plug-in and the core system. 
+# And so the core doesn’t need a specialized code for each incompatible plug-in.

@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "workflow"
+version = "0.0.0"
+description = "Framework for building ETL projects dynamically."
+authors = ["Jakub Pulaczewski"]
+license = "MIT"
+packages = [
+    { include="**/*.py", from="src"}
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pytest = "^7.4.2"
+PyYAML = "^6.0.1"
+pydantic = "^2.4.2"
+pytest-cases = "^3.8.0"
+
+[tool.poetry.dev-dependencies]
+asyncio = "^3.4.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

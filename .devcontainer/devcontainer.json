@@ -1,0 +1,54 @@
+{
+    "name": "Python 3",
+    "build": {
+		"dockerfile": "Dockerfile",
+		"context": "..",
+		"args": { 
+			// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
+			// Append -bullseye or -buster to pin to an OS version.
+			// Use -bullseye variants on local on arm64/Apple Silicon.
+			"VARIANT": "3.11",
+			// Options
+			"NODE_VERSION": "none"
+		}
+    },
+    
+    //   "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,type=bind=consistency=cached"    
+    "mounts": [],
+
+    // Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Set *default* container specific settings.json values on container create.
+			"settings": { 
+				"python.pythonPath" : "/usr/local/bin/python",
+				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+				"python.languageServer": "Pylance",
+				"python.testing.pytestEnabled": true,
+				"python.formatting.blackPath": "${workspaceFolder}/.venv/bin/black",
+			    // Linting
+				"python.linting.enabled": true,
+				"python.linting.flake8Enabled": true,
+				"python.linting.flake8Path": "${workspaceFolder}/.venv/bin/flake8",
+				"python.linting.mypyEnabled": true,
+				"python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy",
+				"python.linting.pylintEnabled": true,
+				"python.linting.pylintPath": "/path/to/pylint"
+
+
+			},
+			
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+                "eamodio.gitlens"
+			]
+		}
+
+        
+	},
+
+    "remoteUser": "vscode"
+}
