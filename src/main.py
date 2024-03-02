@@ -1,26 +1,25 @@
-import asyncio
+# import asyncio
 
-from plugins.loader import load_plugins
-from core.executor import execute_jobs
-from core.parser import parse_jobs, deserialize_yaml
-import yaml_example
+# import yaml_example
+# from core.executor import execute_jobs
+# from core.parser import deserialize_yaml, parse_jobs
+# from plugins.loader import load_plugins
 
-DEFAULT_PLUGINS = ['s3']
+# DEFAULT_PLUGINS = ["s3"]
 
-if __name__ == '__main__':
-    yaml_str = yaml_example.yaml_str
+# if __name__ == "__main__":
+#     yaml_str = yaml_example.yaml_str
 
-    # Deserialiazed yaml
-    parsed_yaml = deserialize_yaml(yaml_str)
+#     # Deserialiazed yaml
+#     parsed_yaml = deserialize_yaml(yaml_str)
 
-    # Load Transition
-    transition = load_transition(parsed_yaml['transition'])
+#     # Load Transition
+#     # transition = load_transition(parsed_yaml["transition"])
 
-    # Load Plugins
-    plugins = set(DEFAULT_PLUGINS + parsed_yaml['plugins'])
-    load_plugins(plugins)
+#     # Load Plugins
+#     plugins = set(DEFAULT_PLUGINS + parsed_yaml["plugins"])
+#     load_plugins(plugins)
 
+#     parsed_jobs = parse_jobs(parsed_yaml["jobs"])
 
-    parsed_jobs = parse_jobs(parsed_yaml['jobs'])
-
-    asyncio.run(execute_jobs(parsed_jobs))
+#     asyncio.run(execute_jobs(parsed_jobs))

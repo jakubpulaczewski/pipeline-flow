@@ -24,9 +24,15 @@ ARG DEFAULT_UTILS_TO_UNINSTALL="\
 "
 RUN echo "${DEFAULT_UTILS_TO_UNINSTALL}" | xargs -n 1 pipx uninstall
 
-RUN pipx install pre-commit
+ARG DEFAULT_UTILS_TO_INSTALL="\
+    pre-commit \
+    black \
+    isort \
+"
+
+RUN echo "${DEFAULT_UTILS_TO_INSTALL}" | xargs -n 1 pipx install
 
 # Install Poetry for vscode user
-RUN su vscode -c "curl -sSL https://install.python-poetry.org | python3 - --version 1.1.10 2>&1"
+RUN su vscode -c "curl -sSL https://install.python-poetry.org | python3 - --version 1.8.1 2>&1"
 RUN su vscode -c "echo `source ~/.poetry/env` >> ~/.zshrc 2>&1"
 RUN su vscode -c "echo `source ~/.poetry/env` >> ~/.bashrc 2>&1"
