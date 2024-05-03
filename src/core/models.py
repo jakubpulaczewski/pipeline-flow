@@ -2,62 +2,119 @@
 This module provides functionalities to create Interfaces for the ETL processes. Any plugins
 that want to be integrated with this application need to follow these standards.
 """
+# Standard Imports
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
+from typing import TypeVar
 
-from typing import Protocol
-
+# Third-party Imports
 import pydantic as pyd
 
-from common.utils.logger import setup_logger
+# Project imports
 
-logger = setup_logger(__name__)
+T = TypeVar('T')
 
 
-class ExtractInterface(Protocol):
+class PipelineTypes:
+    """ A config class that contains constants related to Pipelines and its types."""
+    ETL_PIPELINE = "ETL"
+    ELT_PIPELINE = "ELT"
+    ETLT_PIPELINE = "ETLT"
+
+    ALLOWED_PIPELINE_TYPES: set[str] = {ETL_PIPELINE, ELT_PIPELINE}
+
+
+class ExtractInterface(ABC):
     """An interface of the Extract Step."""
+    id: str
+    type: str
 
-    def extract(self) -> str:
+    @abstractmethod
+    async def extract_data(self) -> T:
         """Collects data from a source."""
         raise NotImplementedError(
             "The method has not been implemented. You must implement it"
         )
-
-
-class TransformInterface(Protocol):
+    
+class TransformInterface(ABC):
     """An interface of the Transform Step."""
+    id: str
 
-    name: str
+class ELTTransformInterface(ABC):
+    @abstractmethod
+    def transform_elt(self, data):
+        """Perform transformations after data is loaded into the target system."""
+        pass
 
-    def transform(self, data) -> str:
-        """Performs transformations on the extracted data"""
+class ETLTransformInterface(ABC):
+
+    @abstractmethod
+    def transform_etl(self, data: T) -> T:
+        """Perform transformations before data is loaded into the target system."""
         raise NotImplementedError(
             "The method has not been implemented. You must implement it"
         )
 
-
-class LoadInterface(Protocol):
+class LoadInterface(ABC):
     """An interface of the Load Step."""
+    id: str
+    type: str
 
-    def load(self, data) -> str:
+    @abstractmethod
+    async def load_data(self, data: T) -> bool:
         """Load data to a destination."""
         raise NotImplementedError(
             "The method has not been implemented. You must implement it"
         )
 
-
-class Job(pyd.BaseModel):
-    """A job class that executes ETL steps."""
+class MergerStrategy(ABC):
+    """ An Interface of the Load Step."""
+    
+    @abstractmethod
+    def merger(self, extracted_sources: Iterable[T]) -> T:
+        """Merges multiple extracted data."""
+        raise NotImplementedError(
+            "The method has not been implemented. You must implement it"
+        )
+    
+class Pipeline(pyd.BaseModel):
+    """A pipeline class that executes ETL steps."""
+    model_config = pyd.ConfigDict(arbitrary_types_allowed=True)
 
     name: str
-    extract: list
-    transform: list
-    load: list
-    needs: str | list[str] = None
+    type: str
 
-    is_executed: bool = False
+    # ETL Phases
+    extract: list[ExtractInterface]
+    transform: list[TransformInterface]
+    load: list[LoadInterface]
 
-    async def execute(self):
-        """Asynchronously executes a given job."""
-        # await asyncio.sleep(5)  # Simulating some asynchronous task.
-        logger.info("Executing: %s ", self.name)
-        logger.info("Completed: %s", self.name)
-        self.is_executed = True
+    # manage how data is handled immediately after it has been extracted/transformed
+    # and before it moves to the next stage. 
+    extractor_data_flow_type: str = "direct"
+    transformer_data_flow_type: str = "direct"
+
+    # Private
+    __is_executed: bool = False
+
+    # Optional
+    description: str | None = None
+    needs: str | list[str] | None = None
+    extract_merger_strategy: MergerStrategy | None = None #TODO: STILL IDK HOW TO PARSE IT...
+
+
+    @property
+    def is_executed(self) -> bool:
+        return self.__is_executed
+    
+    @is_executed.setter
+    def is_executed(self, value: bool) -> None:
+        self.__is_executed = value
+
+    @pyd.field_validator("type")
+    def pipeline_type_match(cls: "Pipeline", value: str) -> str:
+        """A validator that validates pipeline type against the allowed pipeline types."""
+        upper_cased_pipeline = value.upper()
+        if upper_cased_pipeline not in PipelineTypes.ALLOWED_PIPELINE_TYPES:
+            raise ValueError("A pipeline must be of following types: ETL, ELT, ETLT")
+        return upper_cased_pipeline

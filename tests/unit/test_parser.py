@@ -1,41 +1,22 @@
 # Standard Imports
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 # Third-party Imports
 import pytest
-import test_utils as utils  # pylint: disable=import-error
-from faker import Faker
-from pytest_cases import parametrize_with_cases
+import pydantic as pyd
 
 # Project Imports
-import common.config as config  # pylint: disable=consider-using-from-import
 import core.parser as parser  # pylint: disable=consider-using-from-import
-from core.models import Job
-
-fake = Faker()
-
-
-def mock_parse_etl_components(job_data: dict, stage_type: str):
-    """Function to be used as side_effect for the mock"""
-    return [utils.create_fake_class(plugin["type"]) for plugin in job_data[stage_type]]
+from core.plugins import PluginFactory
+from core.models import Pipeline
 
 
-@pytest.mark.parametrize("etl_stage", config.ETL_STAGES)
-def case_etl_plugins(etl_stage):
-    """A util function to generate a Plugin name and return a class associated with that plugin."""
-    plugin = utils.generate_plugin_name()
-    plugin_cls = utils.create_fake_class(plugin)
 
-    job_data = {etl_stage: [{"type": plugin}]}
-
-    return etl_stage, job_data, plugin_cls
-
-
-def test_serialize_yaml() -> None:
+def test_deserialize_valid_yaml() -> None:
     """A test that verifies the serialization of the YAML."""
     yaml_str = """
-    jobs:
-        job1:
+    pipelines:
+        pipeline1:
             name: Name
             extract: []
             transform: []
@@ -45,85 +26,54 @@ def test_serialize_yaml() -> None:
     serialized_yaml = parser.deserialize_yaml(yaml_str)
 
     expected_dict = {
-        "jobs": {"job1": {"name": "Name", "extract": [], "transform": [], "load": []}}
+        "pipelines": {"pipeline1": {"name": "Name", "extract": [], "transform": [], "load": []}}
     }
     assert serialized_yaml == expected_dict
 
 
-@patch("core.parser.PluginFactory.get")
-@parametrize_with_cases("etl_stage, job_data, plugin_cls", cases=".")
-def test_parse_etl_plugins(factory_mock, etl_stage, job_data, plugin_cls):
-    """A test checking that plugins are parsed appropriately."""
-    factory_mock.return_value = plugin_cls
-    parsed_plugins = parser.parse_etl_plugins(job_data, etl_stage)
+def test_deserialize_empty_yaml():
+    assert parser.deserialize_yaml('') == None
 
-    assert len(parsed_plugins) == 1
-    assert parsed_plugins[0] == plugin_cls
+def test_parse_plugins_for_empty_stage():
+    stage_data = {'extract': []}
+    assert parser.parse_plugins_for_etl_stage(stage_data, 'extract') == []
 
 
-@patch("core.parser.parse_etl_plugins", side_effect=mock_parse_etl_components)
-def test_parse_single_job(parse_mock):  # pylint: disable=unused-argument
-    """A test that parses a single."""
-    job_data = {
-        "extract": [{"type": utils.generate_plugin_name()}],
-        "transform": [
-            {"type": utils.generate_plugin_name()},
-            {"type": utils.generate_plugin_name()},
-        ],
-        "load": [{"type": utils.generate_plugin_name()}],
+def test_parse_plugins_for_multiple_plugins():
+    stage_data = {'load': [{'type': 'pluginA'}, {'type': 'pluginB'}]}
+    
+    MockPluginA = Mock(name='MockPluginA')
+    MockPluginB = Mock(name='MockPluginB')
+
+    with patch.object(PluginFactory, 'get', side_effect=[MockPluginA, MockPluginB]):
+        result = parser.parse_plugins_for_etl_stage(stage_data, 'load')
+        assert len(result) == 2
+        assert result[0] == MockPluginA and result[1] == MockPluginB
+
+
+def test_create_pipeline_with_no_stages():
+    pipeline_data = {}
+
+    with pytest.raises(pyd.ValidationError):
+        parser.create_pipeline_from_data('empty_pipeline', pipeline_data)
+
+
+def test_create_pipeline_with_multiple_stages():
+    pipeline_data = {'type': 'ELT', 'extract': [], 'transform': [], 'load': []}
+    pipeline = parser.create_pipeline_from_data('full_pipeline', pipeline_data)
+    assert isinstance(pipeline, Pipeline)
+    assert pipeline.name == 'full_pipeline' and all([hasattr(pipeline, stage) for stage in ['extract', 'transform', 'load']])
+
+
+def test_create_pipelines_from_empty_dict():
+    assert parser.create_pipelines_from_dict({}) == []
+
+def test_create_multiple_pipelines_from_dict():
+    pipelines_dict = {
+        'pipeline1': {'type': 'ELT', 'extract': [], 'transform': [], 'load': []},
+        'pipeline2': {'type': 'ELT', 'extract': [], 'transform': [], 'load': []},
     }
+    pipelines = parser.create_pipelines_from_dict(pipelines_dict)
+    assert len(pipelines) == 2
+    assert all(isinstance(pipeline, Pipeline) for pipeline in pipelines)
 
-    result = parser.parse_single_job(job_data)
-
-    # Validates if the number of parsed service is right
-    assert len(result) == 3
-    assert len(result["extract"]) == 1
-    assert len(result["transform"]) == 2
-    assert len(result["load"]) == 1
-
-    # Validates if they are all classes - can't check for typing since Protocols are used.
-    assert isinstance(result["extract"][0], type)
-    assert isinstance(result["transform"][0], type) and isinstance(
-        result["transform"][1], type
-    )
-    assert isinstance(result["load"][0], type)
-
-
-@patch("core.parser.parse_single_job")
-def test_parse_jobs(mock):
-    """A test parsing multiple jobs."""
-    plugins = (
-        utils.generate_plugin_name(),
-        utils.generate_plugin_name(),
-        utils.generate_plugin_name(),
-    )
-    plugin_cls = (
-        utils.create_fake_class(plugins[0]),
-        utils.create_fake_class(plugins[1]),
-        utils.create_fake_class(plugins[2]),
-    )
-
-    job_data = {
-        "job1": {
-            "extract": [{"type": plugins[0], "otherarg1": "valuearg1"}],
-            "transform": [{"type": plugins[1], "otherarg2": "valuearg2"}],
-            "load": [{"type": plugins[2], "otherarg3": "valuearg3"}],
-        }
-    }
-    mock.return_value = {
-        "extract": [plugin_cls[0]],
-        "transform": [plugin_cls[1]],
-        "load": [plugin_cls[2]],
-    }
-    result = parser.parse_jobs(job_data)
-
-    assert result == [
-        Job.model_construct(
-            name="job1",
-            extract=[plugin_cls[0]],
-            transform=[plugin_cls[1]],
-            load=[plugin_cls[2]],
-            needs=None,
-        )
-    ]
-    assert isinstance(result[0], Job)

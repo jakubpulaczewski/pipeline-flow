@@ -1,10 +1,12 @@
-from typing import Type
+# Standard Imports
 
+# Third-party imports
 import yaml
 
-from common.config import ETL_CLASS, ETLStages
-from core.factory import PluginFactory
-from core.models import Job
+# Project Imports
+from common.config import ETLConfig
+from core.models import Pipeline
+from core.plugins import PluginFactory
 
 
 def deserialize_yaml(yaml_str: str) -> dict:
@@ -12,35 +14,27 @@ def deserialize_yaml(yaml_str: str) -> dict:
     return yaml.safe_load(yaml_str)
 
 
-def parse_etl_plugins(job_data: dict, stage_type: str) -> list[Type[ETL_CLASS]]:
-    """Parse individual ETL plugins by fetching their respective plugin class."""
+def parse_plugins_for_etl_stage(stage_data: dict, stage: str) -> list[ETLConfig.ETL_CALLABLE]:
+    """Parse individual ETL pipeline plugins by fetching their respective plugin class."""
     plugins = []
-
-    for args in job_data.get(stage_type, []):
-        # Loop through each type in the same ETL Stage.
+    for args in stage_data.get(stage, []):
         service = args.pop("type")
-        plugin = PluginFactory.get(stage_type, service)
+        plugin = PluginFactory.get(stage, service)
         plugins.append(plugin)
     return plugins
 
+def create_pipeline_from_data(pipeline_name: str, pipeline_data: dict) -> Pipeline:
+    """Parse a single pipeline's data and return a pipeline instance."""
+    parsed_data = pipeline_data.copy()
+    for stage in ETLConfig.ETL_STAGES:
+        parsed_data[stage] = parse_plugins_for_etl_stage(pipeline_data, stage)
 
-def parse_single_job(job_data: dict) -> dict[str, list[Type[ETL_CLASS]]]:
-    """Parse a single job's data."""
-    parsed_data = job_data.copy()
-    for stage_type in [
-        ETLStages.EXTRACT.name,
-        ETLStages.TRANSFORM.name,
-        ETLStages.LOAD.name,
-    ]:
-        parsed_data[stage_type] = parse_etl_plugins(job_data, stage_type)
-
-    return parsed_data
+    return Pipeline(name=pipeline_name, **parsed_data)
 
 
-def parse_jobs(jobs: dict) -> list[Job]:
-    """Parse all jobs."""
-    parsed_jobs = [
-        Job(name=job_name, **parse_single_job(job_data))
-        for job_name, job_data in jobs.items()
+def create_pipelines_from_dict(pipelines: dict) -> list[Pipeline]:
+    """Parse all pipelines and return a list of Pipeline instances."""
+    return [
+        create_pipeline_from_data(pipeline_name, pipeline_data) 
+        for pipeline_name, pipeline_data in pipelines.items()
     ]
-    return parsed_jobs

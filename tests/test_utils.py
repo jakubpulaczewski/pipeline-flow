@@ -1,26 +1,41 @@
-import random
-from typing import Any, Type
+# # Standard Imports
+# import random
+# from typing import Any, Type
 
-DEFAULT_PLUGIN_TYPES = ["s3"]
-# ['jdbc', 's3', 'api', 'ftp', 'http', 'https']
+# # Third-party imports
+
+# # Project Imports
+# from common.config import ETLConfig
+# from core.models import (
+#     ExtractInterface,
+#     LoadInterface, 
+#     TransformInterface
+# )
 
 
-def generate_plugin_name() -> str:
-    """Generates a plugin name from a default list.
+# def generate_plugin_name(stage: str) -> str:
+#     """ Randomly takes a random plugin name from a default list for a given ETL stage.
 
-    Returns:
-        str: A name of the plugin.
-    """
-    return random.choice(DEFAULT_PLUGIN_TYPES)
+#     Args:
+#         stage (str): An ETL Stage - either extract or load.
+
+#     Returns:
+#         str: a string plugin name
+#     """
+#     random_plugins = ['jdbc', 's3', 'api', 'ftp', 'http', 'https']
+#     return random.choice(random_plugins)
 
 
-def create_fake_class(key: str) -> Type[Any]:
-    """Creates a fake class using one of the ETL Interfaces.
+# def create_fake_class(key: str, stage: str) -> ETLConfig.ETL_CALLABLE:
+#     """Creates a fake class using one of the ETL Interfaces.
 
-    Args:
-        key (str): Name of the plugin for the ETL stage.
+#     Args:
+#         key (str): Name of the plugin for the ETL stage.
 
-    Returns:
-        Type[Any]: A new class type with the specified key as its name.
-    """
-    return type(key, (object,), {})
+#     Returns:
+#         ETL_CALLABLE: an ETL class associated with that specific stage.
+#     """
+#     if isinstance(key, str):
+#         stage_class = ETLConfig.get_base_class(stage)
+#         return type(key, (stage_class,), {})
+   
