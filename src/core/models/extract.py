@@ -34,7 +34,7 @@ def extract_decorator(extract_function: ExtractFunction) -> ExtractFunction:
         try:
             result = await extract_function(self, *args, **kwargs)
             return ExtractResult(name = self.id, success=True, result=result)
-        
+
         except Exception as e:
             error_message = f"A problem occurred when trying to extract data from {self.id}: {str(e)}"
             logger.error(error_message)
@@ -55,11 +55,10 @@ class IExtractor(pyd.BaseModel, ABC):
         raise NotImplementedError(
             "The method has not been implemented. You must implement it"
         )
-    
+
 
 class ExtractPhase(pyd.BaseModel):
     model_config = pyd.ConfigDict(arbitrary_types_allowed=True)
 
     steps: list[IExtractor]
     storage: StoragePhase | None = None
-

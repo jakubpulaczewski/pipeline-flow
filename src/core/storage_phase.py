@@ -17,4 +17,3 @@ class StoragePhase(pyd.BaseModel, ABC):
     @abstractmethod
     def save(self, data: Data) -> bool:
         raise NotImplementedError("This method needs to be implemented by subclass.")
-

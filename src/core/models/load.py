@@ -36,7 +36,7 @@ def load_decorator(load_function: LoadFunction) -> LoadFunction:
         try:
             load_function(self, *args, **kwargs)
             return LoadResult(name=self.id, success=True)
-        
+
         except Exception as e:
             error_message = f"A problem occurred when trying to load data to the following destination {self.id}: {str(e)}"
             logger.error(error_message)
@@ -53,7 +53,7 @@ class ILoader(pyd.BaseModel, ABC):
     type: str
 
     @abstractmethod
-    async def load_data(self, data: ExtractedData | TransformedData) -> None: 
+    async def load_data(self, data: ExtractedData | TransformedData) -> None:
         """Load data to a destination."""
         raise NotImplementedError(
             "The method has not been implemented. You must implement it"

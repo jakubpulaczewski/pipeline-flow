@@ -31,7 +31,7 @@ class TransformResult:
     success: bool
     result: TransformedData | None = None
     error: Exception | None = None
-    
+
 
 TransformFunction = Callable[[str | ExtractedData], TransformResult]
 
@@ -50,7 +50,7 @@ def transform_decorator(transform_function: TransformFunction) -> TransformFunct
             logger.error(error_message)
             transform_result = TransformResult(name=self.id, success=False, error=str(e), type="UNKNOWN")
             raise TransformException(error_message, transform_result) from e
-        
+
     return wrapper
 
 
@@ -60,7 +60,7 @@ class ITransformer(pyd.BaseModel):
 
 class ITransformerETL(ITransformer, ABC):
     """ An interface of the Transformation in ETL."""
-    
+
     @abstractmethod
     def transform_data(self, data: ExtractedData) -> TransformResult:
         """Perform transformations before data is loaded into the target system."""
@@ -71,7 +71,7 @@ class ITransformerETL(ITransformer, ABC):
 class ITransformerELT(ITransformer, ABC):
     " A separate interface of the Transformation in ELT."
     query: str
-    
+
     @abstractmethod
     def transform_data(self) -> None:
         """Perform transformations after data is loaded into the target system."""
@@ -85,4 +85,3 @@ class TransformPhase(pyd.BaseModel):
 
     steps: list[ITransformer] | None = None
     storage: StoragePhase | None = None
-

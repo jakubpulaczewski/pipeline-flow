@@ -36,14 +36,14 @@ class MockTransformELT(tf.ITransformerELT):
 
     @tf.transform_decorator
     def transform_data(self) -> None:
-       return 
+       return
 
 
 class MockLoad(load.ILoader):
 
     @load.load_decorator
     async def load_data(self, data: ExtractedData | TransformedData) -> None:
-        return 
+        return
 
 
 @pytest.fixture(scope="session")
@@ -101,7 +101,7 @@ def elt_pipeline(mock_extractor, mock_transformer_elt, mock_loader) -> Pipeline:
 
 @pytest.fixture(scope="session")
 def etl_pipeline(mock_extractor, mock_transformer_etl, mock_loader) -> Pipeline:
-  
+
     return Pipeline(
         name="TEST ETL Pipeline",
         description="A test ETL Pipeline",
@@ -189,4 +189,3 @@ def test_pipeline_type_validation(mock_extractor, mock_transformer_etl, mock_loa
                 storage=None
             )
         )
-

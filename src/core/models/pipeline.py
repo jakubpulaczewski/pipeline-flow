@@ -27,7 +27,7 @@ class Pipeline(pyd.BaseModel):
     # Optional
     description: str | None = None
     needs: str | list[str] | None = None
-   
+
     # Private
     __is_executed: bool = False
 
@@ -35,7 +35,7 @@ class Pipeline(pyd.BaseModel):
     @property
     def is_executed(self) -> bool:
         return self.__is_executed
-    
+
 
     @is_executed.setter
     def is_executed(self, value: bool) -> None:
