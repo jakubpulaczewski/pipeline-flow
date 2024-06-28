@@ -1,16 +1,20 @@
 {
-    "name": "Python 3",
-    "build": {
-		"dockerfile": "Dockerfile",
-		"context": "..",
-		"args": {
-			// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
-			// Append -bullseye or -buster to pin to an OS version.
-			// Use -bullseye variants on local on arm64/Apple Silicon.
-			"VARIANT": "3.11",
-			// Options
-			"NODE_VERSION": "none"
-		}
+    "name": "Workflow Project",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+	"features": {
+		"ghcr.io/devcontainers/features/python:1": {
+			"version": "3.12"
+		},
+		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
+		"ghcr.io/devcontainers-contrib/features/isort:2": {},
+		"ghcr.io/devcontainers-contrib/features/poetry:2": {},
+		"ghcr.io/devcontainers-contrib/features/black:2": {
+			"version": "latest"
+		},
+		// "ghcr.io/devcontainers-contrib/features/spark-sdkman:2": {
+		// 	"version": "3.5.0", // Matrix https://community.cloudera.com/t5/Community-Articles/Spark-Python-Supportability-Matrix/ta-p/379144
+		// 	"jdkVersion": "11"
+		// }
     },
 
 	"mounts": [
@@ -48,7 +52,7 @@
 
 
 	},
-	"postCreateCommand": "chmod 700 /home/vscode/.ssh && chmod 600 /home/vscode/.ssh/config && chmod 600 /home/vscode/.ssh/id_rsa",
+	"postCreateCommand": "chmod 700 /home/vscode/.ssh && chmod 600 /home/vscode/.ssh/id_rsa",
 
     "remoteUser": "vscode"
 }
