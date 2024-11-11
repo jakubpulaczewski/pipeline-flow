@@ -4,7 +4,7 @@ from typing import Type, TypeVar
 
 # Project Imports
 from common.config import ETLConfig
-from common.type_def import ETL_CALLABLE
+from common.type_def import ETL_PHASE_CALLABLE
 from common.utils.logger import setup_logger
 
 # Third Party Imports
@@ -22,78 +22,88 @@ class PluginFactory:
 
     """
 
-    _registry: dict[str, dict[str, ETL_CALLABLE]] = {}
+    _registry: dict[str, dict[str, ETL_PHASE_CALLABLE]] = {}
 
     @staticmethod
-    def lowercase_etl_stage(etl_stage: str) -> str:
-        return etl_stage.lower()
+    def lowercase_etl_phase(etl_phase: str) -> str:
+        return etl_phase.lower()
 
     @staticmethod
-    def _validate_plugin_interface(etl_stage: str, plugin_class: PluginClass) -> bool:
-        stage_class = ETLConfig.get_base_class(etl_stage)
-        if stage_class is None:
-            error_message = ("Not Identifiable ETL Stage %s", etl_stage)
-            logger.error(error_message)
-            raise TypeError(error_message)
+    def _validate_plugin_interface(etl_phase: str, plugin_class: PluginClass) -> bool:
+        """
+        Validates that the provided plugin_class is a valid implementation
+        for the given ETL phase.
 
-        if not issubclass(plugin_class, stage_class):
-            error_message = (
-                f"{plugin_class.__name__} is not a subclass of {stage_class.__name__}"
+        Args:
+            etl_phase (str): The ETL phase (e.g., "extract", "transform", "load").
+            plugin_class (type): The class to validate.
+
+        Returns:
+            bool: True if validation succeeds.
+
+        Raises:
+            ValueError: If the ETL phase is invalid.
+            TypeError: If the plugin_class does not inherit from the required base class.
+        """
+        phase_class = ETLConfig.get_base_class(etl_phase)
+
+        if not issubclass(plugin_class, phase_class):
+            raise TypeError(
+                f"Plugin class '{plugin_class.__name__}' must be a subclass of '{phase_class.__name__}' "
+                f"to be registered under the '{etl_phase}' phase."
             )
-            logger.error(error_message)
-            raise TypeError(error_message)
 
         return True
 
     @classmethod
-    def register(cls, etl_stage: str, plugin: str, plugin_class: PluginClass) -> bool:
+    def register(cls, etl_phase: str, plugin: str, plugin_class: PluginClass) -> bool:
         """Regisers a plugin for a given ETL type and plugin."""
-        etl_stage = cls.lowercase_etl_stage(etl_stage)
+        etl_phase = cls.lowercase_etl_phase(etl_phase)
 
-        cls._validate_plugin_interface(etl_stage, plugin_class)
+        cls._validate_plugin_interface(etl_phase, plugin_class)
 
-        # Initialise the ETL stage in the registry.
-        if etl_stage not in cls._registry:
-            cls._registry[etl_stage] = {}
+        # Initialise the ETL phase in the registry.
+        if etl_phase not in cls._registry:
+            cls._registry[etl_phase] = {}
 
         # Check if the plugin has been registered.
-        if plugin in cls._registry[etl_stage]:
+        if plugin in cls._registry[etl_phase]:
             logger.warning(
-                "Plugin for `%s` stage already exists in PluginFactory class.",
-                etl_stage,
+                "Plugin for `%s` phase already exists in PluginFactory class.",
+                etl_phase,
             )
             return False
 
-        cls._registry[etl_stage][plugin] = plugin_class
+        cls._registry[etl_phase][plugin] = plugin_class
         logger.debug(
-            "Plugin `%s` for stage `%s` registered successfully.", plugin, etl_stage
+            "Plugin `%s` for phase `%s` registered successfully.", plugin, etl_phase
         )
         return True
 
     @classmethod
-    def remove(cls, etl_stage: str, plugin: str) -> bool:
+    def remove(cls, etl_phase: str, plugin: str) -> bool:
         """Remove a plugin for a given ETL type and plugin."""
-        etl_stage = cls.lowercase_etl_stage(etl_stage)
+        etl_phase = cls.lowercase_etl_phase(etl_phase)
 
-        if etl_stage in cls._registry and plugin in cls._registry[etl_stage]:
-            del cls._registry[etl_stage][plugin]
+        if etl_phase in cls._registry and plugin in cls._registry[etl_phase]:
+            del cls._registry[etl_phase][plugin]
             logger.debug(
-                "Plugin '%s' for stage '%s' has been removed.", plugin, etl_stage
+                "Plugin '%s' for phase '%s' has been removed.", plugin, etl_phase
             )
 
             # Remove the ETL type dict if empty after removing the plugin.
-            if not cls._registry[etl_stage]:
-                logger.debug("Stage '%s' has been removed.", etl_stage)
-                del cls._registry[etl_stage]
+            if not cls._registry[etl_phase]:
+                logger.debug("Stage '%s' has been removed.", etl_phase)
+                del cls._registry[etl_phase]
             return True
         return False
 
     @classmethod
-    def get(cls, etl_stage: str, plugin: str) -> ETL_CALLABLE:
+    def get(cls, etl_phase: str, plugin: str) -> ETL_PHASE_CALLABLE:
         """Retrieve a plugin for a given ETL type and plugin."""
-        etl_stage = cls.lowercase_etl_stage(etl_stage)
+        etl_phase = cls.lowercase_etl_phase(etl_phase)
 
-        etl_class = cls._registry.get(etl_stage, {}).get(plugin, None)
+        etl_class = cls._registry.get(etl_phase, {}).get(plugin, None)
         if not etl_class:
             raise ValueError("Plugin class '%s' was not found", etl_class)
         logger.debug("Plugin class '%s' has been successfully retrieved.", etl_class)
@@ -103,20 +113,20 @@ class PluginFactory:
 class PluginConfig:
     """A config plugin class that contains default Plugins"""
 
-    EXTRACT_PLUGINS = {"pandas": ["s3"]}
-    LOAD_PLUGINS = {"pandas": ["s3"]}
+    _DEFAULT_EXTRACT_PLUGINS = {"pandas": ["s3"]}
+    _DEFAULT_LOAD_PLUGINS = {"pandas": ["s3"]}
+
+    # Mapping ETL phases to their respective default plugins
+    _STAGE_PLUGIN_MAP = {
+        ETLConfig.EXTRACT_PHASE: _DEFAULT_EXTRACT_PLUGINS,
+        ETLConfig.LOAD_PHASE: _DEFAULT_LOAD_PLUGINS,
+    }
 
     @classmethod
-    def plugin_stage_mapper(
-        cls: "PluginConfig", etl_stage: str
-    ) -> dict[str, list[str]]:
-        etl_stage = etl_stage.lower()
-
-        if etl_stage == ETLConfig.EXTRACT:
-            return cls.EXTRACT_PLUGINS
-        if etl_stage == ETLConfig.LOAD:
-            return cls.LOAD_PLUGINS
-        return None
+    def plugin_phase_mapper(
+        cls: "PluginConfig", etl_phase: str
+    ) -> dict[str, list[str]] | None:
+        return cls._STAGE_PLUGIN_MAP.get(etl_phase.lower())
 
 
 class PluginLoader:
@@ -145,38 +155,38 @@ class PluginLoader:
                 f"Expected plugins to be a dict, got {type(plugins).__name__}"
             )
 
-        allowed_stages = {ETLConfig.EXTRACT, ETLConfig.LOAD}
+        allowed_phases = {ETLConfig.EXTRACT_PHASE, ETLConfig.LOAD_PHASE}
 
-        if not all(key in allowed_stages for key in plugins.keys()):
+        if not all(key in allowed_phases for key in plugins.keys()):
             err_message = "Plugins must only contain 'EXTRACT' and 'LOAD' keys."
             logger.error(err_message)
             raise ValueError(err_message)
 
-    def _initialize_plugin(self, stage: str, plugin_list: list[str]) -> None:
-        """Initializes plugin modules for a given ETL stage."""
+    def _initialize_plugin(self, phase: str, plugin_list: list[str]) -> None:
+        """Initializes plugin modules for a given ETL phase."""
         logger.info(
-            "Initializing plugin list %s for ETL stage %s with engine %s",
+            "Initializing plugin list %s for ETL phase %s with engine %s",
             plugin_list,
-            stage,
+            phase,
             self.engine,
         )
 
-        default_plugins = PluginConfig.plugin_stage_mapper(stage)[self.engine]
+        default_plugins = PluginConfig.plugin_phase_mapper(phase)[self.engine]
         combined_plugins = set(default_plugins + plugin_list)
 
         if not combined_plugins:
-            raise ValueError("No plugins to load for stage {}".format(stage))
+            raise ValueError("No plugins to load for phase {}".format(phase))
 
         for plugin in combined_plugins:
             try:
                 module = importlib.import_module(
-                    f"plugins.{stage}.{self.engine}.{plugin}"
+                    f"plugins.{phase}.{self.engine}.{plugin}"
                 )
                 module.initialize()
             except ModuleNotFoundError:
                 logger.error(
                     "Plugin module not found: plugins.%s.%s.%s",
-                    stage,
+                    phase,
                     self.engine,
                     plugin,
                 )
@@ -186,9 +196,9 @@ class PluginLoader:
 
     def loader(self) -> None:
         """Load the plugins defined in the plugins list."""
-        # For each stage in plugins, initialize the plugins for that stage.
-        for stage, plugin_list in self.plugins.items():
-            self._initialize_plugin(stage.lower(), plugin_list)
+        # For each phase in plugins, initialize the plugins for that phase.
+        for phase, plugin_list in self.plugins.items():
+            self._initialize_plugin(phase.lower(), plugin_list)
 
 
 class PluginModuleInterface:

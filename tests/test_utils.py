@@ -6,7 +6,7 @@
 
 # # Project Imports
 # from common.config import ETLConfig
-# from common.type_def import ETL_CALLABLE
+# from common.type_def import ETL_PHASE_CALLABLE
 
 # from core.models import (
 #     IExtractor,
@@ -28,14 +28,14 @@
 #     return random.choice(random_plugins)
 
 
-# def create_fake_class(key: str, stage: str) -> ETL_CALLABLE:
+# def create_fake_class(key: str, stage: str) -> ETL_PHASE_CALLABLE:
 #     """Creates a fake class using one of the ETL Interfaces.
 
 #     Args:
 #         key (str): Name of the plugin for the ETL stage.
 
 #     Returns:
-#         ETL_CALLABLE: an ETL class associated with that specific stage.
+#         ETL_PHASE_CALLABLE: an ETL class associated with that specific stage.
 #     """
 #     if isinstance(key, str):
 #         stage_class = ETLConfig.get_base_class(stage)

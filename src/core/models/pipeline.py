@@ -42,7 +42,6 @@ class Pipeline(pyd.BaseModel):
     @pyd.field_validator("type")
     def pipeline_type_match(cls: Pipeline, value: str) -> str:
         """A validator that validates pipeline type against the allowed pipeline types."""
-        upper_cased_pipeline = value.upper()
-        if upper_cased_pipeline not in PipelineTypes.ALLOWED_PIPELINE_TYPES:
+        if not PipelineTypes.is_valid_pipeline_type(value.upper()):
             raise ValueError("A pipeline must be of following types: ETL, ELT, ETLT")
-        return upper_cased_pipeline
+        return value.upper()

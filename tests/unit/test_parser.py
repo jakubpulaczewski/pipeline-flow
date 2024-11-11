@@ -1,8 +1,6 @@
 # Standard Imports
 from unittest.mock import Mock, patch
 
-import pydantic as pyd
-
 # Third-party Imports
 import pytest
 
@@ -13,10 +11,13 @@ from core.models.load import ILoader
 from core.models.pipeline import Pipeline
 from core.models.transform import ITransformerETL
 from core.plugins import PluginFactory
+from tests.common.constants import EXTRACT_PHASE, LOAD_PHASE
 
-EXTRACT = "extract"
-LOAD = "load"
-TRANSFORM = "transform"
+
+def test_deserialize_empty_yaml():
+    """Given that empty YAML string is passed to the deserialize function, it should raise an exception."""
+    with pytest.raises(ValueError):
+        parser.deserialize_yaml("")
 
 
 def test_deserialize_valid_yaml() -> None:
@@ -84,13 +85,14 @@ def test_deserialize_valid_yaml() -> None:
     ), f"Deserialized YAML does not match the expected dictionary. Got: {serialized_yaml}"
 
 
-def test_deserialize_empty_yaml():
-    """Given that empty YAML string is passed to the deserialize function, it should raise an exception."""
+@pytest.mark.parametrize("mandatory_phase", [(EXTRACT_PHASE), (LOAD_PHASE)])
+def test_validate_phase_configuration_with_missing_phases(mandatory_phase: str):
+    "When there are missing phases present, the validation should raise ValueError."
     with pytest.raises(ValueError):
-        parser.deserialize_yaml("")
+        parser.validate_phase_configuration(mandatory_phase, {})
 
 
-@pytest.mark.parametrize("phase", [(EXTRACT), (LOAD)])
+@pytest.mark.parametrize("phase", [(EXTRACT_PHASE), (LOAD_PHASE)])
 def test_validate_phase_configuration_with_mandatory_phases_present(phase):
     "When mandatory phases are present, the validation should be passed."
     phase_args = {
@@ -99,16 +101,10 @@ def test_validate_phase_configuration_with_mandatory_phases_present(phase):
                 "id": f"mock_{phase}",
                 "type": "mock_s3",
             }
-        ]
+        ],
+        "another_phase_para": "value1",
     }
     assert parser.validate_phase_configuration(phase, phase_args) == True
-
-
-@pytest.mark.parametrize("mandatory_phase", [(EXTRACT), (LOAD)])
-def test_validate_phase_configuration_with_missing_phases(mandatory_phase: str):
-    "When there are missing phases present, the validation should raise ValueError."
-    with pytest.raises(ValueError):
-        parser.validate_phase_configuration(mandatory_phase, {})
 
 
 def test_parse_plugins_with_missing_args_mandatory_phase(mocker):
@@ -116,13 +112,13 @@ def test_parse_plugins_with_missing_args_mandatory_phase(mocker):
         parser,
         "parse_phase_steps_plugins",
         side_effect=ValueError(
-            "Validation Failed! Mandatory phase EXTRACT cannot be empty or missing plugins."
+            "Validation Failed! Mandatory phase EXTRACT_PHASE cannot be empty or missing plugins."
         ),
     )
-    phase_data = {EXTRACT: {}}
+    phase_data = {EXTRACT_PHASE: {}}
 
     with pytest.raises(ValueError):
-        parser.parse_phase_steps_plugins(EXTRACT, phase_data)
+        parser.parse_phase_steps_plugins(EXTRACT_PHASE, phase_data)
 
 
 def test_parse_one_plugin():
@@ -138,7 +134,7 @@ def test_parse_one_plugin():
     MockPluginA = Mock(spec=IExtractor)
 
     with patch.object(PluginFactory, "get", return_value=MockPluginA):
-        result = parser.parse_phase_steps_plugins(EXTRACT, phase_data)
+        result = parser.parse_phase_steps_plugins(EXTRACT_PHASE, phase_data)
 
         assert len(result) == 1
         assert result[0] is MockPluginA
@@ -148,22 +144,24 @@ def test_parse_multiple_plugins():
     phase_data = {
         "steps": [
             {
-                "id": "mock_extractor_1",
-                "type": "mock_s3",
+                "id": "mock_extractor",
+                "type": "mock",
             },
-            {"id": "mock_extractor_2", "type": "mock_jdbc"},
+            {"id": "mock_extractor", "type": "mock"},
         ]
     }
 
-    MockPluginA = Mock(spec=IExtractor)
-    MockPluginB = Mock(spec=IExtractor)
+    MockExtractorA = Mock(spec=IExtractor)
+    MockExtractorB = Mock(spec=IExtractor)
 
-    with patch.object(PluginFactory, "get", side_effect=[MockPluginA, MockPluginB]):
-        result = parser.parse_phase_steps_plugins(EXTRACT, phase_data)
+    with patch.object(
+        PluginFactory, "get", side_effect=[MockExtractorA, MockExtractorB]
+    ):
+        result = parser.parse_phase_steps_plugins(EXTRACT_PHASE, phase_data)
 
         assert len(result) == 2
-        assert result[0] is MockPluginA
-        assert result[1] is MockPluginB
+        assert result[0] is MockExtractorA
+        assert result[1] is MockExtractorB
 
 
 def test_create_pipeline_with_no_pipeline_attributes():
@@ -173,10 +171,14 @@ def test_create_pipeline_with_no_pipeline_attributes():
         parser.create_pipeline_from_data("empty_pipeline", pipeline_data)
 
 
+def test_create_pipelines_from_empty_dict():
+    assert parser.create_pipelines_from_dict({}) == []
+
+
 def test_create_pipeline_with_multiple_sources_destinations(mocker):
     pipeline_data = {
-        "type": "ELT",
-        EXTRACT: {
+        "type": "ETL",
+        "extract": {
             "steps": [
                 {
                     "id": "mock_extractor_1",
@@ -185,7 +187,7 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker):
                 {"id": "mock_extractor_2", "type": "mock_jdbc"},
             ]
         },
-        TRANSFORM: {
+        "transform": {
             "steps": [
                 {
                     "id": "transformation1",
@@ -195,7 +197,7 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker):
                 },
             ]
         },
-        LOAD: {
+        "load": {
             "steps": [
                 {
                     "id": "mock_load_1",
@@ -234,7 +236,3 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker):
         and pipeline.transform.steps[0] is MockTranformer
     )
     assert len(pipeline.load.steps) == 2 and pipeline.load.steps[0] is MockLoader
-
-
-def test_create_pipelines_from_empty_dict():
-    assert parser.create_pipelines_from_dict({}) == []

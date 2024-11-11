@@ -5,14 +5,14 @@ import yaml
 
 # Project Imports
 from common.config import ETLConfig
-from common.type_def import ETL_CALLABLE
+from common.type_def import ETL_PHASE_CALLABLE
 from core.models.pipeline import Pipeline
 from core.plugins import PluginFactory
 
 PLUGIN_MANDATORY_FLAGS_BY_PHASE = {
-    ETLConfig.EXTRACT: True,
-    ETLConfig.TRANSFORM: False,
-    ETLConfig.LOAD: True,
+    ETLConfig.EXTRACT_PHASE: True,
+    ETLConfig.TRANSFORM_PHASE: False,
+    ETLConfig.LOAD_PHASE: True,
 }
 
 
@@ -46,7 +46,7 @@ def validate_phase_configuration(phase: str, phase_args: dict) -> bool:
     if is_phase_mandatory(phase):
         # Check if "steps" exist and are not empty
 
-        if not phase_args.get(ETLConfig.STEPS, []):
+        if not phase_args.get(ETLConfig.STEPS_KEY, []):
             raise ValueError(
                 "Validation Failed! Mandatory phase '%s' cannot be empty or missing plugins.",
                 phase,
@@ -55,7 +55,7 @@ def validate_phase_configuration(phase: str, phase_args: dict) -> bool:
     return True
 
 
-def parse_phase_steps_plugins(phase: str, phase_args: dict) -> list[ETL_CALLABLE]:
+def parse_phase_steps_plugins(phase: str, phase_args: dict) -> list[ETL_PHASE_CALLABLE]:
     """Retrieve all the plugin objects.
 
     Args:
@@ -63,7 +63,7 @@ def parse_phase_steps_plugins(phase: str, phase_args: dict) -> list[ETL_CALLABLE
         phase_args (dict): Dict containing arguments for each phase, in the YAML.
 
     Returns:
-        list[ETL_CALLABLE]: A list of plugins for a given phase.
+        list[ETL_PHASE_CALLABLE]: A list of plugins for a given phase.
     """
 
     # Validation Step
@@ -71,7 +71,7 @@ def parse_phase_steps_plugins(phase: str, phase_args: dict) -> list[ETL_CALLABLE
 
     return [
         PluginFactory.get(phase, step.get("type"))
-        for step in phase_args[ETLConfig.STEPS]
+        for step in phase_args[ETLConfig.STEPS_KEY]
     ]
 
 
@@ -82,7 +82,7 @@ def create_pipeline_from_data(pipeline_name: str, pipeline_data: dict) -> Pipeli
 
     for phase in ETLConfig.get_etl_phases():
         phase_args = pipeline_data.get(phase)
-        pipeline_data[phase][ETLConfig.STEPS] = parse_phase_steps_plugins(
+        pipeline_data[phase][ETLConfig.STEPS_KEY] = parse_phase_steps_plugins(
             phase, phase_args
         )
 

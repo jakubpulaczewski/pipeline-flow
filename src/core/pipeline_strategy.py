@@ -62,6 +62,7 @@ class PipelineStrategy:
         result = data
 
         for tf in transformations.steps:
+            # TODO: Needs re-write so that it only works for ETL
             if isinstance(tf, ITransformerETL) or isinstance(tf, ITransformerELT):
                 result = tf.transform_data(result)
 
@@ -140,7 +141,7 @@ class ELTStrategy(PipelineStrategy):
 class PipelineStrategyFactory:
 
     @staticmethod
-    def find_strategy(pipeline_type: str) -> PipelineStrategy:
+    def get_pipeline_strategy(pipeline_type: str) -> PipelineStrategy:
         if pipeline_type == PipelineTypes.ETL_PIPELINE:
             return ETLStrategy
         elif pipeline_type == PipelineTypes.ELT_PIPELINE:

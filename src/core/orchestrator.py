@@ -44,7 +44,7 @@ class PipelineOrchestrator:
                 pipeline = await pipeline_queue.get()
                 logger.info("Executing: %s ", pipeline.name)
 
-                strategy = PipelineStrategyFactory.find_strategy(pipeline.type)
+                strategy = PipelineStrategyFactory.get_pipeline_strategy(pipeline.type)
                 await strategy.execute(pipeline)
 
                 logger.info("Completed: %s", pipeline.name)

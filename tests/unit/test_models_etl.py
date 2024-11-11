@@ -9,36 +9,13 @@ import core.models.extract as extract
 import core.models.load as load
 import core.models.transform as tf
 from common.config import PipelineTypes
-from common.type_def import ExtractedData, LoadedData, TransformedData
 from core.models.pipeline import Pipeline
-
-
-class MockExtractor(extract.IExtractor):
-
-    @extract.extract_decorator
-    async def extract_data(self) -> ExtractedData:
-        return "extracted_data"
-
-
-class MockTransformETL(tf.ITransformerETL):
-
-    @tf.transform_decorator
-    def transform_data(self, data: ExtractedData) -> TransformedData:
-        return "transformed_etl_data"
-
-
-class MockTransformELT(tf.ITransformerELT):
-
-    @tf.transform_decorator
-    def transform_data(self) -> None:
-        return
-
-
-class MockLoad(load.ILoader):
-
-    @load.load_decorator
-    async def load_data(self, data: ExtractedData | TransformedData) -> None:
-        return
+from tests.common.mocks import (
+    MockExtractor,
+    MockLoad,
+    MockTransformELT,
+    MockTransformETL,
+)
 
 
 @pytest.fixture(scope="session")
@@ -68,9 +45,9 @@ def elt_pipeline(mock_extractor, mock_transformer_elt, mock_loader) -> Pipeline:
         description="A test ELT Pipeline",
         type="ELT",
         needs=None,
-        extract=extract.ExtractPhase(steps=[mock_extractor], storage=None),
-        transform=tf.TransformPhase(steps=[mock_transformer_elt], storage=None),
-        load=load.LoadPhase(steps=[mock_loader], storage=None),
+        extract=extract.ExtractPhase(steps=[mock_extractor]),
+        transform=tf.TransformPhase(steps=[mock_transformer_elt]),
+        load=load.LoadPhase(steps=[mock_loader]),
     )
 
 
@@ -82,9 +59,9 @@ def etl_pipeline(mock_extractor, mock_transformer_etl, mock_loader) -> Pipeline:
         description="A test ETL Pipeline",
         type="ETL",
         needs=None,
-        extract=extract.ExtractPhase(steps=[mock_extractor], storage=None),
-        transform=tf.TransformPhase(steps=[mock_transformer_etl], storage=None),
-        load=load.LoadPhase(steps=[mock_loader], storage=None),
+        extract=extract.ExtractPhase(steps=[mock_extractor]),
+        transform=tf.TransformPhase(steps=[mock_transformer_etl]),
+        load=load.LoadPhase(steps=[mock_loader]),
     )
 
 
@@ -165,7 +142,7 @@ def test_pipeline_type_validation(
         Pipeline(
             name="InvalidTypePipeline",
             type="INVALID",
-            extract=extract.ExtractPhase(steps=[mock_extractor], storage=None),
-            transform=tf.TransformPhase(steps=[mock_transformer_etl], storage=None),
-            load=load.LoadPhase(steps=[mock_loader], storage=None),
+            extract=extract.ExtractPhase(steps=[mock_extractor]),
+            transform=tf.TransformPhase(steps=[mock_transformer_etl]),
+            load=load.LoadPhase(steps=[mock_loader]),
         )

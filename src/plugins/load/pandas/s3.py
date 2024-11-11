@@ -17,6 +17,6 @@ class PandasS3LoadPlugin(pyd.BaseModel):
 
 
 def initialize():
-    PluginFactory.register(ETLConfig.EXTRACT, "s3", PandasS3LoadPlugin)
+    PluginFactory.register(ETLConfig.EXTRACT_PHASE, "s3", PandasS3LoadPlugin)
 
     logger.info("S3 Plugin Succesfully Initialised")

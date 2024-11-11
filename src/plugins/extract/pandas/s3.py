@@ -17,6 +17,6 @@ class PandasS3ExtractPlugin(pyd.BaseModel):
 
 
 def initialize():
-    PluginFactory.register(ETLConfig.EXTRACT, "s3", PandasS3ExtractPlugin)
+    PluginFactory.register(ETLConfig.EXTRACT_PHASE, "s3", PandasS3ExtractPlugin)
 
     logger.info("S3 Plugin Succesfully Initialised")

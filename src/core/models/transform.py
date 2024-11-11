@@ -41,11 +41,11 @@ def transform_decorator(transform_function: TransformFunction) -> TransformFunct
                     name=self.id,
                     success=True,
                     result=result,
-                    type=config.PipelineTypes.ETL_PIPELINE,
+                    type=config.PipelineType.ETL.name,
                 )
             elif isinstance(self, ITransformerELT):
                 return TransformResult(
-                    name=self.id, success=True, type=config.PipelineTypes.ELT_PIPELINE
+                    name=self.id, success=True, type=config.PipelineType.ELT.name
                 )
 
         except Exception as e:
