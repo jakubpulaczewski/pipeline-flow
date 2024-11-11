@@ -9,12 +9,12 @@ from typing import Callable
 # Third Party Imports
 import pydantic as pyd
 
-# Project Imports
-from core.storage_phase import StoragePhase
-from core.models.exceptions import ExtractException
 from common.type_def import ExtractedData
 from common.utils.logger import setup_logger
+from core.models.exceptions import ExtractException
 
+# Project Imports
+from core.storage_phase import StoragePhase
 
 logger = setup_logger(__name__)
 
@@ -26,14 +26,16 @@ class ExtractResult:
     result: ExtractedData | None = None
     error: Exception | None = None
 
+
 ExtractFunction = Callable[[], ExtractResult]
+
 
 def extract_decorator(extract_function: ExtractFunction) -> ExtractFunction:
     @wraps(extract_function)
     async def wrapper(self, *args, **kwargs) -> ExtractResult:
         try:
             result = await extract_function(self, *args, **kwargs)
-            return ExtractResult(name = self.id, success=True, result=result)
+            return ExtractResult(name=self.id, success=True, result=result)
 
         except Exception as e:
             error_message = f"A problem occurred when trying to extract data from {self.id}: {str(e)}"
@@ -43,8 +45,10 @@ def extract_decorator(extract_function: ExtractFunction) -> ExtractFunction:
 
     return wrapper
 
+
 class IExtractor(pyd.BaseModel, ABC):
     """An interface of the Extract Step."""
+
     id: str
     type: str
     config: dict | None = None

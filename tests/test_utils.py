@@ -6,10 +6,12 @@
 
 # # Project Imports
 # from common.config import ETLConfig
+# from common.type_def import ETL_CALLABLE
+
 # from core.models import (
-#     ExtractInterface,
-#     LoadInterface, 
-#     TransformInterface
+#     IExtractor,
+#     ILoader,
+#     ITransformer
 # )
 
 
@@ -26,7 +28,7 @@
 #     return random.choice(random_plugins)
 
 
-# def create_fake_class(key: str, stage: str) -> ETLConfig.ETL_CALLABLE:
+# def create_fake_class(key: str, stage: str) -> ETL_CALLABLE:
 #     """Creates a fake class using one of the ETL Interfaces.
 
 #     Args:
@@ -38,4 +40,3 @@
 #     if isinstance(key, str):
 #         stage_class = ETLConfig.get_base_class(stage)
 #         return type(key, (stage_class,), {})
-   

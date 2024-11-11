@@ -9,15 +9,12 @@ from typing import Callable
 # Third Party Imports
 import pydantic as pyd
 
+from common.type_def import ExtractedData, TransformedData
+from common.utils.logger import setup_logger
+from core.models.exceptions import LoadException
+
 # Project Imports
 from core.storage_phase import StoragePhase
-from core.models.exceptions import LoadException
-from common.type_def import (
-    ExtractedData,
-    TransformedData
-)
-from common.utils.logger import setup_logger
-
 
 logger = setup_logger(__name__)
 
@@ -28,7 +25,9 @@ class LoadResult:
     success: bool
     error: Exception | None = None
 
+
 LoadFunction = Callable[[ExtractedData | TransformedData], LoadResult]
+
 
 def load_decorator(load_function: LoadFunction) -> LoadFunction:
     @wraps(load_function)
@@ -46,9 +45,9 @@ def load_decorator(load_function: LoadFunction) -> LoadFunction:
     return wrapper
 
 
-
 class ILoader(pyd.BaseModel, ABC):
     """An interface of the Load Step."""
+
     id: str
     type: str
 

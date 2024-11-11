@@ -5,36 +5,93 @@ import yaml
 
 # Project Imports
 from common.config import ETLConfig
-from core.models import Pipeline
+from common.type_def import ETL_CALLABLE
+from core.models.pipeline import Pipeline
 from core.plugins import PluginFactory
+
+PLUGIN_MANDATORY_FLAGS_BY_PHASE = {
+    ETLConfig.EXTRACT: True,
+    ETLConfig.TRANSFORM: False,
+    ETLConfig.LOAD: True,
+}
 
 
 def deserialize_yaml(yaml_str: str) -> dict:
     """Deserialiazes a yaml string into python objects i.e. dicts, strings, int"""
+    if not yaml_str:
+        raise ValueError("A YAML string you provided is empty.")
     return yaml.safe_load(yaml_str)
 
 
-def parse_plugins_for_etl_stage(stage_data: dict, stage: str) -> list[ETLConfig.ETL_CALLABLE]:
-    """Parse individual ETL pipeline plugins by fetching their respective plugin class."""
-    plugins = []
-    for args in stage_data.get(stage, []):
-        service = args.pop("type")
-        plugin = PluginFactory.get(stage, service)
-        plugins.append(plugin)
-    return plugins
+def is_phase_mandatory(phase: str) -> bool:
+    """Check if a phase is mandatory based on configuration."""
+    return PLUGIN_MANDATORY_FLAGS_BY_PHASE.get(phase, False)
+
+
+def validate_phase_configuration(phase: str, phase_args: dict) -> bool:
+    """Validate if the given phase has mandatory plugins (cannot be empty) and
+    if it is correctly configured.
+
+    Args:
+        phase (str): The phase of the ETL (e.g., extract, transform, load)
+        phase_args (dict): Dict containing arguments for each phase.
+
+    Raises:
+        ValueError: True, if the phase passes validation.
+
+    Returns:
+        bool: If a mandatory phase is empty.
+    """
+    # If the phase is mandatory, validate its attributes
+    if is_phase_mandatory(phase):
+        # Check if "steps" exist and are not empty
+
+        if not phase_args.get(ETLConfig.STEPS, []):
+            raise ValueError(
+                "Validation Failed! Mandatory phase '%s' cannot be empty or missing plugins.",
+                phase,
+            )
+
+    return True
+
+
+def parse_phase_steps_plugins(phase: str, phase_args: dict) -> list[ETL_CALLABLE]:
+    """Retrieve all the plugin objects.
+
+    Args:
+        phase (str): The phase of the ETL (e.g., extract, transform, load)
+        phase_args (dict): Dict containing arguments for each phase, in the YAML.
+
+    Returns:
+        list[ETL_CALLABLE]: A list of plugins for a given phase.
+    """
+
+    # Validation Step
+    validate_phase_configuration(phase, phase_args)
+
+    return [
+        PluginFactory.get(phase, step.get("type"))
+        for step in phase_args[ETLConfig.STEPS]
+    ]
+
 
 def create_pipeline_from_data(pipeline_name: str, pipeline_data: dict) -> Pipeline:
     """Parse a single pipeline's data and return a pipeline instance."""
-    parsed_data = pipeline_data.copy()
-    for stage in ETLConfig.ETL_STAGES:
-        parsed_data[stage] = parse_plugins_for_etl_stage(pipeline_data, stage)
+    if not pipeline_data:
+        raise ValueError("Pipeline attributes are empty")
 
-    return Pipeline(name=pipeline_name, **parsed_data)
+    for phase in ETLConfig.get_etl_phases():
+        phase_args = pipeline_data.get(phase)
+        pipeline_data[phase][ETLConfig.STEPS] = parse_phase_steps_plugins(
+            phase, phase_args
+        )
+
+    return Pipeline(name=pipeline_name, **pipeline_data)
 
 
-def create_pipelines_from_dict(pipelines: dict) -> list[Pipeline]:
+def create_pipelines_from_dict(pipelines: dict[str, dict]) -> list[Pipeline]:
     """Parse all pipelines and return a list of Pipeline instances."""
     return [
-        create_pipeline_from_data(pipeline_name, pipeline_data) 
+        create_pipeline_from_data(pipeline_name, pipeline_data)
         for pipeline_name, pipeline_data in pipelines.items()
     ]

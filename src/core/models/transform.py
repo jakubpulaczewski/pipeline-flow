@@ -6,23 +6,18 @@ from dataclasses import dataclass
 from functools import wraps
 from typing import Callable
 
-
 # Third Party Imports
 import pydantic as pyd
 
 # Project Imports
 import common.config as config
+from common.type_def import ExtractedData, TransformedData
 from common.utils.logger import setup_logger
-
-from common.type_def import (
-    ExtractedData,
-    TransformedData,
-)
-from core.storage_phase import StoragePhase
 from core.models.exceptions import TransformException
-
+from core.storage_phase import StoragePhase
 
 logger = setup_logger(__name__)
+
 
 @dataclass
 class TransformResult:
@@ -35,20 +30,30 @@ class TransformResult:
 
 TransformFunction = Callable[[str | ExtractedData], TransformResult]
 
+
 def transform_decorator(transform_function: TransformFunction) -> TransformFunction:
     @wraps(transform_function)
     def wrapper(self, *args, **kwargs) -> TransformResult:
         try:
             result = transform_function(self, *args, **kwargs)
             if isinstance(self, ITransformerETL):
-                return TransformResult(name = self.id, success=True, result=result, type=config.PipelineTypes.ETL_PIPELINE)
+                return TransformResult(
+                    name=self.id,
+                    success=True,
+                    result=result,
+                    type=config.PipelineTypes.ETL_PIPELINE,
+                )
             elif isinstance(self, ITransformerELT):
-                return TransformResult(name = self.id, success=True, type=config.PipelineTypes.ELT_PIPELINE)
+                return TransformResult(
+                    name=self.id, success=True, type=config.PipelineTypes.ELT_PIPELINE
+                )
 
         except Exception as e:
             error_message = f"A problem occurred when trying to execute following transformation {self.id}: {str(e)}"
             logger.error(error_message)
-            transform_result = TransformResult(name=self.id, success=False, error=str(e), type="UNKNOWN")
+            transform_result = TransformResult(
+                name=self.id, success=False, error=str(e), type="UNKNOWN"
+            )
             raise TransformException(error_message, transform_result) from e
 
     return wrapper
@@ -56,10 +61,12 @@ def transform_decorator(transform_function: TransformFunction) -> TransformFunct
 
 class ITransformer(pyd.BaseModel):
     """An interface of the Transform Step."""
+
     id: str
 
+
 class ITransformerETL(ITransformer, ABC):
-    """ An interface of the Transformation in ETL."""
+    """An interface of the Transformation in ETL."""
 
     @abstractmethod
     def transform_data(self, data: ExtractedData) -> TransformResult:
@@ -68,8 +75,9 @@ class ITransformerETL(ITransformer, ABC):
             "The method has not been implemented. You must implement it"
         )
 
+
 class ITransformerELT(ITransformer, ABC):
-    " A separate interface of the Transformation in ELT."
+    "A separate interface of the Transformation in ELT."
     query: str
 
     @abstractmethod

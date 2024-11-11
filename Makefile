@@ -23,7 +23,6 @@ format: ## Reformat source code
 	@poetry run black ${src_dir} ${tests_dir}
 
 precommit: ## Running Precommit checks.
-	clean
 	format
 	build
 	test

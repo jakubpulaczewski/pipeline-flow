@@ -1,15 +1,22 @@
 # Standard Imports
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
+import pydantic as pyd
 
 # Third-party Imports
 import pytest
-import pydantic as pyd
 
 # Project Imports
 import core.parser as parser  # pylint: disable=consider-using-from-import
+from core.models.extract import IExtractor
+from core.models.load import ILoader
+from core.models.pipeline import Pipeline
+from core.models.transform import ITransformerETL
 from core.plugins import PluginFactory
-from core.models import Pipeline
 
+EXTRACT = "extract"
+LOAD = "load"
+TRANSFORM = "transform"
 
 
 def test_deserialize_valid_yaml() -> None:
@@ -17,63 +24,217 @@ def test_deserialize_valid_yaml() -> None:
     yaml_str = """
     pipelines:
         pipeline1:
-            name: Name
-            extract: []
-            transform: []
-            load: []
+            name: Pipeline_1
+            type: ELT
+            extract:
+                para1: val1
+                steps:
+                  - id: mock_extract1
+                    type: mock_s3
+            transform:
+                para2: val2
+                steps:
+                  - id: mock_tranformation1
+            load:
+                para3: val3
+                steps:
+                  - id: mock_load1
+                    type: mock_s3
     """
 
     serialized_yaml = parser.deserialize_yaml(yaml_str)
 
     expected_dict = {
-        "pipelines": {"pipeline1": {"name": "Name", "extract": [], "transform": [], "load": []}}
+        "pipelines": {
+            "pipeline1": {
+                "name": "Pipeline_1",
+                "type": "ELT",
+                "extract": {
+                    "para1": "val1",
+                    "steps": [
+                        {
+                            "id": "mock_extract1",
+                            "type": "mock_s3",
+                        }
+                    ],
+                },
+                "transform": {
+                    "para2": "val2",
+                    "steps": [
+                        {
+                            "id": "mock_tranformation1",
+                        }
+                    ],
+                },
+                "load": {
+                    "para3": "val3",
+                    "steps": [
+                        {
+                            "id": "mock_load1",
+                            "type": "mock_s3",
+                        }
+                    ],
+                },
+            }
+        }
     }
-    assert serialized_yaml == expected_dict
+
+    assert (
+        serialized_yaml == expected_dict
+    ), f"Deserialized YAML does not match the expected dictionary. Got: {serialized_yaml}"
 
 
 def test_deserialize_empty_yaml():
-    assert parser.deserialize_yaml('') == None
-
-def test_parse_plugins_for_empty_stage():
-    stage_data = {'extract': []}
-    assert parser.parse_plugins_for_etl_stage(stage_data, 'extract') == []
+    """Given that empty YAML string is passed to the deserialize function, it should raise an exception."""
+    with pytest.raises(ValueError):
+        parser.deserialize_yaml("")
 
 
-def test_parse_plugins_for_multiple_plugins():
-    stage_data = {'load': [{'type': 'pluginA'}, {'type': 'pluginB'}]}
-    
-    MockPluginA = Mock(name='MockPluginA')
-    MockPluginB = Mock(name='MockPluginB')
+@pytest.mark.parametrize("phase", [(EXTRACT), (LOAD)])
+def test_validate_phase_configuration_with_mandatory_phases_present(phase):
+    "When mandatory phases are present, the validation should be passed."
+    phase_args = {
+        "steps": [
+            {
+                "id": f"mock_{phase}",
+                "type": "mock_s3",
+            }
+        ]
+    }
+    assert parser.validate_phase_configuration(phase, phase_args) == True
 
-    with patch.object(PluginFactory, 'get', side_effect=[MockPluginA, MockPluginB]):
-        result = parser.parse_plugins_for_etl_stage(stage_data, 'load')
+
+@pytest.mark.parametrize("mandatory_phase", [(EXTRACT), (LOAD)])
+def test_validate_phase_configuration_with_missing_phases(mandatory_phase: str):
+    "When there are missing phases present, the validation should raise ValueError."
+    with pytest.raises(ValueError):
+        parser.validate_phase_configuration(mandatory_phase, {})
+
+
+def test_parse_plugins_with_missing_args_mandatory_phase(mocker):
+    mocker.patch.object(
+        parser,
+        "parse_phase_steps_plugins",
+        side_effect=ValueError(
+            "Validation Failed! Mandatory phase EXTRACT cannot be empty or missing plugins."
+        ),
+    )
+    phase_data = {EXTRACT: {}}
+
+    with pytest.raises(ValueError):
+        parser.parse_phase_steps_plugins(EXTRACT, phase_data)
+
+
+def test_parse_one_plugin():
+    phase_data = {
+        "steps": [
+            {
+                "id": "mock_extractor",
+                "type": "mock_s3",
+            }
+        ]
+    }
+
+    MockPluginA = Mock(spec=IExtractor)
+
+    with patch.object(PluginFactory, "get", return_value=MockPluginA):
+        result = parser.parse_phase_steps_plugins(EXTRACT, phase_data)
+
+        assert len(result) == 1
+        assert result[0] is MockPluginA
+
+
+def test_parse_multiple_plugins():
+    phase_data = {
+        "steps": [
+            {
+                "id": "mock_extractor_1",
+                "type": "mock_s3",
+            },
+            {"id": "mock_extractor_2", "type": "mock_jdbc"},
+        ]
+    }
+
+    MockPluginA = Mock(spec=IExtractor)
+    MockPluginB = Mock(spec=IExtractor)
+
+    with patch.object(PluginFactory, "get", side_effect=[MockPluginA, MockPluginB]):
+        result = parser.parse_phase_steps_plugins(EXTRACT, phase_data)
+
         assert len(result) == 2
-        assert result[0] == MockPluginA and result[1] == MockPluginB
+        assert result[0] is MockPluginA
+        assert result[1] is MockPluginB
 
 
-def test_create_pipeline_with_no_stages():
+def test_create_pipeline_with_no_pipeline_attributes():
     pipeline_data = {}
 
-    with pytest.raises(pyd.ValidationError):
-        parser.create_pipeline_from_data('empty_pipeline', pipeline_data)
+    with pytest.raises(ValueError):
+        parser.create_pipeline_from_data("empty_pipeline", pipeline_data)
 
 
-def test_create_pipeline_with_multiple_stages():
-    pipeline_data = {'type': 'ELT', 'extract': [], 'transform': [], 'load': []}
-    pipeline = parser.create_pipeline_from_data('full_pipeline', pipeline_data)
+def test_create_pipeline_with_multiple_sources_destinations(mocker):
+    pipeline_data = {
+        "type": "ELT",
+        EXTRACT: {
+            "steps": [
+                {
+                    "id": "mock_extractor_1",
+                    "type": "mock_s3",
+                },
+                {"id": "mock_extractor_2", "type": "mock_jdbc"},
+            ]
+        },
+        TRANSFORM: {
+            "steps": [
+                {
+                    "id": "transformation1",
+                },
+                {
+                    "id": "transformation2",
+                },
+            ]
+        },
+        LOAD: {
+            "steps": [
+                {
+                    "id": "mock_load_1",
+                    "type": "mock_s3",
+                },
+                {"id": "mock_load2", "type": "mock_jdbc"},
+            ]
+        },
+    }
+
+    MockExtractor = Mock(spec=IExtractor)
+    MockTranformer = Mock(spec=ITransformerETL)
+    MockLoader = Mock(spec=ILoader)
+
+    mocker.patch.object(
+        PluginFactory,
+        "get",
+        side_effect=[
+            MockExtractor,
+            MockExtractor,
+            MockTranformer,
+            MockTranformer,
+            MockLoader,
+            MockLoader,
+        ],
+    )
+
+    pipeline = parser.create_pipeline_from_data("full_pipeline", pipeline_data)
     assert isinstance(pipeline, Pipeline)
-    assert pipeline.name == 'full_pipeline' and all([hasattr(pipeline, stage) for stage in ['extract', 'transform', 'load']])
+    assert pipeline.name == "full_pipeline"
+    assert (
+        len(pipeline.extract.steps) == 2 and pipeline.extract.steps[0] is MockExtractor
+    )
+    assert (
+        len(pipeline.transform.steps) == 2
+        and pipeline.transform.steps[0] is MockTranformer
+    )
+    assert len(pipeline.load.steps) == 2 and pipeline.load.steps[0] is MockLoader
 
 
 def test_create_pipelines_from_empty_dict():
     assert parser.create_pipelines_from_dict({}) == []
-
-def test_create_multiple_pipelines_from_dict():
-    pipelines_dict = {
-        'pipeline1': {'type': 'ELT', 'extract': [], 'transform': [], 'load': []},
-        'pipeline2': {'type': 'ELT', 'extract': [], 'transform': [], 'load': []},
-    }
-    pipelines = parser.create_pipelines_from_dict(pipelines_dict)
-    assert len(pipelines) == 2
-    assert all(isinstance(pipeline, Pipeline) for pipeline in pipelines)
-

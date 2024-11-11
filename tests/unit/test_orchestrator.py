@@ -6,9 +6,10 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from pytest_cases import case, parametrize_with_cases
 
+from core.models.pipeline import Pipeline
+
 # Project Imports
 from core.orchestrator import PipelineOrchestrator
-from core.models import Pipeline
 
 
 @pytest.fixture()
@@ -102,20 +103,23 @@ def test_can_execute_failures(job: Pipeline, executed_jobs: set) -> None:
 
 
 @pytest.mark.asyncio
-async def test_execution_etl_pipeline(mocker, etl_basic_config: dict[str, list]) -> None:
+async def test_execution_etl_pipeline(
+    mocker, etl_basic_config: dict[str, list]
+) -> None:
     elt_pipeline = Pipeline(name="job1", type="elt", **etl_basic_config)
 
-    execute_mock: MagicMock = mocker.patch.object(PipelineOrchestrator, '_execute_elt')
+    execute_mock: MagicMock = mocker.patch.object(PipelineOrchestrator, "_execute_elt")
 
     # Check to verify that the pipeline has not been executed beforehand.
     assert elt_pipeline.is_executed == False
 
-    orchestrator = await PipelineOrchestrator(pipelines=[elt_pipeline])._execute_pipeline(elt_pipeline)
+    orchestrator = await PipelineOrchestrator(
+        pipelines=[elt_pipeline]
+    )._execute_pipeline(elt_pipeline)
 
     # Check to verify the mock has been executed
     assert elt_pipeline.is_executed == True
     execute_mock.assert_called_once()
-
 
 
 async def mock_execute_pipeline(pipeline):
@@ -123,32 +127,23 @@ async def mock_execute_pipeline(pipeline):
     pipeline.is_executed = True  # Modify the attribute after the sleep
 
 
-
-
-
 @pytest.mark.asyncio
-async def test_execute_pipeline(mocker, etl_basic_config):    
+async def test_execute_pipeline(mocker, etl_basic_config):
     execute_pipeline_mock = mocker.patch.object(
-        PipelineOrchestrator, 
+        PipelineOrchestrator,
         "_execute_pipeline",
         new_callable=AsyncMock,
-        side_effect=mock_execute_pipeline
+        side_effect=mock_execute_pipeline,
     )
-
 
     job1 = Pipeline(name="job1", type="elt", **etl_basic_config)
     job2 = Pipeline(name="job2", type="elt", **etl_basic_config)
-
 
     orchestrator = PipelineOrchestrator(pipelines=[job1, job2])
 
     executed = await orchestrator.execute_pipelines()
 
     print(executed)
-
-
-
-
 
 
 # # @pytest.mark.asyncio
