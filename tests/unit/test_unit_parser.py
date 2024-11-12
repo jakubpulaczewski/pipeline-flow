@@ -1,5 +1,5 @@
 # Standard Imports
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
 # Third-party Imports
 import pytest
@@ -11,8 +11,9 @@ from core.models.load import ILoader
 from core.models.pipeline import Pipeline
 from core.models.transform import ITransformerETL
 from core.plugins import PluginFactory
-from tests.common.constants import EXTRACT_PHASE, LOAD_PHASE
 
+from tests.common.constants import EXTRACT_PHASE, LOAD_PHASE
+from tests.common.mocks import MockExtractor, MockTransformETL, MockLoad
 
 def test_deserialize_empty_yaml():
     """Given that empty YAML string is passed to the deserialize function, it should raise an exception."""
@@ -25,7 +26,6 @@ def test_deserialize_valid_yaml() -> None:
     yaml_str = """
     pipelines:
         pipeline1:
-            name: Pipeline_1
             type: ELT
             extract:
                 para1: val1
@@ -48,7 +48,6 @@ def test_deserialize_valid_yaml() -> None:
     expected_dict = {
         "pipelines": {
             "pipeline1": {
-                "name": "Pipeline_1",
                 "type": "ELT",
                 "extract": {
                     "para1": "val1",
@@ -131,37 +130,35 @@ def test_parse_one_plugin():
         ]
     }
 
-    MockPluginA = Mock(spec=IExtractor)
-
-    with patch.object(PluginFactory, "get", return_value=MockPluginA):
+    with patch.object(PluginFactory, "get", return_value=MockExtractor) as mock:
         result = parser.parse_phase_steps_plugins(EXTRACT_PHASE, phase_data)
 
         assert len(result) == 1
-        assert result[0] is MockPluginA
+        assert result[0] == MockExtractor(id='mock_extractor', type='mock_s3', config=None)
+
+        mock.assert_called_with('extract', 'mock_s3')
 
 
 def test_parse_multiple_plugins():
     phase_data = {
         "steps": [
             {
-                "id": "mock_extractor",
-                "type": "mock",
+                "id": "mock_extractor1",
+                "type": "mock_1",
             },
-            {"id": "mock_extractor", "type": "mock"},
+            {"id": "mock_extractor2", "type": "mock_2"},
         ]
     }
 
-    MockExtractorA = Mock(spec=IExtractor)
-    MockExtractorB = Mock(spec=IExtractor)
-
-    with patch.object(
-        PluginFactory, "get", side_effect=[MockExtractorA, MockExtractorB]
-    ):
+    with patch.object(PluginFactory, "get", side_effect=[MockExtractor, MockExtractor]) as mock:
         result = parser.parse_phase_steps_plugins(EXTRACT_PHASE, phase_data)
 
         assert len(result) == 2
-        assert result[0] is MockExtractorA
-        assert result[1] is MockExtractorB
+        assert result[0] == MockExtractor(id="mock_extractor1", type='mock_1', config=None)
+        assert result[1] == MockExtractor(id="mock_extractor2", type='mock_2', config=None)
+
+        assert call('extract', 'mock_1') in mock.mock_calls
+        assert call('extract', 'mock_2') in mock.mock_calls
 
 
 def test_create_pipeline_with_no_pipeline_attributes():
@@ -208,9 +205,6 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker):
         },
     }
 
-    MockExtractor = Mock(spec=IExtractor)
-    MockTranformer = Mock(spec=ITransformerETL)
-    MockLoader = Mock(spec=ILoader)
 
     mocker.patch.object(
         PluginFactory,
@@ -218,10 +212,10 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker):
         side_effect=[
             MockExtractor,
             MockExtractor,
-            MockTranformer,
-            MockTranformer,
-            MockLoader,
-            MockLoader,
+            MockTransformETL,
+            MockTransformETL,
+            MockLoad,
+            MockLoad,
         ],
     )
 
@@ -229,10 +223,10 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker):
     assert isinstance(pipeline, Pipeline)
     assert pipeline.name == "full_pipeline"
     assert (
-        len(pipeline.extract.steps) == 2 and pipeline.extract.steps[0] is MockExtractor
+        len(pipeline.extract.steps) == 2 and isinstance(pipeline.extract.steps[0], MockExtractor)
     )
     assert (
         len(pipeline.transform.steps) == 2
-        and pipeline.transform.steps[0] is MockTranformer
+        and (pipeline.transform.steps[0],MockTransformETL)
     )
-    assert len(pipeline.load.steps) == 2 and pipeline.load.steps[0] is MockLoader
+    assert len(pipeline.load.steps) == 2 and (pipeline.load.steps[0], MockLoad)

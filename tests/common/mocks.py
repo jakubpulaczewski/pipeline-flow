@@ -13,8 +13,6 @@ from core.models.transform import ITransformerELT, ITransformerETL, transform_de
 
 
 class MockExtractor(IExtractor):
-    id: str = "mock_extractor"
-    type: str = "mock"
 
     @extract_decorator
     async def extract_data(self) -> ExtractedData:
@@ -22,7 +20,6 @@ class MockExtractor(IExtractor):
 
 
 class MockTransformETL(ITransformerETL):
-    id: str = "mock_transformer_etl"
 
     @transform_decorator
     def transform_data(self, data: ExtractedData) -> TransformedData:
@@ -30,8 +27,6 @@ class MockTransformETL(ITransformerETL):
 
 
 class MockTransformELT(ITransformerELT):
-    id: str = "mock_transformer_elt"
-    query: str = "SELECT 1 FROM TABLE"
 
     @transform_decorator
     def transform_data(self) -> None:
@@ -39,8 +34,6 @@ class MockTransformELT(ITransformerELT):
 
 
 class MockLoad(ILoader):
-    id: str = "mock_loader"
-    type: str = "mock"
 
     @load_decorator
     async def load_data(self, data: ExtractedData | TransformedData) -> None:

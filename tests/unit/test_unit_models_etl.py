@@ -133,16 +133,3 @@ def test_elt_pipeline_init(elt_pipeline) -> None:
         elt_pipeline.load.steps[0], load.ILoader
     )
     assert not elt_pipeline.is_executed
-
-
-def test_pipeline_type_validation(
-    mock_extractor, mock_transformer_etl, mock_loader
-) -> None:
-    with pytest.raises(ValueError):
-        Pipeline(
-            name="InvalidTypePipeline",
-            type="INVALID",
-            extract=extract.ExtractPhase(steps=[mock_extractor]),
-            transform=tf.TransformPhase(steps=[mock_transformer_etl]),
-            load=load.LoadPhase(steps=[mock_loader]),
-        )

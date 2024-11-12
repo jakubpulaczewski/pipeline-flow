@@ -5,7 +5,6 @@ from __future__ import annotations
 import pydantic as pyd
 
 # Project imports
-from common.config import PipelineTypes
 from core.models.extract import ExtractPhase
 from core.models.load import LoadPhase
 from core.models.transform import TransformPhase
@@ -38,10 +37,3 @@ class Pipeline(pyd.BaseModel):
     @is_executed.setter
     def is_executed(self, value: bool) -> None:
         self.__is_executed = value
-
-    @pyd.field_validator("type")
-    def pipeline_type_match(cls: Pipeline, value: str) -> str:
-        """A validator that validates pipeline type against the allowed pipeline types."""
-        if not PipelineTypes.is_valid_pipeline_type(value.upper()):
-            raise ValueError("A pipeline must be of following types: ETL, ELT, ETLT")
-        return value.upper()

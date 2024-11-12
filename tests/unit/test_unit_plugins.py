@@ -1,6 +1,5 @@
 # Standard Imports
-from typing import TypeVar
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 # Third Party
 import pytest
@@ -11,6 +10,8 @@ from common.type_def import ETL_PHASE_CALLABLE
 # Project
 from core.models.extract import IExtractor
 from core.plugins import PluginConfig, PluginFactory, PluginLoader
+from tests.common.constants import EXTRACT_PHASE
+
 from tests.common.mocks import (
     MockExtractor,
     MockLoad,
@@ -19,7 +20,7 @@ from tests.common.mocks import (
 )
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def setup_plugin_env():
     PluginFactory._registry = {}  # Ensure a clean state before each test
     yield
@@ -50,35 +51,61 @@ class TestPluginFactory:
     """Tests for the PluginFactory class."""
 
     @staticmethod
-    def test_register_plugin(setup_plugin_env) -> None:
+    def test_register_plugin() -> None:
         """Test registering a new plugin."""
-        result = PluginFactory.register("extract", "mock_plugin", MockExtractor)
+        result = PluginFactory.register(EXTRACT_PHASE, "mock_plugin", MockExtractor)
         assert result == True
         assert "extract" in PluginFactory._registry
         assert "mock_plugin" in PluginFactory._registry["extract"]
 
     @staticmethod
-    def test_register_duplicate_plugin(setup_plugin_env) -> None:
+    def test_register_duplicate_plugin() -> None:
         """Test registering a duplicate plugin."""
-        PluginFactory.register("extract", "fake_plugin", MockExtractor)
-        result = PluginFactory.register("extract", "fake_plugin", MockExtractor)
+        result = PluginFactory.register(EXTRACT_PHASE, "fake_plugin", MockExtractor)
+        assert result == True
+        result = PluginFactory.register(EXTRACT_PHASE, "fake_plugin", MockExtractor)
         assert result == False
 
     @staticmethod
-    def test_remove_nonexistent_plugin(setup_plugin_env) -> None:
+    def test_remove_plugin() -> None:
+        """A test that validates the `removal` functionality of the PluginFactory."""
+        plugin_name = "fake_plugin"
+        # Add the plugin
+        PluginFactory.register(EXTRACT_PHASE, plugin_name, MockExtractor)
+
+        # Removes the plugin
+        result = PluginFactory.remove(EXTRACT_PHASE, plugin_name)
+        assert result == True
+
+        # Try to remove the same plugin, should return False
+        result = PluginFactory.remove(EXTRACT_PHASE, plugin_name)
+        assert result == False
+
+    @staticmethod
+    def test_remove_nonexistent_plugin() -> None:
         """Test removing a nonexistent plugin."""
         result = PluginFactory.remove("extract", "fake_plugin")
         assert result == False
 
     @staticmethod
-    def test_get_plugin(setup_plugin_env) -> None:
+    def test_get_plugin() -> None:
+        plugin_name = "mock_plugin"
         """Test retrieving a registered plugin."""
-        PluginFactory.register("extract", "mock_plugin", MockExtractor)
-        plugin_class = PluginFactory.get("extract", "mock_plugin")
+        # Registering the plugin
+        PluginFactory.register(EXTRACT_PHASE, plugin_name, MockExtractor)
+
+        # Fetch it
+        plugin_class = PluginFactory.get(EXTRACT_PHASE, plugin_name)
         assert plugin_class is MockExtractor
 
+        # Try to get the same plugin plugin, after its removed, should raise an exception
+        PluginFactory.remove(EXTRACT_PHASE, plugin_name)
+
+        with pytest.raises(ValueError):
+            PluginFactory.get(EXTRACT_PHASE, plugin_name)
+
     @staticmethod
-    def test_get_nonexistent_plugin(setup_plugin_env) -> None:
+    def test_get_nonexistent_plugin() -> None:
         """Test retrieving a nonexistent plugin."""
         with pytest.raises(ValueError):
             PluginFactory.get("extract", "fake_plugin")
@@ -125,19 +152,18 @@ class TestPluginFactory:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "etl_phase, plugin_class, base_class",
+        "etl_phase, plugin_class",
         [
             ("extract", MockExtractor),
             ("transform", MockTransformETL),
             ("load", MockLoad),
         ],
     )
-    def test_validate_plugin_interface_valid_etl_phase_and_subclass(
-        etl_phase: str, plugin_class: ETL_PHASE_CALLABLE
-    ) -> None:
+    def test_validate_plugin_interface_valid_etl_phase_and_subclass(etl_phase: str, plugin_class: ETL_PHASE_CALLABLE ) -> None:
         """Ensures that validation works for valid cases"""
 
         PluginFactory._validate_plugin_interface(etl_phase, plugin_class)
+
 
 
 class TestPluginLoader:
@@ -167,9 +193,7 @@ class TestPluginLoader:
             loader._initialize_plugin("extract", [])
 
     @staticmethod
-    def test_initialize_default_plugin(
-        mock_validate_plugins, mock_plugin_phase_mapper, mock_importlib
-    ) -> None:
+    def test_initialize_default_plugin(mock_plugin_phase_mapper, mock_importlib) -> None:
         mock_plugin_phase_mapper.return_value = {"fake_engine": ["default_plugin1"]}
 
         loader = PluginLoader({}, engine="fake_engine")
@@ -179,9 +203,7 @@ class TestPluginLoader:
         mock_importlib.assert_called_with("plugins.extract.fake_engine.default_plugin1")
 
     @staticmethod
-    def test_initialize_aditional_plugin(
-        mock_validate_plugins, mock_plugin_phase_mapper, mock_importlib
-    ) -> None:
+    def test_initialize_aditional_plugin(mock_plugin_phase_mapper, mock_importlib) -> None:
         mock_plugin_phase_mapper.return_value = {"fake_engine": []}
 
         loader = PluginLoader({}, engine="fake_engine")
@@ -193,9 +215,7 @@ class TestPluginLoader:
         )
 
     @staticmethod
-    def test_loader_to_initialize_empty_plugins(
-        mock_validate_plugins, mock_initialize_plugin
-    ) -> None:
+    def test_loader_to_initialize_empty_plugins( mock_validate_plugins, mock_initialize_plugin) -> None:
         loader = PluginLoader(plugins={}, engine="pandas")
         loader.loader()
 

@@ -28,7 +28,14 @@ class PipelineTypes:
     @classmethod
     def is_valid_pipeline_type(cls, pipeline_type: str) -> bool:
         """Check if a pipeline type is valid."""
-        return pipeline_type in (ptype for ptype in cls.ALLOWED_PIPELINE_TYPES)
+        return pipeline_type in cls.ALLOWED_PIPELINE_TYPES
+
+
+    @classmethod
+    def validate_pipeline_type(cls, pipeline_type: str) -> None:
+        """Validate if a pipeline type is allowed."""
+        if not cls.is_valid_pipeline_type(pipeline_type):
+            raise ValueError("A pipeline must be of following types: ETL, ELT, ETLT")
 
 
 class ETLConfig:
@@ -48,9 +55,13 @@ class ETLConfig:
         return (extract.IExtractor, transform.ITransformer, load.ILoader)
 
     @classmethod
-    def get_etl_phases(cls) -> tuple[str]:
-        """Get the list of ETL phases."""
-        return (cls.EXTRACT_PHASE, cls.TRANSFORM_PHASE, cls.LOAD_PHASE)
+    def get_pipeline_phases(cls, pipeline_type: str) -> tuple[str]:
+        """Get a list of Pipeline phases."""
+        PipelineTypes.validate_pipeline_type(pipeline_type)
+
+        if pipeline_type == PipelineType.ETL.name:
+            return (cls.EXTRACT_PHASE, cls.TRANSFORM_PHASE, cls.LOAD_PHASE)
+        
 
     @classmethod
     def get_base_class(cls, stage_name: str) -> ETL_PHASE_CALLABLE:

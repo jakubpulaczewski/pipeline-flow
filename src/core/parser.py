@@ -23,7 +23,7 @@ def deserialize_yaml(yaml_str: str) -> dict:
     return yaml.safe_load(yaml_str)
 
 
-def is_phase_mandatory(phase: str) -> bool:
+def is_mandatory_phase_empty(phase: str) -> bool:
     """Check if a phase is mandatory based on configuration."""
     return PLUGIN_MANDATORY_FLAGS_BY_PHASE.get(phase, False)
 
@@ -42,8 +42,7 @@ def validate_phase_configuration(phase: str, phase_args: dict) -> bool:
     Returns:
         bool: If a mandatory phase is empty.
     """
-    # If the phase is mandatory, validate its attributes
-    if is_phase_mandatory(phase):
+    if is_mandatory_phase_empty(phase):
         # Check if "steps" exist and are not empty
 
         if not phase_args.get(ETLConfig.STEPS_KEY, []):
@@ -56,7 +55,7 @@ def validate_phase_configuration(phase: str, phase_args: dict) -> bool:
 
 
 def parse_phase_steps_plugins(phase: str, phase_args: dict) -> list[ETL_PHASE_CALLABLE]:
-    """Retrieve all the plugin objects.
+    """Retrieves all the plugin objects.
 
     Args:
         phase (str): The phase of the ETL (e.g., extract, transform, load)
@@ -69,18 +68,24 @@ def parse_phase_steps_plugins(phase: str, phase_args: dict) -> list[ETL_PHASE_CA
     # Validation Step
     validate_phase_configuration(phase, phase_args)
 
-    return [
-        PluginFactory.get(phase, step.get("type"))
-        for step in phase_args[ETLConfig.STEPS_KEY]
-    ]
+    plugins = []
+    for step in phase_args[ETLConfig.STEPS_KEY]:
+        plugin_name = step.get('type')
+        plugin =  PluginFactory.get(phase, plugin_name)(**step)
+        plugins.append(plugin)
+    
+    return plugins
 
 
 def create_pipeline_from_data(pipeline_name: str, pipeline_data: dict) -> Pipeline:
     """Parse a single pipeline's data and return a pipeline instance."""
     if not pipeline_data:
         raise ValueError("Pipeline attributes are empty")
+    
+    # Fetch the pipeline type (e.g., ETL, ELT, etc.)
+    pipeline_type = pipeline_data.get('type')
 
-    for phase in ETLConfig.get_etl_phases():
+    for phase in ETLConfig.get_pipeline_phases(pipeline_type):
         phase_args = pipeline_data.get(phase)
         pipeline_data[phase][ETLConfig.STEPS_KEY] = parse_phase_steps_plugins(
             phase, phase_args
