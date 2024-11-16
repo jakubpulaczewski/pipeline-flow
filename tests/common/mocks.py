@@ -9,7 +9,7 @@ from common.type_def import ExtractedData, TransformedData
 # Project Imports
 from core.models.extract import IExtractor, extract_decorator
 from core.models.load import ILoader, load_decorator
-from core.models.transform import ITransformerELT, ITransformerETL, transform_decorator
+from core.models.transform import ILoadTransform, ITransform, transform_decorator
 
 
 class MockExtractor(IExtractor):
@@ -19,18 +19,18 @@ class MockExtractor(IExtractor):
         return "extracted_data"
 
 
-class MockTransformETL(ITransformerETL):
+class MockTransform(ITransform):
 
     @transform_decorator
     def transform_data(self, data: ExtractedData) -> TransformedData:
         return "transformed_etl_data"
 
 
-class MockTransformELT(ITransformerELT):
+class MockLoadTransform(ILoadTransform):
 
     @transform_decorator
     def transform_data(self) -> None:
-        return
+        return None
 
 
 class MockLoad(ILoader):
