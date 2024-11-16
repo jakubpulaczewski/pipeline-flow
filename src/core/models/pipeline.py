@@ -1,27 +1,57 @@
 # Standard Imports
 from __future__ import annotations
 
+from enum import Enum, unique
+from typing import Self
+
 # Third-party Imports
 import pydantic as pyd
 
 # Project imports
-from core.models.extract import ExtractPhase
-from core.models.load import LoadPhase
-from core.models.transform import TransformPhase
+from core.models.phases import (
+    ExtractPhase,
+    LoadPhase,
+    PipelinePhase,
+    TransformLoadPhase,
+    TransformPhase,
+)
 
+
+@unique
+class PipelineType(Enum):
+    """A config class that contains constants and utilities related to pipelines."""
+
+    ETL = "ETL"
+    ELT = "ELT"
+    ETLT = "ETLT"
+
+type PHASE_TYPE = ExtractPhase | TransformPhase | LoadPhase | TransformLoadPhase
+
+MANDATORY_PHASES_BY_PIPELINE_TYPE = {
+    PipelineType.ETL: {
+        PipelinePhase.EXTRACT_PHASE: True,
+        PipelinePhase.TRANSFORM_PHASE: False,
+        PipelinePhase.LOAD_PHASE: True,
+    },
+    PipelineType.ELT: {
+        PipelinePhase.EXTRACT_PHASE: True,
+        PipelinePhase.LOAD_PHASE: True,
+        PipelinePhase.TRANSFORM_AT_LOAD_PHASE: True,
+    },
+    PipelineType.ETLT: {
+        PipelinePhase.EXTRACT_PHASE: True,
+        PipelinePhase.TRANSFORM_PHASE: True,
+        PipelinePhase.LOAD_PHASE: True,
+        PipelinePhase.TRANSFORM_AT_LOAD_PHASE: True,
+    },
+}
 
 class Pipeline(pyd.BaseModel):
-    """A pipeline class that executes ETL steps."""
-
     model_config = pyd.ConfigDict(arbitrary_types_allowed=True)
 
     name: str
-    type: str
-
-    # ETL Phases
-    extract: ExtractPhase
-    transform: TransformPhase
-    load: LoadPhase
+    type: PipelineType
+    phases: list[dict[PipelinePhase, PHASE_TYPE]]
 
     # Optional
     description: str | None = None
@@ -37,3 +67,15 @@ class Pipeline(pyd.BaseModel):
     @is_executed.setter
     def is_executed(self, value: bool) -> None:
         self.__is_executed = value
+
+    @pyd.model_validator(mode="after")
+    def validate_pipeline_phase_mandatory(self: Self) -> Self:
+        for phase, mandatory_phase in MANDATORY_PHASES_BY_PIPELINE_TYPE[self.type].items():
+            if mandatory_phase and not self.phases[0][phase].steps:
+                raise ValueError(
+                    "Validation Failed! Mandatory phase '%s' cannot be empty or missing plugins.",
+                    phase,
+                )
+
+        return self
+

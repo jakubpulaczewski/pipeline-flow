@@ -49,18 +49,12 @@ class ILoader(pyd.BaseModel, ABC):
     """An interface of the Load Step."""
 
     id: str
-    type: str
+    plugin: str
 
     @abstractmethod
+    @load_decorator
     async def load_data(self, data: ExtractedData | TransformedData) -> None:
         """Load data to a destination."""
         raise NotImplementedError(
             "The method has not been implemented. You must implement it"
         )
-
-
-class LoadPhase(pyd.BaseModel):
-    model_config = pyd.ConfigDict(arbitrary_types_allowed=True)
-
-    steps: list[ILoader]
-    storage: StoragePhase | None = None

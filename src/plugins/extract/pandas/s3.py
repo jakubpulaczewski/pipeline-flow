@@ -2,8 +2,8 @@
 
 import pydantic as pyd
 
-from common.config import ETLConfig
 from common.utils.logger import setup_logger
+from core.models.phases import PipelinePhase
 from core.plugins import PluginFactory
 
 logger = setup_logger(__name__)
@@ -17,6 +17,6 @@ class PandasS3ExtractPlugin(pyd.BaseModel):
 
 
 def initialize():
-    PluginFactory.register(ETLConfig.EXTRACT_PHASE, "s3", PandasS3ExtractPlugin)
+    PluginFactory.register(PipelinePhase.EXTRACT_PHASE, "s3", PandasS3ExtractPlugin)
 
     logger.info("S3 Plugin Succesfully Initialised")
