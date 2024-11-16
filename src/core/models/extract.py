@@ -14,7 +14,6 @@ from common.utils.logger import setup_logger
 from core.models.exceptions import ExtractException
 
 # Project Imports
-from core.storage_phase import StoragePhase
 
 logger = setup_logger(__name__)
 
@@ -50,19 +49,13 @@ class IExtractor(pyd.BaseModel, ABC):
     """An interface of the Extract Step."""
 
     id: str
-    type: str
+    plugin: str
     config: dict | None = None
 
     @abstractmethod
+    @extract_decorator
     async def extract_data(self) -> ExtractedData:
         """Collects data from a source."""
         raise NotImplementedError(
             "The method has not been implemented. You must implement it"
         )
-
-
-class ExtractPhase(pyd.BaseModel):
-    model_config = pyd.ConfigDict(arbitrary_types_allowed=True)
-
-    steps: list[IExtractor]
-    storage: StoragePhase | None = None
