@@ -1,4 +1,7 @@
 # Standard Imports
+import tempfile
+import os
+import yaml
 from unittest.mock import call, patch
 
 # Third-party Imports
@@ -15,14 +18,9 @@ from tests.common.constants import ETL, EXTRACT_PHASE, TRANSFORM_PHASE, LOAD_PHA
 from tests.common.mocks import MockExtractor, MockLoad, MockTransform
 
 
-def test_deserialize_empty_yaml():
-    """Given that empty YAML string is passed to the deserialize function, it should raise an exception."""
-    with pytest.raises(ValueError):
-        parser.deserialize_yaml("")
-
-
-def test_deserialize_valid_yaml() -> None:
-    yaml_str = f"""
+@pytest.fixture(scope='session')
+def yaml_pipeline():
+    yaml_str = """
     pipelines:
         pipeline1:
             type: ETL
@@ -39,9 +37,50 @@ def test_deserialize_valid_yaml() -> None:
                     steps:
                         - id: mock_load1
                           type: mock_s3
-    """
+                    
+    """  
 
-    serialized_yaml = parser.deserialize_yaml(yaml_str)
+    return yaml_str
+
+@pytest.fixture(scope='session')
+def temporary_yaml_file(yaml_pipeline):
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".yaml")
+
+    yaml_content = yaml.safe_load(yaml_pipeline)
+
+    with open(temp_file.name, "w") as f:
+        yaml.dump(yaml_content, f)
+    
+    yield temp_file.name
+
+    os.remove(temp_file.name)
+
+
+def test_parse_empty_yaml():
+    with pytest.raises(ValueError):
+        parser.parse_yaml_str("")
+
+def test_parse_invalid_yaml():
+    yaml_content = """
+    key1: value1
+    key2 value2  # Missing colon
+    key3:
+    - item1
+    - item2:
+    """
+    
+    with pytest.raises(yaml.YAMLError):
+        parser.parse_yaml_str(yaml_content)
+
+
+def test_parse_yaml_file_not_found():
+    with pytest.raises(FileNotFoundError, match="File not found: not_found.yaml"):
+        parser.parse_yaml_file("not_found.yaml")
+
+
+
+def test_parse_yaml_str_success(yaml_pipeline) -> None:
+    serialized_yaml = parser.parse_yaml_str(yaml_pipeline)
 
     expected_dict = {
         "pipelines": {
@@ -78,18 +117,42 @@ def test_deserialize_valid_yaml() -> None:
     ), f"Deserialized YAML does not match the expected dictionary. Got: {serialized_yaml}"
 
 
-def test_parse_plugins_with_missing_args_mandatory_phase(mocker):
-    mocker.patch.object(
-        parser,
-        "parse_phase_steps_plugins",
-        side_effect=ValueError(
-            "Validation Failed! Mandatory phase EXTRACT_PHASE cannot be empty or missing plugins."
-        ),
-    )
-    phase_data = {EXTRACT_PHASE: {}}
+def test_parse_yaml_file_success(temporary_yaml_file) -> None:
+    serialized_yaml = parser.parse_yaml_file(temporary_yaml_file)
 
-    with pytest.raises(ValueError):
-        parser.parse_phase_steps_plugins(EXTRACT_PHASE, phase_data)
+    expected_dict = {
+        "pipelines": {
+            "pipeline1": {
+                "type": "ETL",
+                "phases": [
+                    {
+                        "extract": {
+                            "steps": [{"id": "mock_extract1", "plugin": "mock_s3"}],
+                        }
+                    },
+                    {
+                        "transform": {
+                            "steps": [
+                                {
+                                    "id": "mock_tranformation1",
+                                    "operation": "aggregate_sum",
+                                }
+                            ],
+                        }
+                    },
+                    {
+                        "load": {
+                            "steps": [{"id": "mock_load1", "type": "mock_s3"}],
+                        }
+                    },
+                ],
+            }
+        }
+    }
+
+    assert (
+        serialized_yaml == expected_dict
+    ), f"Deserialized YAML does not match the expected dictionary. Got: {serialized_yaml}"
 
 
 def test_parse_one_plugin(extractor_plugin_data):
@@ -98,7 +161,7 @@ def test_parse_one_plugin(extractor_plugin_data):
     }
 
     with patch.object(PluginFactory, "get", return_value=MockExtractor) as mock:
-        result = parser.parse_phase_steps_plugins(EXTRACT_PHASE, phase_data)
+        result = parser.parse_plugins_by_phase(EXTRACT_PHASE, phase_data["steps"])
 
         assert len(result) == 1
         assert result[0] == MockExtractor(
@@ -119,7 +182,7 @@ def test_parse_multiple_plugins(extractor_plugin_data, extractor_plugin_data_2):
     with patch.object(
         PluginFactory, "get", side_effect=[MockExtractor, MockExtractor]
     ) as mock:
-        result = parser.parse_phase_steps_plugins(EXTRACT_PHASE, phase_data)
+        result = parser.parse_plugins_by_phase(EXTRACT_PHASE, phase_data["steps"])
 
         assert len(result) == 2
         assert result[0] == MockExtractor(
@@ -137,11 +200,12 @@ def test_create_pipeline_with_no_pipeline_attributes():
     pipeline_data = {}
 
     with pytest.raises(ValueError):
-        parser.create_pipeline_from_data("empty_pipeline", pipeline_data)
+        parser.create_pipeline("empty_pipeline", pipeline_data)
 
 
 def test_create_pipelines_from_empty_dict():
-    assert parser.create_pipelines_from_dict({}) == []
+    with pytest.raises(ValueError, match="Pipeline attributes are empty"):
+        parser.parse_all_pipelines({})
 
 
 
@@ -183,7 +247,7 @@ def test_create_pipeline_with_only_mandatory_phases(
         ],
     )
 
-    pipeline = parser.create_pipeline_from_data("full_pipeline", pipeline_data)
+    pipeline = parser.create_pipeline("full_pipeline", pipeline_data)
     assert isinstance(pipeline, Pipeline)
     assert pipeline.name == "full_pipeline"
 
@@ -232,7 +296,7 @@ def test_create_pipeline_without_mandatory_phase(
     )
 
     with pytest.raises(ValidationError, match="Validation Failed! Mandatory phase '%s' cannot be empty or missing plugins."):
-        parser.create_pipeline_from_data("full_pipeline", pipeline_data)
+        parser.create_pipeline("full_pipeline", pipeline_data)
 
 def test_create_pipeline_with_multiple_sources_destinations(
     mocker,
@@ -278,7 +342,7 @@ def test_create_pipeline_with_multiple_sources_destinations(
         ],
     )
 
-    pipeline = parser.create_pipeline_from_data("full_pipeline", pipeline_data)
+    pipeline = parser.create_pipeline("full_pipeline", pipeline_data)
     assert isinstance(pipeline, Pipeline)
     assert pipeline.name == "full_pipeline"
 

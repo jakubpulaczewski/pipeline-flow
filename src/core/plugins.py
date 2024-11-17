@@ -1,13 +1,17 @@
 # Standard Imports
+from __future__ import annotations
+
 import importlib
-from typing import Type
+from typing import Type, TYPE_CHECKING
+
+# Third Party Imports
 
 # Project Imports
 from common.type_def import PLUGIN_BASE_CALLABLE
 from common.utils.logger import setup_logger
-from core.models.phases import PipelinePhase
 
-# Third Party Imports
+import core.models.phases as phase
+#from core.models.phases import PipelinePhase
 
 
 logger = setup_logger(__name__)
@@ -21,13 +25,13 @@ class PluginFactory:
     Registry example: {'extract': {'s3': S3Plugin}}
     """
 
-    _registry: dict[PipelinePhase, dict[PLUGIN_NAME, PLUGIN_BASE_CALLABLE]] = {}
+    _registry: dict[phase.PipelinePhase, dict[PLUGIN_NAME, PLUGIN_BASE_CALLABLE]] = {}
 
     @staticmethod
     def _validate_plugin_registration(
-        pipeline_phase: PipelinePhase, plugin_class: PLUGIN_BASE_CALLABLE
+        pipeline_phase: phase.PipelinePhase, plugin_class: PLUGIN_BASE_CALLABLE
     ):
-        expected_inteface = PipelinePhase.get_plugin_interface_for_phase(pipeline_phase)
+        expected_inteface = phase.PipelinePhase.get_plugin_interface_for_phase(pipeline_phase)
 
         if not expected_inteface:
             raise ValueError("No interface defined for phase %s", pipeline_phase)
@@ -40,7 +44,7 @@ class PluginFactory:
     @classmethod
     def register(
         cls,
-        pipeline_phase: PipelinePhase,
+        pipeline_phase: phase.PipelinePhase,
         plugin: str,
         plugin_class: PLUGIN_BASE_CALLABLE,
     ) -> bool:
@@ -69,7 +73,7 @@ class PluginFactory:
         return True
 
     @classmethod
-    def remove(cls, pipeline_phase: PipelinePhase, plugin: str) -> bool:
+    def remove(cls, pipeline_phase: phase.PipelinePhase, plugin: str) -> bool:
         """Remove a plugin for a given Pipeline type and plugin."""
         if pipeline_phase in cls._registry and plugin in cls._registry[pipeline_phase]:
             del cls._registry[pipeline_phase][plugin]
@@ -86,7 +90,7 @@ class PluginFactory:
 
     @classmethod
     def get(
-        cls, pipeline_phase: PipelinePhase, plugin: str
+        cls, pipeline_phase: phase.PipelinePhase, plugin: str
     ) -> PLUGIN_BASE_CALLABLE:
         """Retrieve a plugin for a given ETL type and plugin."""
         etl_class = cls._registry.get(pipeline_phase, {}).get(plugin, None)
@@ -104,16 +108,16 @@ class PluginConfig:
     _DEFAULT_LOAD_PLUGINS = {"pandas": ["s3"]}
 
     # Mapping Pipeline phases to their respective default plugins
-    _STAGE_PLUGIN_MAP = {
-        PipelinePhase.EXTRACT_PHASE: _DEFAULT_EXTRACT_PLUGINS,
-        PipelinePhase.LOAD_PHASE: _DEFAULT_LOAD_PLUGINS,
-    }
 
-    @classmethod
-    def plugin_phase_mapper(
-        cls: "PluginConfig", pipeline_phase: str
-    ) -> dict[str, list[str]] | None:
-        return cls._STAGE_PLUGIN_MAP.get(pipeline_phase.lower())
+
+    @staticmethod
+    def plugin_phase_mapper(pipeline_phase: str) -> dict[str, list[str]] | None:
+        
+        _STAGE_PLUGIN_MAP = {
+            phase.PipelinePhase.EXTRACT_PHASE: PluginConfig._DEFAULT_EXTRACT_PLUGINS,
+            phase.PipelinePhase.LOAD_PHASE: PluginConfig._DEFAULT_LOAD_PLUGINS,
+        }
+        return _STAGE_PLUGIN_MAP.get(pipeline_phase.lower())
 
 
 class PluginLoader:
@@ -143,7 +147,7 @@ class PluginLoader:
 #                 f"Expected plugins to be a dict, got {type(plugins).__name__}"
 #             )
 
-#         allowed_phases = {PipelinePhase.EXTRACT_PHASE, PipelinePhase.LOAD_PHASE}
+#         allowed_phases = {phase.PipelinePhase.EXTRACT_PHASE, phase.PipelinePhase.LOAD_PHASE}
 
 #         if not all(key in allowed_phases for key in plugins.keys()):
 #             err_message = "Plugins must only contain 'EXTRACT' and 'LOAD' keys."
