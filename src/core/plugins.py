@@ -27,19 +27,19 @@ class PluginFactory:
 
     _registry: dict[phase.PipelinePhase, dict[PLUGIN_NAME, PLUGIN_BASE_CALLABLE]] = {}
 
-    # @staticmethod
-    # def _validate_plugin_registration(
-    #     pipeline_phase: phase.PipelinePhase, plugin_class: PLUGIN_BASE_CALLABLE
-    # ):
-    #     expected_inteface = phase.PipelinePhase.get_plugin_interface_for_phase(pipeline_phase)
+    @staticmethod
+    def _validate_plugin_registration(
+        pipeline_phase: phase.PipelinePhase, plugin_class: PLUGIN_BASE_CALLABLE
+    ):
+        expected_inteface = phase.PipelinePhase.get_plugin_interface_for_phase(pipeline_phase)
 
-    #     if not expected_inteface:
-    #         raise ValueError("No interface defined for phase %s", pipeline_phase)
+        if not expected_inteface:
+            raise ValueError("No interface defined for phase %s", pipeline_phase)
 
-    #     if not issubclass(plugin_class, expected_inteface):
-    #         raise TypeError(
-    #             f"Plugin class '{plugin_class.__name__}' must be a subclass of '{expected_inteface.__name__}' "
-    #         )
+        if not issubclass(plugin_class, expected_inteface):
+            raise TypeError(
+                f"Plugin class '{plugin_class.__name__}' must be a subclass of '{expected_inteface.__name__}' "
+            )
 
     @classmethod
     def register(
@@ -50,7 +50,7 @@ class PluginFactory:
     ) -> bool:
         """Regisers a plugin for a given Pipeline type and plugin."""
         # Validates the plugin implements the correct interface for the given phrase.
-        #cls._validate_plugin_registration(pipeline_phase, plugin_class)
+        cls._validate_plugin_registration(pipeline_phase, plugin_class)
 
         # Initialise the Pipeline phase in the registry.
         if pipeline_phase not in cls._registry:
