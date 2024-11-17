@@ -9,52 +9,79 @@ import yaml
 if TYPE_CHECKING:
     from common.type_def import PLUGIN_BASE_CALLABLE
 
-from core.models.pipeline import Pipeline, PipelineType, MANDATORY_PHASES_BY_PIPELINE_TYPE
-from core.models.phases import PipelinePhase
+from core.models.pipeline import Pipeline
+from core.models.phases import PipelinePhase, PHASE_TYPE
 from core.plugins import PluginFactory
 
 
-def deserialize_yaml(yaml_str: str) -> dict:
-    """Deserialiazes a yaml string into python objects i.e. dicts, strings, int"""
-    if not yaml_str:
-        raise ValueError("A YAML string you provided is empty.")
-    return yaml.safe_load(yaml_str)
 
 
-def parse_phase_steps_plugins(phase: PipelinePhase, phase_args: dict) -> list[PLUGIN_BASE_CALLABLE]:
-    plugins = []
-    
-    for step in phase_args["steps"]:
+def parse_yaml_str(yaml_text: str) -> dict:
+    """ Parses a YAML text into a Python native data structures."""
+    if not yaml_text:
+        raise ValueError("Provided YAML is empty.")
+    try:
+        return yaml.safe_load(yaml_text)
+    except yaml.YAMLError as e:
+        raise yaml.YAMLError(f"Invalid YAML file: {e}")
+
+
+def parse_yaml_file(file_path: str) -> dict:
+    """ Parses a YAML file into a Python native data structures."""
+    try:
+        with open(file_path, "r") as file:
+            return parse_yaml_str(file)
+
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+
+
+def parse_plugins_by_phase(phase_pipeline: PipelinePhase, steps: list[dict]) -> list[PLUGIN_BASE_CALLABLE]:
+    plugin_callables = []
+
+    for step in steps:
         plugin_name = step.get("plugin")
-        plugin = PluginFactory.get(phase, plugin_name)(**step)
-        plugins.append(plugin)
 
-    return plugins
+        if not plugin_name:
+            raise ValueError("The attribute 'plugin` is empty.")
+        
+        plugin = PluginFactory.get(phase_pipeline, plugin_name)(**step)
+        plugin_callables.append(plugin)
+    
+    return plugin_callables
+        
 
 
-def create_pipeline_from_data(pipeline_name: str, pipeline_data: dict) -> Pipeline:
+def create_phase(phase_name: str, phase_data: dict) -> PHASE_TYPE:
+    phase_pipeline = PipelinePhase(phase_name)
+    phase_class = PipelinePhase.get_phase_class(phase_pipeline)
+
+    phase_data["steps"] = parse_plugins_by_phase(phase_pipeline, phase_data.get("steps"))
+
+    return phase_class(**phase_data)
+
+
+
+def create_pipeline(pipeline_name: str, pipeline_data: dict) -> Pipeline:
     """Parse a single pipeline's data and return a pipeline instance."""
     if not pipeline_data:
         raise ValueError("Pipeline attributes are empty")
 
-    # Fetch the pipeline type (e.g., ETL, ELT, etc.)    
+    phases = [{}]
+    
     for phase_name, phase_details in pipeline_data.get("phases")[0].items():
-
-        phase_pipeline = PipelinePhase(phase_name)
-        phase_class = PipelinePhase.get_phase_class(phase_pipeline)
-
-        plugins = parse_phase_steps_plugins(phase_pipeline, phase_details)
-
-        pipeline_data["phases"][0][phase_name] = phase_class(steps=plugins)
-        
-
+        phases[0][phase_name] = create_phase(phase_name, phase_details)
+    
+    pipeline_data["phases"] = phases
 
     return Pipeline(name=pipeline_name, **pipeline_data)
 
 
-def create_pipelines_from_dict(pipelines: dict[str, dict]) -> list[Pipeline]:
-    """Parse all pipelines and return a list of Pipeline instances."""
+def parse_all_pipelines(yaml_data: dict[str, list[dict]]) -> list[Pipeline]:
+    if "pipelines" not in yaml_data:
+        raise ValueError("Pipeline attributes are empty")
     return [
-        create_pipeline_from_data(pipeline_name, pipeline_data)
-        for pipeline_name, pipeline_data in pipelines.items()
+        create_pipeline(pipeline_name, pipeline_data)
+        for pipeline_name, pipeline_data in yaml_data.get("pipelines", [])
     ]

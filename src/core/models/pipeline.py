@@ -8,24 +8,17 @@ from typing import Self
 import pydantic as pyd
 
 # Project imports
-from core.models.phases import (
-    ExtractPhase,
-    LoadPhase,
-    PipelinePhase,
-    TransformLoadPhase,
-    TransformPhase,
-)
+from core.models.phases import PipelinePhase, PHASE_TYPE
+
 
 
 @unique
 class PipelineType(Enum):
     """A config class that contains constants and utilities related to pipelines."""
-
     ETL = "ETL"
     ELT = "ELT"
     ETLT = "ETLT"
 
-type PHASE_TYPE = ExtractPhase | TransformPhase | LoadPhase | TransformLoadPhase
 
 MANDATORY_PHASES_BY_PIPELINE_TYPE = {
     PipelineType.ETL: {

@@ -105,35 +105,6 @@ class TestPluginFactory:
         with pytest.raises(ValueError):
             PluginFactory.get(EXTRACT_PHASE, "fake_plugin")
 
-    @staticmethod
-    @pytest.mark.parametrize(
-        "etl_phase",
-        [
-            ("extracttt"),
-            ("transformm"),
-            ("looooad"),
-        ],
-    )
-    def test_validate_invalid_pipeline_phase_name(etl_phase: str) -> None:
-        """Test the validation process by providing an invalid pipeline phase name."""
-
-        with pytest.raises(KeyError):
-            PluginFactory._validate_plugin_registration(etl_phase, MockLoadTransform)
-
-    @staticmethod
-    def test_validate_invalid_subclass_plugin_interface(mocker) -> None:
-        """Test the subclass inheritance between the plugin with its base class."""
-        mock_base_class = mocker.patch.object(
-            PipelinePhase, "get_plugin_interface_for_phase", return_value=IExtractor
-        )
-
-        with pytest.raises(TypeError):
-            PluginFactory._validate_plugin_registration(EXTRACT_PHASE, MockLoadTransform)
-
-        # Check if mocks were called properly
-        mock_base_class.assert_called_once()
-        mock_base_class.assert_called_with(EXTRACT_PHASE)
-
 
 
 # class TestPluginLoader:

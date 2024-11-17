@@ -5,14 +5,15 @@ import pytest
 
 
 # Project Imports
-from core.models.phases import PipelinePhase
-from core.models.pipeline import (
+from core.models.phases import (
     ExtractPhase,
     LoadPhase,
-    Pipeline,
     TransformLoadPhase,
     TransformPhase,
 )
+
+from core.models.pipeline import Pipeline
+
 from tests.common.mocks import (
     MockExtractor, 
     MockLoad, 
