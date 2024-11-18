@@ -9,7 +9,7 @@ import core.models.load as load
 import core.models.transform as tf
 from core.models.phases import ExtractPhase, PipelinePhase
 from core.models.pipeline import PipelineType
-from core.plugins import PluginFactory
+from plugins.registry import PluginFactory
 from tests.common.constants import ELT, ETL, EXTRACT_PHASE, LOAD_PHASE, TRANSFORM_PHASE, LOAD_TRANSFORM_PHASE
 from tests.common.mocks import MockExtractor, MockLoad, MockTransform, MockLoadTransform
 

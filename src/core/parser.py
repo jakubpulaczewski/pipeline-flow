@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 from core.models.pipeline import Pipeline
 from core.models.phases import PipelinePhase, PHASE_TYPE
-from core.plugins import PluginFactory
+from plugins.registry import PluginFactory
 
 
 

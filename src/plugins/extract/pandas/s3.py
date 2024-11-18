@@ -4,7 +4,7 @@ import pydantic as pyd
 
 from common.utils.logger import setup_logger
 from core.models.phases import PipelinePhase
-from core.plugins import PluginFactory
+from plugins.registry import PluginFactory
 
 logger = setup_logger(__name__)
 

@@ -13,7 +13,7 @@ from pydantic import ValidationError
 import core.parser as parser  # pylint: disable=consider-using-from-import
 from core.models.pipeline import Pipeline
 from core.models.phases import PipelinePhase
-from core.plugins import PluginFactory
+from plugins.registry import PluginFactory
 from tests.common.constants import ETL, EXTRACT_PHASE, TRANSFORM_PHASE, LOAD_PHASE
 from tests.common.mocks import MockExtractor, MockLoad, MockTransform
 
