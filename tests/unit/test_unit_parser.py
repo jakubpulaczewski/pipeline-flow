@@ -174,10 +174,10 @@ def test_parse_multiple_plugins(extractor_plugin_data, extractor_plugin_data_2):
 
         assert len(result) == 2
         assert result[0] == MockExtractor(
-            id="extractor_id", plugin="mock_extractor", config=None
+            id="extractor_id", config=None
         )
         assert result[1] == MockExtractor(
-            id="extractor_id_2", plugin="mock_extractor_2", config=None
+            id="extractor_id_2", config=None
         )
 
         assert call(EXTRACT_PHASE, "mock_extractor") in mock.mock_calls

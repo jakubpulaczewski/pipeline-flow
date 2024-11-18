@@ -41,7 +41,7 @@ def parse_plugins_by_phase(phase_pipeline: PipelinePhase, steps: list[dict]) -> 
     plugin_callables = []
 
     for step in steps:
-        plugin_name = step.get("plugin")
+        plugin_name = step.pop("plugin", None)
 
         if not plugin_name:
             raise ValueError("The attribute 'plugin` is empty.")

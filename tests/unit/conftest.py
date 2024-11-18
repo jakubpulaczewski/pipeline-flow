@@ -22,27 +22,26 @@ from tests.common.mocks import (
 )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def mock_extractor():
-    return MockExtractor(id="mock_extractor", plugin="mock")
-   
+    return MockExtractor(id="mock_extractor")
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def mock_loader():
-    return MockLoad(id="mock_loader", plugin="mock")
+    return MockLoad(id="mock_loader")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def mock_transformer():
     return MockTransform(id="mock_transformer")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def mock_load_transformer():
     return MockLoadTransform(id="mock_load_transformer", query="SELECT 1")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def extractor_plugin_data():
     return {
         "id": "extractor_id",
@@ -50,32 +49,32 @@ def extractor_plugin_data():
     }
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def extractor_plugin_data_2():
     return {"id": "extractor_id_2", "plugin": "mock_extractor_2"}
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def loader_plugin_data():
     return {"id": "loader_id", "plugin": "mock_loader"}
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def loader_plugin_data_2():
     return {"id": "loader_id_2", "plugin": "mock_loader_2"}
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def transformer_plugin_data():
     return {"id": "transformer_id", "plugin": "mock_transformer"}
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def transformer_plugin_data_2():
     return {"id": "transformer_id2", "plugin": "mock_transformer_2"}
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def transform_at_loader_plugin_data():
     return {"id": "mock_transform_load_id", "query": "SELECT 1 FROM TABLE"}
 
@@ -107,7 +106,7 @@ def pipeline_factory(default_config):
     return create_pipeline
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def etl_pipeline_factory(request, mock_extractor, mock_transformer, mock_loader):
     default_config = {
         "name": "ETL Pipeline",
@@ -124,7 +123,7 @@ def etl_pipeline_factory(request, mock_extractor, mock_transformer, mock_loader)
     return pipeline
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def elt_pipeline_factory(
     request, mock_extractor,  mock_loader, mock_load_transformer
 ):
@@ -142,7 +141,7 @@ def elt_pipeline_factory(
     pipeline = pipeline_factory(default_config=default_config)
     return pipeline
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def etlt_pipeline_factory(
     request, mock_extractor,  mock_transformer, mock_loader, mock_load_transformer
 ):

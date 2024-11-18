@@ -49,7 +49,6 @@ class ILoader(pyd.BaseModel, ABC):
     """An interface of the Load Step."""
 
     id: str
-    plugin: str
 
     @abstractmethod
     @load_decorator
