@@ -22,23 +22,22 @@ from tests.common.mocks import MockExtractor, MockLoad, MockTransform
 def yaml_pipeline():
     yaml_str = """
     pipelines:
-        pipeline1:
-            type: ETL
-            phases:
-                - extract:
-                    steps:
-                        - id: mock_extract1
-                          plugin: mock_s3
-                - transform:
-                    steps:
-                        - id: mock_tranformation1
-                          operation: aggregate_sum
-                - load:
-                    steps:
-                        - id: mock_load1
-                          type: mock_s3
-                    
-    """  
+      pipeline1:
+        type: ETL
+        phases:
+          extract:
+            steps:
+              - id: mock_extract1
+                plugin: mock_s3
+          transform:
+            steps:
+              - id: mock_tranformation1
+                plugin: aggregate_sum
+          load:
+            steps:
+              - id: mock_load1
+                plugin: mock_s3
+    """
 
     return yaml_str
 
@@ -86,28 +85,22 @@ def test_parse_yaml_str_success(yaml_pipeline) -> None:
         "pipelines": {
             "pipeline1": {
                 "type": "ETL",
-                "phases": [
-                    {
-                        "extract": {
-                            "steps": [{"id": "mock_extract1", "plugin": "mock_s3"}],
-                        }
+                "phases": {
+                    "extract": {
+                        "steps": [{"id": "mock_extract1", "plugin": "mock_s3"}],
                     },
-                    {
-                        "transform": {
-                            "steps": [
-                                {
-                                    "id": "mock_tranformation1",
-                                    "operation": "aggregate_sum",
-                                }
-                            ],
-                        }
+                    "transform": {
+                        "steps": [
+                            {
+                                "id": "mock_tranformation1",
+                                "plugin": "aggregate_sum",
+                            }
+                        ],
                     },
-                    {
-                        "load": {
-                            "steps": [{"id": "mock_load1", "type": "mock_s3"}],
-                        }
-                    },
-                ],
+                    "load": {
+                        "steps": [{"id": "mock_load1", "plugin": "mock_s3"}],
+                    }
+                }
             }
         }
     }
@@ -124,31 +117,26 @@ def test_parse_yaml_file_success(temporary_yaml_file) -> None:
         "pipelines": {
             "pipeline1": {
                 "type": "ETL",
-                "phases": [
-                    {
-                        "extract": {
-                            "steps": [{"id": "mock_extract1", "plugin": "mock_s3"}],
-                        }
+                "phases": {
+                    "extract": {
+                        "steps": [{"id": "mock_extract1", "plugin": "mock_s3"}],
                     },
-                    {
-                        "transform": {
-                            "steps": [
-                                {
-                                    "id": "mock_tranformation1",
-                                    "operation": "aggregate_sum",
-                                }
-                            ],
-                        }
+                    "transform": {
+                        "steps": [
+                            {
+                                "id": "mock_tranformation1",
+                                "plugin": "aggregate_sum",
+                            }
+                        ],
                     },
-                    {
-                        "load": {
-                            "steps": [{"id": "mock_load1", "type": "mock_s3"}],
-                        }
-                    },
-                ],
+                    "load": {
+                        "steps": [{"id": "mock_load1", "plugin": "mock_s3"}],
+                    }
+                }
             }
         }
     }
+    
 
     assert (
         serialized_yaml == expected_dict
@@ -218,8 +206,7 @@ def test_create_pipeline_with_only_mandatory_phases(
 ):
     pipeline_data = {
         "type": "ETL",
-        "phases": [
-        {
+        "phases": {
             "extract": {
                 "steps": [
                     extractor_plugin_data, extractor_plugin_data_2
@@ -233,7 +220,7 @@ def test_create_pipeline_with_only_mandatory_phases(
                     loader_plugin_data, loader_plugin_data_2
                 ]
             }
-        }]
+        }
     }
 
     mocker.patch.object(
@@ -251,15 +238,15 @@ def test_create_pipeline_with_only_mandatory_phases(
     assert isinstance(pipeline, Pipeline)
     assert pipeline.name == "full_pipeline"
 
-    assert len(pipeline.phases[0][EXTRACT_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[0][EXTRACT_PHASE].steps[0], MockExtractor)
-    assert isinstance(pipeline.phases[0][EXTRACT_PHASE].steps[1], MockExtractor)
+    assert len(pipeline.phases[EXTRACT_PHASE].steps) == 2
+    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[0], MockExtractor)
+    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[1], MockExtractor)
 
-    assert len(pipeline.phases[0][TRANSFORM_PHASE].steps) == 0
+    assert len(pipeline.phases[TRANSFORM_PHASE].steps) == 0
 
-    assert len(pipeline.phases[0][LOAD_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[0][LOAD_PHASE].steps[0], MockLoad)
-    assert isinstance(pipeline.phases[0][LOAD_PHASE].steps[1], MockLoad)
+    assert len(pipeline.phases[LOAD_PHASE].steps) == 2
+    assert isinstance(pipeline.phases[LOAD_PHASE].steps[0], MockLoad)
+    assert isinstance(pipeline.phases[LOAD_PHASE].steps[1], MockLoad)
 
 
 
@@ -270,8 +257,7 @@ def test_create_pipeline_without_mandatory_phase(
 ):
     pipeline_data = {
         "type": "ETL",
-        "phases": [
-        {
+        "phases": {
             "extract": {
                 "steps": []
             },
@@ -283,7 +269,7 @@ def test_create_pipeline_without_mandatory_phase(
                     loader_plugin_data, loader_plugin_data_2
                 ]
             }
-        }]
+        }
     }
 
     mocker.patch.object(
@@ -295,7 +281,7 @@ def test_create_pipeline_without_mandatory_phase(
         ],
     )
 
-    with pytest.raises(ValidationError, match="Validation Failed! Mandatory phase '%s' cannot be empty or missing plugins."):
+    with pytest.raises(ValidationError, match="Validation Failed! Mandatory phase 'PipelinePhase.EXTRACT_PHASE' cannot be empty or missing plugins."):
         parser.create_pipeline("full_pipeline", pipeline_data)
 
 def test_create_pipeline_with_multiple_sources_destinations(
@@ -309,8 +295,7 @@ def test_create_pipeline_with_multiple_sources_destinations(
     ):
     pipeline_data = {
         "type": "ETL",
-        "phases": [
-        {
+        "phases": {
             "extract": {
                 "steps": [
                     extractor_plugin_data, extractor_plugin_data_2
@@ -326,7 +311,7 @@ def test_create_pipeline_with_multiple_sources_destinations(
                     loader_plugin_data, loader_plugin_data_2
                 ]
             }
-        }]
+        }
     }
 
     mocker.patch.object(
@@ -346,15 +331,15 @@ def test_create_pipeline_with_multiple_sources_destinations(
     assert isinstance(pipeline, Pipeline)
     assert pipeline.name == "full_pipeline"
 
-    assert len(pipeline.phases[0][EXTRACT_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[0][EXTRACT_PHASE].steps[0], MockExtractor)
-    assert isinstance(pipeline.phases[0][EXTRACT_PHASE].steps[1], MockExtractor)
+    assert len(pipeline.phases[EXTRACT_PHASE].steps) == 2
+    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[0], MockExtractor)
+    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[1], MockExtractor)
 
-    assert len(pipeline.phases[0][TRANSFORM_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[0][TRANSFORM_PHASE].steps[0], MockTransform)
-    assert isinstance(pipeline.phases[0][TRANSFORM_PHASE].steps[1], MockTransform)
+    assert len(pipeline.phases[TRANSFORM_PHASE].steps) == 2
+    assert isinstance(pipeline.phases[TRANSFORM_PHASE].steps[0], MockTransform)
+    assert isinstance(pipeline.phases[TRANSFORM_PHASE].steps[1], MockTransform)
 
-    assert len(pipeline.phases[0][LOAD_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[0][LOAD_PHASE].steps[0], MockLoad)
-    assert isinstance(pipeline.phases[0][LOAD_PHASE].steps[1], MockLoad)
+    assert len(pipeline.phases[LOAD_PHASE].steps) == 2
+    assert isinstance(pipeline.phases[LOAD_PHASE].steps[0], MockLoad)
+    assert isinstance(pipeline.phases[LOAD_PHASE].steps[1], MockLoad)
 

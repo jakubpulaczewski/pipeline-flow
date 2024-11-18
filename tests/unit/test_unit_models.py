@@ -58,14 +58,14 @@ def test_etl_pipeline_init(etl_pipeline_factory) -> None:
     assert pipeline.type == PipelineType.ETL
     assert pipeline.needs is None
 
-    assert len(pipeline.phases[0][EXTRACT_PHASE].steps) == 1
-    assert len(pipeline.phases[0][TRANSFORM_PHASE].steps) == 1
-    assert len(pipeline.phases[0][LOAD_PHASE].steps) == 1
+    assert len(pipeline.phases[EXTRACT_PHASE].steps) == 1
+    assert len(pipeline.phases[TRANSFORM_PHASE].steps) == 1
+    assert len(pipeline.phases[LOAD_PHASE].steps) == 1
 
 
-    assert isinstance(pipeline.phases[0][EXTRACT_PHASE].steps[0], extract.IExtractor)
-    assert isinstance(pipeline.phases[0][TRANSFORM_PHASE].steps[0], tf.ITransform)
-    assert isinstance(pipeline.phases[0][LOAD_PHASE].steps[0], load.ILoader)
+    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[0], extract.IExtractor)
+    assert isinstance(pipeline.phases[TRANSFORM_PHASE].steps[0], tf.ITransform)
+    assert isinstance(pipeline.phases[LOAD_PHASE].steps[0], load.ILoader)
 
     assert not pipeline.is_executed
 
@@ -77,14 +77,14 @@ def test_elt_pipeline_init(elt_pipeline_factory) -> None:
     assert pipeline.type == PipelineType.ELT
     assert pipeline.needs is None
 
-    assert len(pipeline.phases[0][EXTRACT_PHASE].steps) == 1
-    assert len(pipeline.phases[0][LOAD_PHASE].steps) == 1
-    assert len(pipeline.phases[0][LOAD_TRANSFORM_PHASE].steps) == 1
+    assert len(pipeline.phases[EXTRACT_PHASE].steps) == 1
+    assert len(pipeline.phases[LOAD_PHASE].steps) == 1
+    assert len(pipeline.phases[LOAD_TRANSFORM_PHASE].steps) == 1
 
 
-    assert isinstance(pipeline.phases[0][EXTRACT_PHASE].steps[0], extract.IExtractor)
-    assert isinstance(pipeline.phases[0][LOAD_PHASE].steps[0], load.ILoader)
-    assert isinstance(pipeline.phases[0][LOAD_TRANSFORM_PHASE].steps[0], tf.ILoadTransform)
+    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[0], extract.IExtractor)
+    assert isinstance(pipeline.phases[LOAD_PHASE].steps[0], load.ILoader)
+    assert isinstance(pipeline.phases[LOAD_TRANSFORM_PHASE].steps[0], tf.ILoadTransform)
 
     assert not pipeline.is_executed
 
@@ -96,15 +96,15 @@ def test_elt_pipeline_init(etlt_pipeline_factory) -> None:
     assert pipeline.type == PipelineType.ETLT
     assert pipeline.needs is None
 
-    assert len(pipeline.phases[0][EXTRACT_PHASE].steps) == 1
-    assert len(pipeline.phases[0][TRANSFORM_PHASE].steps) == 1
-    assert len(pipeline.phases[0][LOAD_PHASE].steps) == 1
-    assert len(pipeline.phases[0][LOAD_TRANSFORM_PHASE].steps) == 1
+    assert len(pipeline.phases[EXTRACT_PHASE].steps) == 1
+    assert len(pipeline.phases[TRANSFORM_PHASE].steps) == 1
+    assert len(pipeline.phases[LOAD_PHASE].steps) == 1
+    assert len(pipeline.phases[LOAD_TRANSFORM_PHASE].steps) == 1
 
 
-    assert isinstance(pipeline.phases[0][EXTRACT_PHASE].steps[0], extract.IExtractor)
-    assert isinstance(pipeline.phases[0][TRANSFORM_PHASE].steps[0], tf.ITransform)
-    assert isinstance(pipeline.phases[0][LOAD_PHASE].steps[0], load.ILoader)
-    assert isinstance(pipeline.phases[0][LOAD_TRANSFORM_PHASE].steps[0], tf.ILoadTransform)
+    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[0], extract.IExtractor)
+    assert isinstance(pipeline.phases[TRANSFORM_PHASE].steps[0], tf.ITransform)
+    assert isinstance(pipeline.phases[LOAD_PHASE].steps[0], load.ILoader)
+    assert isinstance(pipeline.phases[LOAD_TRANSFORM_PHASE].steps[0], tf.ILoadTransform)
 
     assert not pipeline.is_executed

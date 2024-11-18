@@ -44,7 +44,7 @@ class Pipeline(pyd.BaseModel):
 
     name: str
     type: PipelineType
-    phases: list[dict[PipelinePhase, PHASE_TYPE]]
+    phases: dict[PipelinePhase, PHASE_TYPE]
 
     # Optional
     description: str | None = None
@@ -64,11 +64,11 @@ class Pipeline(pyd.BaseModel):
     @pyd.model_validator(mode="after")
     def validate_pipeline_phase_mandatory(self: Self) -> Self:
         for phase, mandatory_phase in MANDATORY_PHASES_BY_PIPELINE_TYPE[self.type].items():
-            if mandatory_phase and not self.phases[0][phase].steps:
-                raise ValueError(
-                    "Validation Failed! Mandatory phase '%s' cannot be empty or missing plugins.",
-                    phase,
-                )
+            if mandatory_phase:
+                if phase not in self.phases or not self.phases[phase].steps:
+                    raise ValueError(
+                        f"Validation Failed! Mandatory phase '{phase}' cannot be empty or missing plugins."
+                    )
 
         return self
 

@@ -86,15 +86,15 @@ def pipeline_factory(default_config):
         config = default_config.copy()
         config.update(overrides)
 
-        phases = [{
+        phases = {
             "extract": ExtractPhase(steps=config.get("extract")),
             "transform": TransformPhase(steps=config.get("transform")) if config['type'] == "ETL" or config['type'] == "ETLT" else None,
             "load": LoadPhase(steps=config.get("load")),
             "transform_at_load": TransformLoadPhase(steps=config.get("transform_at_load")) if config['type'] == "ELT" or config['type'] == "ETLT" else None,
-        }]
+        }
 
         # Include only-non empty values
-        phases = [{k: v for k, v in phases[0].items() if v}]
+        phases = {k: v for k, v in phases.items() if v}
 
         return Pipeline(
             name=config["name"],
