@@ -10,7 +10,7 @@ from common.type_def import PLUGIN_BASE_CALLABLE
 # Project
 from core.models.extract import IExtractor
 from core.models.phases import PipelinePhase
-from core.plugins import PluginConfig, PluginFactory, PluginLoader
+from plugins.registry import PluginConfig, PluginFactory, PluginLoader
 from tests.common.constants import EXTRACT_PHASE, LOAD_PHASE, ELT, ETL
 from tests.common.mocks import MockExtractor, MockLoad, MockLoadTransform, MockTransform
 

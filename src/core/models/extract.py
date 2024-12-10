@@ -49,7 +49,6 @@ class IExtractor(pyd.BaseModel, ABC):
     """An interface of the Extract Step."""
 
     id: str
-    plugin: str
     config: dict | None = None
 
     @abstractmethod

@@ -8,7 +8,14 @@ from typing import Self
 import pydantic as pyd
 
 # Project imports
-from core.models.phases import PipelinePhase, PHASE_TYPE
+from core.models.phases import (
+    PipelinePhase, 
+    PHASE_TYPE,
+    ExtractPhase,
+    TransformPhase,
+    LoadPhase,
+    TransformLoadPhase
+)
 
 
 
@@ -33,7 +40,7 @@ MANDATORY_PHASES_BY_PIPELINE_TYPE = {
     },
     PipelineType.ETLT: {
         PipelinePhase.EXTRACT_PHASE: True,
-        PipelinePhase.TRANSFORM_PHASE: True,
+        PipelinePhase.TRANSFORM_PHASE: False,
         PipelinePhase.LOAD_PHASE: True,
         PipelinePhase.TRANSFORM_AT_LOAD_PHASE: True,
     },
@@ -44,7 +51,7 @@ class Pipeline(pyd.BaseModel):
 
     name: str
     type: PipelineType
-    phases: list[dict[PipelinePhase, PHASE_TYPE]]
+    phases: dict[PipelinePhase, PHASE_TYPE]
 
     # Optional
     description: str | None = None
@@ -61,14 +68,29 @@ class Pipeline(pyd.BaseModel):
     def is_executed(self, value: bool) -> None:
         self.__is_executed = value
 
+    @property
+    def extract(self) -> ExtractPhase:
+        return self.phases[PipelinePhase.EXTRACT_PHASE]
+
+    @property
+    def transform(self) -> TransformPhase:
+        return self.phases[PipelinePhase.TRANSFORM_PHASE]
+
+    @property
+    def load(self) -> LoadPhase:
+        return self.phases[PipelinePhase.LOAD_PHASE]
+
+    @property
+    def load_transform(self) -> TransformLoadPhase:
+        return self.phases[PipelinePhase.TRANSFORM_AT_LOAD_PHASE]
+
     @pyd.model_validator(mode="after")
     def validate_pipeline_phase_mandatory(self: Self) -> Self:
         for phase, mandatory_phase in MANDATORY_PHASES_BY_PIPELINE_TYPE[self.type].items():
-            if mandatory_phase and not self.phases[0][phase].steps:
-                raise ValueError(
-                    "Validation Failed! Mandatory phase '%s' cannot be empty or missing plugins.",
-                    phase,
-                )
+            if mandatory_phase:
+                if phase not in self.phases or not self.phases[phase].steps:
+                    raise ValueError(
+                        f"Validation Failed! Mandatory phase '{phase}' cannot be empty or missing plugins."
+                    )
 
         return self
-
