@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import (
-    dataclass,
-)  # TODO: Potentially might need to be changed to pydantic's data class.
+from dataclasses import dataclass # TODO: Potentially might need to be changed to pydantic's data class.
 from functools import wraps
 from typing import Callable
 
@@ -53,7 +51,6 @@ def transform_decorator(transform_function: TransformFunction) -> TransformFunct
 
 class ITransform(pyd.BaseModel, ABC):
     """An interface for the Transform phase."""
-
     id: str
 
     @abstractmethod
@@ -67,9 +64,7 @@ class ITransform(pyd.BaseModel, ABC):
 
 class ILoadTransform(pyd.BaseModel, ABC):
     """An interface for the Post-Load Transform phase."""
-
     id: str
-    query: str
 
     @abstractmethod
     @transform_decorator

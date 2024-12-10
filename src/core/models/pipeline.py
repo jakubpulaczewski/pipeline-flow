@@ -33,7 +33,7 @@ MANDATORY_PHASES_BY_PIPELINE_TYPE = {
     },
     PipelineType.ETLT: {
         PipelinePhase.EXTRACT_PHASE: True,
-        PipelinePhase.TRANSFORM_PHASE: True,
+        PipelinePhase.TRANSFORM_PHASE: False,
         PipelinePhase.LOAD_PHASE: True,
         PipelinePhase.TRANSFORM_AT_LOAD_PHASE: True,
     },
@@ -71,4 +71,3 @@ class Pipeline(pyd.BaseModel):
                     )
 
         return self
-

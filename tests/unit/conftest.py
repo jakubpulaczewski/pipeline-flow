@@ -38,7 +38,7 @@ def mock_transformer():
 
 @pytest.fixture
 def mock_load_transformer():
-    return MockLoadTransform(id="mock_load_transformer", query="SELECT 1")
+    return MockLoadTransform(id="mock_load_transformer")
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def transformer_plugin_data_2():
 
 @pytest.fixture
 def transform_at_loader_plugin_data():
-    return {"id": "mock_transform_load_id", "query": "SELECT 1 FROM TABLE"}
+    return {"id": "mock_transform_load_id"}
 
 
 def pipeline_factory(default_config):
