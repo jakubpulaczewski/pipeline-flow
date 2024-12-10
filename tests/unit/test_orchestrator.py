@@ -11,13 +11,6 @@
 # # Project Imports
 # from core.orchestrator import PipelineOrchestrator
 
-
-# @pytest.fixture()
-# def etl_basic_config() -> dict[str, list]:
-#     """An ETL basic configuration needed to create a job."""
-#     return {"extract": [], "transform": [], "load": []}
-
-
 # @pytest.fixture
 # def mock_jobs(etl_basic_config: dict[str, list]) -> list[Pipeline]:
 #     "A mock to create a list of three jobs."
@@ -28,7 +21,7 @@
 #     return [job1, job2, job3]
 
 
-# @case(tags="can_execute_success")
+# @case(tags="can_execute_success", id="no_dependency")
 # def case_no_dependency_success(
 #     etl_basic_config: dict[str, list]
 # ) -> tuple[Pipeline, set[str]]:
@@ -39,7 +32,7 @@
 #     return job1, executed_jobs
 
 
-# @case(tags="can_execute_success")
+# @case(tags="can_execute_success", id="one_dependency")
 # def case_one_job_dependency_success(
 #     etl_basic_config: dict[str, list]
 # ) -> tuple[Pipeline, set[str]]:
@@ -50,7 +43,7 @@
 #     return job2, executed_jobs
 
 
-# @case(tags="can_execute_success")
+# @case(tags="can_execute_success", id="multiple_dependencies")
 # def case_multiple_job_dependency_success(
 #     etl_basic_config: dict[str, list]
 # ) -> tuple[Pipeline, set[str]]:

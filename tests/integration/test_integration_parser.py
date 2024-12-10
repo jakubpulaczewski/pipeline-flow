@@ -3,8 +3,6 @@
 # Third-party imports
 import pytest
 
-from core.models.phases import ExtractPhase, LoadPhase, TransformPhase, TransformLoadPhase
-
 # Project Imports
 import core.parser as parser
 from core.models.pipeline import Pipeline
@@ -117,11 +115,11 @@ def test_parse_etl_pipeline_with_only_mandatory_phases() -> None:
     assert pipeline.name == "pipeline1"
 
 
-    assert len(pipeline.phases[EXTRACT_PHASE].steps) == 1
-    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[0], MockExtractor)
+    assert len(pipeline.extract.steps) == 1
+    assert isinstance(pipeline.extract.steps[0], MockExtractor)
 
-    assert len(pipeline.phases[LOAD_PHASE].steps) == 1
-    assert isinstance(pipeline.phases[LOAD_PHASE].steps[0], MockLoad)
+    assert len(pipeline.load.steps) == 1
+    assert isinstance(pipeline.load.steps[0], MockLoad)
 
 
 
@@ -178,21 +176,21 @@ def test_parse_etl_multiple_pipelines() -> None:
     assert isinstance(pipelines[1], Pipeline)
 
     # Pipeline 1
-    assert len(pipelines[0].phases[EXTRACT_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[EXTRACT_PHASE].steps[0], MockExtractor)
+    assert len(pipelines[0].extract.steps) == 1
+    assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
 
-    assert len(pipelines[0].phases[TRANSFORM_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[TRANSFORM_PHASE].steps[0], MockTransform)
+    assert len(pipelines[0].transform.steps) == 1
+    assert isinstance(pipelines[0].transform.steps[0], MockTransform)
 
-    assert len(pipelines[0].phases[LOAD_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[LOAD_PHASE].steps[0], MockLoad)
+    assert len(pipelines[0].load.steps) == 1
+    assert isinstance(pipelines[0].load.steps[0], MockLoad)
 
    # Pipeline 2
-    assert len(pipelines[1].phases[EXTRACT_PHASE].steps) == 1
-    assert isinstance(pipelines[1].phases[EXTRACT_PHASE].steps[0], MockExtractor)
+    assert len(pipelines[1].extract.steps) == 1
+    assert isinstance(pipelines[1].extract.steps[0], MockExtractor)
 
-    assert len(pipelines[1].phases[LOAD_PHASE].steps) == 1
-    assert isinstance(pipelines[1].phases[LOAD_PHASE].steps[0], MockLoad)
+    assert len(pipelines[1].load.steps) == 1
+    assert isinstance(pipelines[1].load.steps[0], MockLoad)
 
 
 
@@ -240,15 +238,15 @@ def test_parse_elt_pipeline() -> None:
     assert pipelines[0].name == "pipeline1"
 
 
-    assert len(pipelines[0].phases[EXTRACT_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[EXTRACT_PHASE].steps[0], MockExtractor)
+    assert len(pipelines[0].extract.steps) == 1
+    assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
 
-    assert len(pipelines[0].phases[LOAD_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[LOAD_PHASE].steps[0], MockLoad)
+    assert len(pipelines[0].load.steps) == 1
+    assert isinstance(pipelines[0].load.steps[0], MockLoad)
 
 
-    assert len(pipelines[0].phases[LOAD_TRANSFORM_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[LOAD_TRANSFORM_PHASE].steps[0], MockLoadTransform)
+    assert len(pipelines[0].load_transform.steps) == 1
+    assert isinstance(pipelines[0].load_transform.steps[0], MockLoadTransform)
 
 
 
@@ -302,16 +300,16 @@ def test_parse_etlt_pipeline() -> None:
     assert pipelines[0].name == "pipeline_ETLT"
 
 
-    assert len(pipelines[0].phases[EXTRACT_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[EXTRACT_PHASE].steps[0], MockExtractor)
+    assert len(pipelines[0].extract.steps) == 1
+    assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
 
-    assert len(pipelines[0].phases[TRANSFORM_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[TRANSFORM_PHASE].steps[0], MockTransform)
+    assert len(pipelines[0].transform.steps) == 1
+    assert isinstance(pipelines[0].transform.steps[0], MockTransform)
 
-    assert len(pipelines[0].phases[LOAD_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[LOAD_PHASE].steps[0], MockLoad)
+    assert len(pipelines[0].load.steps) == 1
+    assert isinstance(pipelines[0].load.steps[0], MockLoad)
 
 
-    assert len(pipelines[0].phases[LOAD_TRANSFORM_PHASE].steps) == 1
-    assert isinstance(pipelines[0].phases[LOAD_TRANSFORM_PHASE].steps[0], MockLoadTransform)
+    assert len(pipelines[0].load_transform.steps) == 1
+    assert isinstance(pipelines[0].load_transform.steps[0], MockLoadTransform)
 

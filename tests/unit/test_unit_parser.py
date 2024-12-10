@@ -238,15 +238,15 @@ def test_create_pipeline_with_only_mandatory_phases(
     assert isinstance(pipeline, Pipeline)
     assert pipeline.name == "full_pipeline"
 
-    assert len(pipeline.phases[EXTRACT_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[0], MockExtractor)
-    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[1], MockExtractor)
+    assert len(pipeline.extract.steps) == 2
+    assert isinstance(pipeline.extract.steps[0], MockExtractor)
+    assert isinstance(pipeline.extract.steps[1], MockExtractor)
 
-    assert len(pipeline.phases[TRANSFORM_PHASE].steps) == 0
+    assert len(pipeline.transform.steps) == 0
 
-    assert len(pipeline.phases[LOAD_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[LOAD_PHASE].steps[0], MockLoad)
-    assert isinstance(pipeline.phases[LOAD_PHASE].steps[1], MockLoad)
+    assert len(pipeline.load.steps) == 2
+    assert isinstance(pipeline.load.steps[0], MockLoad)
+    assert isinstance(pipeline.load.steps[1], MockLoad)
 
 
 
@@ -331,15 +331,15 @@ def test_create_pipeline_with_multiple_sources_destinations(
     assert isinstance(pipeline, Pipeline)
     assert pipeline.name == "full_pipeline"
 
-    assert len(pipeline.phases[EXTRACT_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[0], MockExtractor)
-    assert isinstance(pipeline.phases[EXTRACT_PHASE].steps[1], MockExtractor)
+    assert len(pipeline.extract.steps) == 2
+    assert isinstance(pipeline.extract.steps[0], MockExtractor)
+    assert isinstance(pipeline.extract.steps[1], MockExtractor)
 
-    assert len(pipeline.phases[TRANSFORM_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[TRANSFORM_PHASE].steps[0], MockTransform)
-    assert isinstance(pipeline.phases[TRANSFORM_PHASE].steps[1], MockTransform)
+    assert len(pipeline.transform.steps) == 2
+    assert isinstance(pipeline.transform.steps[0], MockTransform)
+    assert isinstance(pipeline.transform.steps[1], MockTransform)
 
-    assert len(pipeline.phases[LOAD_PHASE].steps) == 2
-    assert isinstance(pipeline.phases[LOAD_PHASE].steps[0], MockLoad)
-    assert isinstance(pipeline.phases[LOAD_PHASE].steps[1], MockLoad)
+    assert len(pipeline.load.steps) == 2
+    assert isinstance(pipeline.load.steps[0], MockLoad)
+    assert isinstance(pipeline.load.steps[1], MockLoad)
 

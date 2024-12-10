@@ -8,7 +8,14 @@ from typing import Self
 import pydantic as pyd
 
 # Project imports
-from core.models.phases import PipelinePhase, PHASE_TYPE
+from core.models.phases import (
+    PipelinePhase, 
+    PHASE_TYPE,
+    ExtractPhase,
+    TransformPhase,
+    LoadPhase,
+    TransformLoadPhase
+)
 
 
 
@@ -60,6 +67,22 @@ class Pipeline(pyd.BaseModel):
     @is_executed.setter
     def is_executed(self, value: bool) -> None:
         self.__is_executed = value
+
+    @property
+    def extract(self) -> ExtractPhase:
+        return self.phases[PipelinePhase.EXTRACT_PHASE]
+
+    @property
+    def transform(self) -> TransformPhase:
+        return self.phases[PipelinePhase.TRANSFORM_PHASE]
+
+    @property
+    def load(self) -> LoadPhase:
+        return self.phases[PipelinePhase.LOAD_PHASE]
+
+    @property
+    def load_transform(self) -> TransformLoadPhase:
+        return self.phases[PipelinePhase.TRANSFORM_AT_LOAD_PHASE]
 
     @pyd.model_validator(mode="after")
     def validate_pipeline_phase_mandatory(self: Self) -> Self:
