@@ -21,26 +21,6 @@ from tests.common.mocks import (
     MockLoadTransform
 )
 
-
-@pytest.fixture
-def mock_extractor():
-    return MockExtractor(id="mock_extractor")
-
-@pytest.fixture
-def mock_loader():
-    return MockLoad(id="mock_loader")
-
-
-@pytest.fixture
-def mock_transformer():
-    return MockTransform(id="mock_transformer")
-
-
-@pytest.fixture
-def mock_load_transformer():
-    return MockLoadTransform(id="mock_load_transformer")
-
-
 @pytest.fixture
 def extractor_plugin_data():
     return {
@@ -48,20 +28,39 @@ def extractor_plugin_data():
         "plugin": "mock_extractor",
     }
 
+@pytest.fixture
+def extractor_mock(extractor_plugin_data):
+    return MockExtractor(id=extractor_plugin_data['id'])
+
 
 @pytest.fixture
-def extractor_plugin_data_2():
-    return {"id": "extractor_id_2", "plugin": "mock_extractor_2"}
+def second_extractor_plugin_data():
+    return {
+        "id": "extractor_id_2", 
+        "plugin": "mock_extractor_2"
+    }
+
+@pytest.fixture
+def second_extractor_mock(second_extractor_plugin_data):
+    return MockExtractor(id=second_extractor_plugin_data['id'])
 
 
 @pytest.fixture
 def loader_plugin_data():
     return {"id": "loader_id", "plugin": "mock_loader"}
 
+@pytest.fixture
+def second_loader_plugin_data():
+    return {"id": "loader_id_2", "plugin": "mock_loader_2"}
+
 
 @pytest.fixture
-def loader_plugin_data_2():
-    return {"id": "loader_id_2", "plugin": "mock_loader_2"}
+def mock_loader(loader_plugin_data):
+    return MockLoad(id=loader_plugin_data['id'])
+
+@pytest.fixture
+def second_mock_loader(second_loader_plugin_data):
+    return MockLoad(id=second_loader_plugin_data["id"])
 
 
 @pytest.fixture
@@ -75,8 +74,23 @@ def transformer_plugin_data_2():
 
 
 @pytest.fixture
-def transform_at_loader_plugin_data():
+def mock_transformer(transformer_plugin_data):
+    return MockTransform(id=transformer_plugin_data['id'])
+
+@pytest.fixture
+def second_mock_transformer(transformer_plugin_data_2):
+    return MockTransform(id=transformer_plugin_data_2['id'])
+
+
+
+@pytest.fixture
+def transform_at_load_plugin_data():
     return {"id": "mock_transform_load_id"}
+
+@pytest.fixture
+def mock_load_transformer(transform_at_load_plugin_data):
+    return MockLoadTransform(id=transform_at_load_plugin_data['id'])
+
 
 
 def pipeline_factory(default_config):
@@ -106,12 +120,12 @@ def pipeline_factory(default_config):
     return create_pipeline
 
 
-@pytest.fixture()
-def etl_pipeline_factory(request, mock_extractor, mock_transformer, mock_loader):
+@pytest.fixture
+def etl_pipeline_factory(request, extractor_mock, mock_transformer, mock_loader):
     default_config = {
         "name": "ETL Pipeline",
         "type": "ETL",
-        "extract": [mock_extractor],
+        "extract": [extractor_mock],
         "transform": [mock_transformer],
         "load": [mock_loader],
     }
@@ -123,14 +137,14 @@ def etl_pipeline_factory(request, mock_extractor, mock_transformer, mock_loader)
     return pipeline
 
 
-@pytest.fixture()
+@pytest.fixture
 def elt_pipeline_factory(
-    request, mock_extractor,  mock_loader, mock_load_transformer
+    request, extractor_mock,  mock_loader, mock_load_transformer
 ):
     default_config = {
         "name": "ELT Pipeline",
         "type": "ELT",
-        "extract": [mock_extractor],
+        "extract": [extractor_mock],
         "load": [mock_loader],
         "transform_at_load": [mock_load_transformer],
     }
@@ -141,14 +155,14 @@ def elt_pipeline_factory(
     pipeline = pipeline_factory(default_config=default_config)
     return pipeline
 
-@pytest.fixture()
+@pytest.fixture
 def etlt_pipeline_factory(
-    request, mock_extractor,  mock_transformer, mock_loader, mock_load_transformer
+    request, extractor_mock,  mock_transformer, mock_loader, mock_load_transformer
 ):
     default_config = {
         "name": "ETLT Pipeline",
         "type": "ETLT",
-        "extract": [mock_extractor],
+        "extract": [extractor_mock],
         "transform": [mock_transformer],
         "load": [mock_loader],
         "transform_at_load": [mock_load_transformer],

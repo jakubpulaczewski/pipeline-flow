@@ -159,11 +159,11 @@ def test_parse_one_plugin(extractor_plugin_data):
         mock.assert_called_with(EXTRACT_PHASE, "mock_extractor")
 
 
-def test_parse_multiple_plugins(extractor_plugin_data, extractor_plugin_data_2):
+def test_parse_multiple_plugins(extractor_plugin_data, second_extractor_plugin_data):
     phase_data = {
         "steps": [
             extractor_plugin_data,
-            extractor_plugin_data_2
+            second_extractor_plugin_data
         ]
     }
 
@@ -200,16 +200,16 @@ def test_create_pipelines_from_empty_dict():
 def test_create_pipeline_with_only_mandatory_phases(
     mocker,
     extractor_plugin_data,
-    extractor_plugin_data_2,
+    second_extractor_plugin_data,
     loader_plugin_data,
-    loader_plugin_data_2
+    second_loader_plugin_data
 ):
     pipeline_data = {
         "type": "ETL",
         "phases": {
             "extract": {
                 "steps": [
-                    extractor_plugin_data, extractor_plugin_data_2
+                    extractor_plugin_data, second_extractor_plugin_data
                 ]
             },
             "transform": {
@@ -217,7 +217,7 @@ def test_create_pipeline_with_only_mandatory_phases(
             },
             "load": {
                 "steps": [
-                    loader_plugin_data, loader_plugin_data_2
+                    loader_plugin_data, second_loader_plugin_data
                 ]
             }
         }
@@ -253,7 +253,7 @@ def test_create_pipeline_with_only_mandatory_phases(
 def test_create_pipeline_without_mandatory_phase(
     mocker,
     loader_plugin_data,
-    loader_plugin_data_2
+    second_loader_plugin_data
 ):
     pipeline_data = {
         "type": "ETL",
@@ -266,7 +266,7 @@ def test_create_pipeline_without_mandatory_phase(
             },
             "load": {
                 "steps": [
-                    loader_plugin_data, loader_plugin_data_2
+                    loader_plugin_data, second_loader_plugin_data
                 ]
             }
         }
@@ -287,18 +287,18 @@ def test_create_pipeline_without_mandatory_phase(
 def test_create_pipeline_with_multiple_sources_destinations(
     mocker,
     extractor_plugin_data,
-    extractor_plugin_data_2,
+    second_extractor_plugin_data,
     transformer_plugin_data,
     transformer_plugin_data_2,
     loader_plugin_data,
-    loader_plugin_data_2
+    second_loader_plugin_data
     ):
     pipeline_data = {
         "type": "ETL",
         "phases": {
             "extract": {
                 "steps": [
-                    extractor_plugin_data, extractor_plugin_data_2
+                    extractor_plugin_data, second_extractor_plugin_data
                 ]
             },
             "transform": {
@@ -308,7 +308,7 @@ def test_create_pipeline_with_multiple_sources_destinations(
             },
             "load": {
                 "steps": [
-                    loader_plugin_data, loader_plugin_data_2
+                    loader_plugin_data, second_loader_plugin_data
                 ]
             }
         }
