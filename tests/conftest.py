@@ -120,7 +120,7 @@ def pipeline_factory(default_config):
             name=config["name"],
             description=config.get("description", ""),
             type=config["type"],
-            needs=None,
+            needs=config["needs"],
             phases=phases,
         )
 
@@ -135,6 +135,7 @@ def etl_pipeline_factory(request, extractor_mock, mock_transformer, mock_loader)
         "extract": [extractor_mock],
         "transform": [mock_transformer],
         "load": [mock_loader],
+        "needs": None
     }
 
     if hasattr(request, "param"):
@@ -154,6 +155,7 @@ def elt_pipeline_factory(
         "extract": [extractor_mock],
         "load": [mock_loader],
         "transform_at_load": [mock_load_transformer],
+        "needs": None
     }
 
     if hasattr(request, "param"):
@@ -173,6 +175,7 @@ def etlt_pipeline_factory(
         "transform": [mock_transformer],
         "load": [mock_loader],
         "transform_at_load": [mock_load_transformer],
+        "needs": None   
     }
 
     if hasattr(request, "param"):

@@ -15,17 +15,10 @@ logger = setup_logger(__name__)
 class PipelineOrchestrator:
     """Emphasizes the role of the class in executing the pipelines."""
 
-    def __init__(self):
-        self.concurrency = 2  # TODO: set to something
+    def __init__(self, concurrency: int = 2):
+        self.concurrency = concurrency  # TODO: set to something
+        self.pipeline_queue = asyncio.Queue()
 
-    @staticmethod
-    async def pipeline_queue_producer(
-        pipeline_queue: asyncio.Queue, pipelines: list[Pipeline]
-    ) -> None:
-        for pipeline in pipelines:
-            logger.debug("Adding %s to central pipeline queue", pipeline.name)
-            await pipeline_queue.put(pipeline)
-            logger.debug("Added %s to central pipeline queue", pipeline.name)
 
     @staticmethod
     def _can_execute(pipeline: Pipeline, executed_pipelines: set[Pipeline]) -> bool:
@@ -38,26 +31,37 @@ class PipelineOrchestrator:
             return all(need in executed_pipelines for need in pipeline.needs)
         return False
 
-    async def _execute_pipeline(self, pipeline_queue: asyncio.Queue) -> None:
+
+    async def pipeline_queue_producer(self, pipelines: list[Pipeline]) -> None:
+        for pipeline in pipelines:
+            logger.debug("Adding %s to central pipeline queue", pipeline.name)
+            await self.pipeline_queue.put(pipeline)
+            logger.debug("Added %s to central pipeline queue", pipeline.name)
+
+
+    async def _execute_pipeline(self) -> None:
+        if self.pipeline_queue.empty():
+            raise ValueError("The Pipeline queue is empty. There is nothing to execute.")
+        
         async with asyncio.Semaphore(self.concurrency):
-            while not pipeline_queue.empty():
-                pipeline = await pipeline_queue.get()
+            while not self.pipeline_queue.empty():
+                pipeline = await self.pipeline_queue.get()
+                
                 logger.info("Executing: %s ", pipeline.name)
-
                 strategy = PipelineStrategyFactory.get_pipeline_strategy(pipeline.type)
-                await strategy.execute(pipeline) # might need to be an instance..
-
+                pipeline.is_executed = await strategy.execute(pipeline)
                 logger.info("Completed: %s", pipeline.name)
-                pipeline.is_executed = True
 
-                pipeline_queue.task_done()
 
+                self.pipeline_queue.task_done()
+
+   
     async def execute_pipelines(self, pipelines: list[Pipeline]) -> set[str]:
         """Asynchronously executes parsed jobs."""
+        if not pipelines:
+            raise ValueError("The Pipeline list is empty. There is nothing to execute.")
+        
         executed_pipelines = set()
-
-        tasks = []
-        pipeline_queue = asyncio.Queue()
 
         while pipelines:
             executable_pipelines = [
@@ -70,12 +74,11 @@ class PipelineOrchestrator:
                 raise ValueError("Circular dependency detected!")
 
             # Produces a central queue of executable pipelines
-            self.pipeline_queue_producer(pipeline_queue, executable_pipelines)
+            await self.pipeline_queue_producer(executable_pipelines)
 
             async with asyncio.TaskGroup() as tg:
-                for _ in range(self.concurrency):
-                    task = tg.create_task(self._execute_pipeline(pipeline_queue))
-                    tasks.append(task)
+                tasks = [tg.create_task(self._execute_pipeline()) for _ in range(len(executable_pipelines))]
+
 
             executed_pipelines.update(
                 pipeline.name for pipeline in executable_pipelines

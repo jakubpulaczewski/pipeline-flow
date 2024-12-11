@@ -36,7 +36,7 @@ from tests.common.mocks import (
 def test_factory_pipeline(pipeline_type, expected_strategy) -> None:
     strategy = PipelineStrategyFactory.get_pipeline_strategy(pipeline_type)
 
-    assert strategy == expected_strategy
+    assert isinstance(strategy, expected_strategy) 
 
 
 @pytest.mark.asyncio
