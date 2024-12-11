@@ -45,7 +45,7 @@ class PipelineOrchestrator:
                 logger.info("Executing: %s ", pipeline.name)
 
                 strategy = PipelineStrategyFactory.get_pipeline_strategy(pipeline.type)
-                await strategy.execute(pipeline)
+                await strategy.execute(pipeline) # might need to be an instance..
 
                 logger.info("Completed: %s", pipeline.name)
                 pipeline.is_executed = True
