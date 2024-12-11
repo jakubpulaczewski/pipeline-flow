@@ -5,23 +5,11 @@ from unittest.mock import AsyncMock
 # Third Party Imports
 import pytest
 
-from core.models.pipeline import Pipeline
-
 # Project Imports
 from core.models.extract import ExtractResult
 from core.models.exceptions import ExtractException
 from core.orchestrator import PipelineOrchestrator
 from core.pipeline_strategy import PipelineType, PipelineStrategyFactory, ETLStrategy
-
-
-@pytest.fixture
-def mock_jobs(etl_pipeline_factory) -> list[Pipeline]:
-    "A mock to create a list of three jobs."
-    job1 = etl_pipeline_factory(name="Job1")
-    job2 = etl_pipeline_factory(name="Job2", needs=["Job1"])
-    job3 = etl_pipeline_factory(name="Job3", needs=["Job1", "Job2"])
-
-    return [job1, job2, job3]
 
 
 def test_can_execute_no_depedency(etl_pipeline_factory) -> None:
