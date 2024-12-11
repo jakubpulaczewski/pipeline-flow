@@ -20,7 +20,6 @@ logger = setup_logger(__name__)
 @dataclass
 class TransformResult:
     name: str
-    type: str
     success: bool
     result: TransformedData | None = None
     error: Exception | None = None
@@ -29,21 +28,19 @@ class TransformResult:
 TransformFunction = Callable[[str | ExtractedData], TransformResult]
 
 
-def transform_decorator(transform_function: TransformFunction) -> TransformFunction:
+def transform_decorator(id: str, transform_function: TransformFunction) -> TransformFunction:
     @wraps(transform_function)
-    def wrapper(self, *args, **kwargs) -> TransformResult:
+    def wrapper(*args, **kwargs) -> TransformResult:
         try:
-            result = transform_function(self, *args, **kwargs)
+            result = transform_function(*args, **kwargs)
             return TransformResult(
-                name=self.id, type=type(self), success=True, result=result or None
+                name=id, success=True, result=result or None
             )
 
         except Exception as e:
-            error_message = f"A problem occurred when trying to execute following transformation {self.id}: {str(e)}"
+            error_message = f"A problem occurred when trying to execute following transformation {transform_function}: {str(e)}"
             logger.error(error_message)
-            transform_result = TransformResult(
-                name=self.id, type=type(self), success=False, error=str(e)
-            )
+            transform_result = TransformResult(name=id, success=False, error=str(e))
             raise TransformException(error_message, transform_result) from e
 
     return wrapper
@@ -54,7 +51,6 @@ class ITransform(pyd.BaseModel, ABC):
     id: str
 
     @abstractmethod
-    @transform_decorator
     def transform_data(self, data: ExtractedData) -> TransformedData:
         """Perform transformations before data is loaded."""
         raise NotImplementedError(
@@ -67,7 +63,6 @@ class ILoadTransform(pyd.BaseModel, ABC):
     id: str
 
     @abstractmethod
-    @transform_decorator
     def transform_data(self) -> None:
         """Perform transformations after data is loaded."""
         raise NotImplementedError(

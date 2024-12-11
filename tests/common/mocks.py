@@ -7,34 +7,39 @@ import pytest
 from common.type_def import ExtractedData, TransformedData
 
 # Project Imports
-from core.models.extract import IExtractor, extract_decorator
-from core.models.load import ILoader, load_decorator
-from core.models.transform import ILoadTransform, ITransform, transform_decorator
+from core.models.extract import IExtractor
+from core.models.load import ILoader
+from core.models.transform import ILoadTransform, ITransform
 
 
 class MockExtractor(IExtractor):
 
-    @extract_decorator
     async def extract_data(self) -> ExtractedData:
         return "extracted_data"
 
 
 class MockTransform(ITransform):
 
-    @transform_decorator
     def transform_data(self, data: ExtractedData) -> TransformedData:
         return "transformed_etl_data"
+    
+
+class MockTransformAddSuffix(ITransform):
+    def transform_data(self, data: ExtractedData) -> TransformedData:
+        return f"{data}_suffix"
+
+class MockTransformToUpper(ITransform):
+    def transform_data(self, data: ExtractedData) -> TransformedData:
+        return data.upper()
 
 
 class MockLoadTransform(ILoadTransform):
 
-    @transform_decorator
     def transform_data(self) -> None:
         return None
 
 
 class MockLoad(ILoader):
 
-    @load_decorator
     async def load_data(self, data: ExtractedData | TransformedData) -> None:
-        return
+        return None

@@ -289,7 +289,7 @@ def test_create_pipeline_with_multiple_sources_destinations(
     extractor_plugin_data,
     second_extractor_plugin_data,
     transformer_plugin_data,
-    transformer_plugin_data_2,
+    second_transformer_plugin_data,
     loader_plugin_data,
     second_loader_plugin_data
     ):
@@ -303,7 +303,7 @@ def test_create_pipeline_with_multiple_sources_destinations(
             },
             "transform": {
                 "steps": [
-                    transformer_plugin_data, transformer_plugin_data_2
+                    transformer_plugin_data, second_transformer_plugin_data
                 ]
             },
             "load": {

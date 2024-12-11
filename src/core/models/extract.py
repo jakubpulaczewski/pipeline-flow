@@ -25,21 +25,22 @@ class ExtractResult:
     result: ExtractedData | None = None
     error: Exception | None = None
 
+          
 
 ExtractFunction = Callable[[], ExtractResult]
 
 
-def extract_decorator(extract_function: ExtractFunction) -> ExtractFunction:
+def extract_decorator(id: str, extract_function: ExtractFunction) -> ExtractFunction:
     @wraps(extract_function)
-    async def wrapper(self, *args, **kwargs) -> ExtractResult:
+    async def wrapper(*args, **kwargs) -> ExtractResult:
         try:
-            result = await extract_function(self, *args, **kwargs)
-            return ExtractResult(name=self.id, success=True, result=result)
+            result = await extract_function(*args, **kwargs)
+            return ExtractResult(name=id, success=True, result=result)
 
         except Exception as e:
-            error_message = f"A problem occurred when trying to extract data from {self.id}: {str(e)}"
+            error_message = f"Error during extraction: {e}"
             logger.error(error_message)
-            extract_result = ExtractResult(name=self.id, success=False, error=str(e))
+            extract_result = ExtractResult(name=id, success=False, error=str(e))
             raise ExtractException(error_message, extract_result) from e
 
     return wrapper
@@ -52,7 +53,6 @@ class IExtractor(pyd.BaseModel, ABC):
     config: dict | None = None
 
     @abstractmethod
-    @extract_decorator
     async def extract_data(self) -> ExtractedData:
         """Collects data from a source."""
         raise NotImplementedError(

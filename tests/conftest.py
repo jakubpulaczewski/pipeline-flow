@@ -69,7 +69,7 @@ def transformer_plugin_data():
 
 
 @pytest.fixture
-def transformer_plugin_data_2():
+def second_transformer_plugin_data():
     return {"id": "transformer_id2", "plugin": "mock_transformer_2"}
 
 
@@ -78,9 +78,8 @@ def mock_transformer(transformer_plugin_data):
     return MockTransform(id=transformer_plugin_data['id'])
 
 @pytest.fixture
-def second_mock_transformer(transformer_plugin_data_2):
-    return MockTransform(id=transformer_plugin_data_2['id'])
-
+def second_mock_transformer(second_transformer_plugin_data):
+    return MockTransform(id=second_transformer_plugin_data['id'])
 
 
 @pytest.fixture
@@ -88,9 +87,17 @@ def transform_at_load_plugin_data():
     return {"id": "mock_transform_load_id"}
 
 @pytest.fixture
+def second_transform_at_load_plugin_data():
+    return {"id": "mock_transform_load_id_2"}
+
+
+@pytest.fixture
 def mock_load_transformer(transform_at_load_plugin_data):
     return MockLoadTransform(id=transform_at_load_plugin_data['id'])
 
+@pytest.fixture
+def second_mock_load_transformer(second_transform_at_load_plugin_data):
+    return MockLoadTransform(id=second_transform_at_load_plugin_data['id'])
 
 
 def pipeline_factory(default_config):

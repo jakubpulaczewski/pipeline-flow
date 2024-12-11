@@ -29,17 +29,17 @@ class LoadResult:
 LoadFunction = Callable[[ExtractedData | TransformedData], LoadResult]
 
 
-def load_decorator(load_function: LoadFunction) -> LoadFunction:
+def load_decorator(id: str, load_function: LoadFunction) -> LoadFunction:
     @wraps(load_function)
-    async def wrapper(self, *args, **kwargs) -> LoadResult:
+    async def wrapper(*args, **kwargs) -> LoadResult:
         try:
-            load_function(self, *args, **kwargs)
-            return LoadResult(name=self.id, success=True)
+            await load_function(*args, **kwargs)
+            return LoadResult(name=id, success=True)
 
         except Exception as e:
             error_message = f"A problem occurred when trying to load data to the following destination {self.id}: {str(e)}"
             logger.error(error_message)
-            load_result = LoadResult(name=self.id, success=False, error=str(e))
+            load_result = LoadResult(name=id, success=False, error=str(e))
             raise LoadException(error_message, load_result) from e
 
     return wrapper
@@ -47,11 +47,9 @@ def load_decorator(load_function: LoadFunction) -> LoadFunction:
 
 class ILoader(pyd.BaseModel, ABC):
     """An interface of the Load Step."""
-
     id: str
 
     @abstractmethod
-    @load_decorator
     async def load_data(self, data: ExtractedData | TransformedData) -> None:
         """Load data to a destination."""
         raise NotImplementedError(
