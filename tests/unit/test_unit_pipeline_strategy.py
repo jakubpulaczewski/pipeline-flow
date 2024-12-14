@@ -18,10 +18,13 @@ from core.pipeline_strategy import (
     PipelineStrategy,
     PipelineStrategyFactory
 )
-from core.models.extract import ExtractResult
-from core.models.transform import  TransformResult
-from core.models.load import  LoadResult
-from tests.common.mocks import (
+from core.models.phase_wrappers import (
+    ExtractResult,
+    TransformResult,
+    LoadResult
+)
+
+from tests.resources.mocks import (
     MockTransformAddSuffix,
     MockTransformToUpper
 )

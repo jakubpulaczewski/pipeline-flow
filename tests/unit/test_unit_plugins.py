@@ -1,47 +1,65 @@
 # Standard Imports
+import sys
 from unittest.mock import MagicMock
 
 # Third Party
 import pytest
-import pydantic
 
-from common.type_def import PLUGIN_BASE_CALLABLE
 
 # Project
-from core.models.extract import IExtractor
 from core.models.phases import PipelinePhase
-from plugins.registry import PluginConfig, PluginFactory, PluginLoader
-from tests.common.constants import EXTRACT_PHASE, LOAD_PHASE, ELT, ETL
-from tests.common.mocks import MockExtractor, MockLoad, MockLoadTransform, MockTransform
+from plugins.registry import  PluginFactory, PluginLoader
+from tests.resources.constants import EXTRACT_PHASE
+from tests.resources.mocks import MockExtractor, MockLoadTransform
 
 
-@pytest.fixture(autouse=True)
-def setup_plugin_env():
-    PluginFactory._registry = {}  # Ensure a clean state before each test
-    yield
-    PluginFactory._registry = {}  # Clean up after each test
+
+class TestPluginLoader:
+
+    @pytest.fixture(autouse=True)
+    def plugin_loader(self) -> PluginLoader:
+        self.loader = PluginLoader()
+
+    def test_load_plugin_from_file_new_module(self, mocker) -> None:
+        mock_spec = mocker.patch("importlib.util.spec_from_file_location")
+        mock_module = mocker.patch("importlib.util.module_from_spec")
+        mock_spec.return_value.loader.exec_module = MagicMock()
+
+        plugin = 'new_folder/subfolder/file.py'
+
+        self.loader.load_plugin_from_file(plugin)
 
 
-@pytest.fixture
-def mock_validate_plugins(mocker) -> MagicMock:
-    return mocker.patch.object(PluginLoader, "_validate_plugins")
+        mock_spec.assert_called_once_with("new_folder.subfolder.file", 'new_folder/subfolder/file.py')
+        mock_module.assert_called_once()
+        mock_spec.return_value.loader.exec_module.assert_called_once()
 
 
-@pytest.fixture
-def mock_initialize_plugin(mocker) -> MagicMock:
-    return mocker.patch.object(PluginLoader, "_initialize_plugin")
+    def test_load_plugin_from_file_reload_module(self, mocker) -> None:
+        mock_reload = mocker.patch("importlib.reload")
+
+        plugin = 'plugins/registry.py'
+        self.loader.load_plugin_from_file(plugin)
+
+        print(mock_reload.mock_calls)
+        mock_reload.assert_called_once_with(sys.modules['plugins.registry'])
+
+    
+    def test_load_custom_plugins(self, mocker) -> None:
+        mock_load_plugin = mocker.patch.object(self.loader, "load_plugin_from_file")
+
+        custom_files = {"file1.py", "file2.py"}
+        self.loader.load_custom_plugins(custom_files)
+
+        mock_load_plugin.assert_any_call('file1.py')
+        mock_load_plugin.assert_any_call('file2.py')
+        assert len(mock_load_plugin.mock_calls) == 2
 
 
-@pytest.fixture
-def mock_plugin_phase_mapper(mocker) -> MagicMock:
-    return mocker.patch.object(PluginConfig, "plugin_phase_mapper")
 
 
-@pytest.fixture
-def mock_importlib(mocker) -> MagicMock:
-    return mocker.patch("core.plugins.importlib.import_module")
 
-
+@pytest.mark.usefixtures("plugin_registry_setup")
 class TestPluginFactory:
     """Tests for the PluginFactory class."""
 
@@ -105,117 +123,11 @@ class TestPluginFactory:
         with pytest.raises(ValueError):
             PluginFactory.get(EXTRACT_PHASE, "fake_plugin")
 
-    @staticmethod
-    @pytest.mark.parametrize(
-        "etl_phase",
-        [
-            ("extracttt"),
-            ("transformm"),
-            ("looooad"),
-        ],
-    )
-    def test_validate_invalid_pipeline_phase_name(etl_phase: str) -> None:
-        """Test the validation process by providing an invalid pipeline phase name."""
-
-        with pytest.raises(KeyError):
-            PluginFactory._validate_plugin_registration(etl_phase, MockLoadTransform)
 
     @staticmethod
-    def test_validate_invalid_subclass_plugin_interface(mocker) -> None:
+    def test_validate_invalid_subclass_plugin_interface() -> None:
         """Test the subclass inheritance between the plugin with its base class."""
-        mock_base_class = mocker.patch.object(
-            PipelinePhase, "get_plugin_interface_for_phase", return_value=IExtractor
-        )
 
         with pytest.raises(TypeError):
-            PluginFactory._validate_plugin_registration(EXTRACT_PHASE, MockLoadTransform)
+            PluginFactory._validate_plugin_interface(EXTRACT_PHASE, MockLoadTransform)
 
-        # Check if mocks were called properly
-        mock_base_class.assert_called_once()
-        mock_base_class.assert_called_with(EXTRACT_PHASE)
-
-
-
-# class TestPluginLoader:
-
-#     @staticmethod
-#     def test_validate_invalid_plugins_type() -> None:
-#         with pytest.raises(TypeError):
-#             PluginLoader._validate_plugins(["plugin1", "plugin2"])
-
-#     @staticmethod
-#     def test_validate_invalid_etl_phases() -> None:
-#         plugins = {"INVALID_STAGE": ["fake_extract_plugin"]}
-#         with pytest.raises(ValueError):
-#             PluginLoader._validate_plugins(plugins)
-
-#     @staticmethod
-#     def test_validate_plugins_valid_plugin_type_and_etl_phases() -> None:
-#         plugins = {EXTRACT_PHASE: ["fake_extract_plugin"]}
-#         PluginLoader._validate_plugins(plugins)
-
-#     @staticmethod
-#     def test_initialize_empty_plugin(mock_plugin_phase_mapper) -> None:
-#         mock_plugin_phase_mapper.return_value = {"fake_engine": []}
-
-#         with pytest.raises(ValueError):
-#             loader = PluginLoader(plugins={}, engine="fake_engine")
-#             loader._initialize_plugin(EXTRACT_PHASE, [])
-
-#     @staticmethod
-#     def test_initialize_default_plugin(
-#         mock_plugin_phase_mapper, mock_importlib
-#     ) -> None:
-#         mock_plugin_phase_mapper.return_value = {"fake_engine": ["default_plugin1"]}
-
-#         loader = PluginLoader({}, engine="fake_engine")
-#         loader._initialize_plugin(EXTRACT_PHASE, [])
-
-#         assert mock_importlib.call_count == 1
-#         mock_importlib.assert_called_with("plugins.extract.fake_engine.default_plugin1")
-
-#     @staticmethod
-#     def test_initialize_aditional_plugin(
-#         mock_plugin_phase_mapper, mock_importlib
-#     ) -> None:
-#         mock_plugin_phase_mapper.return_value = {"fake_engine": []}
-
-#         loader = PluginLoader({}, engine="fake_engine")
-#         loader._initialize_plugin(EXTRACT_PHASE, ["fake_extract_plugin"])
-
-#         assert mock_importlib.call_count == 1
-#         mock_importlib.assert_called_with(
-#             "plugins.extract.fake_engine.fake_extract_plugin"
-#         )
-
-#     @staticmethod
-#     def test_loader_to_initialize_empty_plugins(
-#         mock_validate_plugins, mock_initialize_plugin
-#     ) -> None:
-#         loader = PluginLoader(plugins={}, engine="pandas")
-#         loader.loader()
-
-#         mock_validate_plugins.assert_called_once()
-#         assert mock_initialize_plugin.call_count == 0
-
-#     @staticmethod
-#     def test_loader_to_initialize_one_plugin(
-#         mock_validate_plugins, mock_initialize_plugin
-#     ) -> None:
-#         plugins = {EXTRACT_PHASE: ["fake_extract_plugin"]}
-#         loader = PluginLoader(plugins=plugins, engine="pandas")
-#         loader.loader()
-
-#         mock_validate_plugins.assert_called_once()
-#         mock_initialize_plugin.assert_called_once()
-
-#     @staticmethod
-#     def test_loader_to_initialize_many_plugins(
-#         mock_validate_plugins, mock_initialize_plugin
-#     ) -> None:
-#         plugins = {EXTRACT_PHASE: ["fake_extract_plugin"], LOAD_PHASE: ["fake_load_plugin"]}
-#         loader = PluginLoader(plugins=plugins, engine="pandas")
-#         loader.loader()
-
-#         mock_validate_plugins.assert_called_once()
-#         assert mock_initialize_plugin.call_count == 2

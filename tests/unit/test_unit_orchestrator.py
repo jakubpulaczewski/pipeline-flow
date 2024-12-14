@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 # Project Imports
-from core.models.extract import ExtractResult
+from core.models.phase_wrappers import ExtractResult
 from core.models.exceptions import ExtractException
 from core.orchestrator import PipelineOrchestrator
 from core.pipeline_strategy import PipelineType, PipelineStrategyFactory, ETLStrategy

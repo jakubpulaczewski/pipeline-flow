@@ -14,19 +14,27 @@ from common.type_def import ExtractedData, LoadedData, TransformedData
 from common.utils.logger import setup_logger
 
 if TYPE_CHECKING:
-    from core.models.extract import ExtractFunction, ExtractResult
-    from core.models.transform import TransformFunction, TransformResult
-    from core.models.load import LoadFunction, LoadResult
+    from core.models.phase_wrappers import (
+        ExtractFunction,
+        ExtractResult,
+        TransformResult,
+        TransformFunction,
+        LoadResult,
+        LoadFunction
+    )
+
     from core.models.phases import (
         ExtractPhase,
         TransformPhase,
         LoadPhase,
         TransformLoadPhase
     )
+from core.models.phase_wrappers import (
+    extract_decorator,
+    transform_decorator,
+    load_decorator
+)
 
-from core.models.extract import extract_decorator
-from core.models.transform import transform_decorator
-from core.models.load import load_decorator
 from core.models.pipeline import Pipeline, PipelineType
 
 

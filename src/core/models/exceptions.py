@@ -7,9 +7,12 @@ from typing import TYPE_CHECKING
 
 # Project Imports
 if TYPE_CHECKING:
-    from core.models.extract import ExtractResult
-    from core.models.load import LoadResult
-    from core.models.transform import TransformResult
+    from core.models.phase_wrappers import (
+        ExtractResult,
+        TransformResult,
+        LoadResult
+    )
+
 
 
 class ExtractException(Exception):
@@ -39,7 +42,7 @@ class LoadException(Exception):
 
     def __init__(self, message: str, load_result: LoadResult) -> None:
         super().__init__(message)
-        self.load_result = self.load_result
+        self.load_result = load_result
 
     def __str__(self) -> str:
         return f"{super().__str__()}\LoadResult: {self.load_result}"

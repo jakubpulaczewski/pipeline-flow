@@ -9,14 +9,13 @@ import pydantic as pyd
 
 # Project imports
 from core.models.phases import (
+    PhaseInstance,
     PipelinePhase, 
-    PHASE_TYPE,
     ExtractPhase,
     TransformPhase,
     LoadPhase,
     TransformLoadPhase
 )
-
 
 
 @unique
@@ -51,7 +50,7 @@ class Pipeline(pyd.BaseModel):
 
     name: str
     type: PipelineType
-    phases: dict[PipelinePhase, PHASE_TYPE]
+    phases: dict[PipelinePhase, PhaseInstance]
 
     # Optional
     description: str | None = None
