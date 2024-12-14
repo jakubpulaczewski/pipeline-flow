@@ -70,10 +70,10 @@ class YamlParser:
         return self.parsed_yaml.get(YamlAttribute.PIPELINES.value, {})
 
     def get_engine(self: Self) -> str | None:
-        return self.parsed_yaml.get(YamlAttribute.ENGINE.value, None)
+        return self.parsed_yaml.get(YamlAttribute.ENGINE.value, {})
 
     def get_plugins(self: Self) -> str | None:
-        return self.parsed_yaml.get(YamlAttribute.PLUGINS.value, None)
+        return self.parsed_yaml.get(YamlAttribute.PLUGINS.value, {})
 
 
 class PluginParser:
@@ -99,8 +99,8 @@ class PluginParser:
     def get_custom_plugin_files(self) -> set[str]:
         plugin_data = self.plugins_data.get("custom", {})
 
-        # Gather files from directories and individual files
-        files_from_dir = self.get_all_files(plugin_data.get("directories", []))
+        # Gather files from dirs and individual files
+        files_from_dir = self.get_all_files(plugin_data.get("dirs", []))
         files = self.get_all_files(plugin_data.get("files", []))
 
         # Combine both sets of files

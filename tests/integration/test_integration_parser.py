@@ -4,312 +4,370 @@
 import pytest
 
 # Project Imports
-import core.parser as parser
+from core.parser import (
+	YamlParser,
+	PluginParser,
+	PipelineParser
+)
+
 from core.models.pipeline import Pipeline
 from plugins.registry import PluginFactory
 
-from tests.common.constants import (
-    EXTRACT_PHASE, 
-    TRANSFORM_PHASE,
-    LOAD_PHASE,
-    LOAD_TRANSFORM_PHASE
+from tests.resources.constants import (
+	EXTRACT_PHASE, 
+	TRANSFORM_PHASE,
+	LOAD_PHASE,
+	LOAD_TRANSFORM_PHASE
 )
-from tests.common.mocks import MockExtractor, MockTransform, MockLoad, MockLoadTransform
-
-
-@pytest.fixture(autouse=True)
-def plugin_setup():
-    PluginFactory._registry = {}
-    yield
-    PluginFactory._registry = {}
+from tests.resources.mocks import MockExtractor, MockTransform, MockLoad, MockLoadTransform
 
 
 def setup_plugins(plugin_dict):
-    for phase, plugins in plugin_dict.items():
-        for plugin_name, plugin_callable in plugins:
-            PluginFactory.register(phase, plugin_name, plugin_callable)
+	for phase, plugins in plugin_dict.items():
+		for plugin_name, plugin_callable in plugins:
+			PluginFactory.register(phase, plugin_name, plugin_callable)
 
 
-
-def test_parse_etl_without_initialised_plugins() -> None:
-    yaml_str = """
-    pipelines:
-      pipeline1:
-        type: ETL
-        phases:
-          extract:
-            steps:
-              - id: mock_extract1
-                plugin: mock_s3
-          transform:
-            steps:
-              - id: mock_tranformation1
-                plugin: aggregate_sum
-          load:
-            steps:
-              - id: mock_load1
-                plugin: mock_s3
-    """
-
-
-    with pytest.raises(ValueError, match="Plugin class '%s' was not found"):
-        parser.start_parser(yaml_str)
-
-def test_parse_etl_pipeline_with_empty_mandatory_phase() -> None:
-    plugins = {
-        TRANSFORM_PHASE: [("transform_plugin", MockTransform)],
-        LOAD_PHASE: [("load_plugin", MockLoad)],
-    }
-    setup_plugins(plugins)
+class TestIntegrationPluginParser:
     
-    yaml_str = """
-    pipelines:
-      pipeline1:
-        type: ETL
-        phases:
-          transform:
-            steps:
-              - id: mock_tranformation1
-                plugin: transform_plugin
-          load:
-            steps:
-              - id: mock_load1
-                plugin: load_plugin
-    """
+    def test_get_custom_plugin_files_with_only_files(self) -> None:
+        yaml_str = """
+        plugins:
+          custom:
+            files:
+              - /workspaces/workflow/tests/resources/plugins/custom_extractor.py
+              - /workspaces/workflow/tests/resources/plugins/custom_loader.py
+        """
+        yaml_parser = YamlParser(yaml_text=yaml_str)
+        plugin_parser = PluginParser(yaml_parser)
+        result = plugin_parser.get_custom_plugin_files()
+
+        expected = {
+             '/workspaces/workflow/tests/resources/plugins/custom_extractor.py',
+             '/workspaces/workflow/tests/resources/plugins/custom_loader.py'
+        }
+
+        assert result == expected
+
+    def test_get_custom_plugin_files_with_dirs_and_files(self) -> None:
+        yaml_str = """
+        plugins:
+          custom:
+            dirs:
+              - /workspaces/workflow/tests/resources/plugins
+            files:
+              - /workspaces/workflow/tests/resources/plugins/custom_loader.py
+        """
+        yaml_parser = YamlParser(yaml_text=yaml_str)
+        plugin_parser = PluginParser(yaml_parser)
+        result = plugin_parser.get_custom_plugin_files()
+
+        expected = {
+             '/workspaces/workflow/tests/resources/plugins/custom_extractor.py',
+             '/workspaces/workflow/tests/resources/plugins/custom_loader.py'
+        }
+
+        assert result == expected
+
+    def test_get_custom_plugin_fils_empty(self) -> None:
+        yaml_str = """
+        test: 123
+        """
+        yaml_parser = YamlParser(yaml_text=yaml_str)
+        plugin_parser = PluginParser(yaml_parser)
+        result = plugin_parser.get_custom_plugin_files()
+
+        assert result == set()
 
 
-    with pytest.raises(
-        ValueError,
-        match="Validation Failed! Mandatory phase 'PipelinePhase.EXTRACT_PHASE' cannot be empty or missing plugins.",
-    ):
-        parser.start_parser(yaml_str)
+class TestIntegrationPipelineParser:
 
-def test_parse_etl_pipeline_with_only_mandatory_phases() -> None:
+    def test_parse_pipeline_without_registered_plugins(self):
+        yaml_str = """
+        pipelines:
+          pipeline1:
+            type: ETL
+            phases:
+              extract:
+                steps:
+                  - id: mock_extract1
+                    plugin: mock_s3
+              transform:
+                steps:
+                  - id: mock_tranformation1
+                    plugin: aggregate_sum
+              load:
+                steps:
+                  - id: mock_load1
+                    plugin: mock_s3
+        """
 
-    plugins = {
-        EXTRACT_PHASE: [("extractor_plugin", MockExtractor)],
-        LOAD_PHASE: [("load_plugin", MockLoad)],
-    }
-    setup_plugins(plugins)
+        with pytest.raises(ValueError, match="Plugin class was not found for following plugin `mock_s3`."):
+            yaml_parser = YamlParser(yaml_text=yaml_str)
+            pipeline_parser = PipelineParser(yaml_parser)
+            pipeline_parser.parse_pipelines()
+
+
+    def test_parse_etl_pipeline_with_empty_mandatory_phases(self):
+        # Register Plugins
+        plugins = {
+            TRANSFORM_PHASE: [("transform_plugin", MockTransform)],
+            LOAD_PHASE: [("load_plugin", MockLoad)],
+        }
+        setup_plugins(plugins)
+
+
+        yaml_str = """
+        pipelines:
+          pipeline1:
+            type: ETL
+            phases:
+              transform:
+                steps:
+                  - id: mock_tranformation1
+                    plugin: transform_plugin
+              load:
+                steps:
+                  - id: mock_load1
+                    plugin: load_plugin
+        """
+        with pytest.raises(
+            ValueError,
+            match="Validation Failed! Mandatory phase 'PipelinePhase.EXTRACT_PHASE' cannot be empty or missing plugins.",
+        ):
+            yaml_parser = YamlParser(yaml_text=yaml_str)
+            pipeline_parser = PipelineParser(yaml_parser)
+            pipeline_parser.parse_pipelines()
     
-    yaml_str = """
-    pipelines:
-      pipeline1:
-        type: ETL
-        phases:
-          extract:
-            steps:
-              - id: mock_extract1
-                plugin: extractor_plugin
-          load:
-            steps:
-              - id: mock_load1
-                plugin: load_plugin
-    """
+    def test_parse_etl_pipeline_with_only_mandatory_phases(self) -> None:
+        # Register Plugins
+        plugins = {
+            EXTRACT_PHASE: [("extractor_plugin", MockExtractor)],
+            LOAD_PHASE: [("load_plugin", MockLoad)],
+        }
+        setup_plugins(plugins)
+            
+        yaml_str = """
+        pipelines:
+          pipeline1:
+            type: ETL
+            phases:
+              extract:
+                steps:
+                  - id: mock_extract1
+                    plugin: extractor_plugin
+              load:
+                steps:
+                  - id: mock_load1
+                    plugin: load_plugin
+        """
+        yaml_parser = YamlParser(yaml_text=yaml_str)
+        pipeline_parser = PipelineParser(yaml_parser)
+        pipelines = pipeline_parser.parse_pipelines()
 
-    pipelines = parser.start_parser(yaml_str)
-    pipeline = pipelines[0]
+        pipeline = pipelines[0]
 
-    assert len(pipelines) == 1
-    assert isinstance(pipeline, Pipeline)
-    assert pipeline.name == "pipeline1"
-
-
-    assert len(pipeline.extract.steps) == 1
-    assert isinstance(pipeline.extract.steps[0], MockExtractor)
-
-    assert len(pipeline.load.steps) == 1
-    assert isinstance(pipeline.load.steps[0], MockLoad)
-
-
-
-def test_parse_etl_multiple_pipelines() -> None:
-    # Setup Required Plugins
-    plugins = {
-        EXTRACT_PHASE: [
-            ("extract_plugin1", MockExtractor),
-        ],
-        TRANSFORM_PHASE: [
-            ("aggregate_sum_etl", MockTransform)
-        ],
-        LOAD_PHASE: [
-            ("load_plugin1", MockLoad),
-            ("load_plugin2", MockLoad),
-        ],
-    }
-    setup_plugins(plugins)
-
-    yaml_str = """
-    pipelines:
-      pipeline1:
-        type: ETL
-        phases:
-          extract:
-            steps:
-              - id: mock_extract1
-                plugin: extract_plugin1
-          transform:
-            steps:
-              - id: mock_tranformation1
-                plugin: aggregate_sum_etl
-          load:
-            steps:
-              - id: mock_load1
-                plugin: load_plugin1
-      pipeline2:
-        type: ETL
-        phases:
-          extract:
-            steps:
-              - id: mock_extract2
-                plugin: extract_plugin1
-          load:
-            steps:
-              - id: mock_load2
-                plugin: load_plugin2
-    """
-
-    pipelines = parser.start_parser(yaml_str)
-
-    assert len(pipelines) == 2
-    assert isinstance(pipelines[0], Pipeline)
-    assert isinstance(pipelines[1], Pipeline)
-
-    # Pipeline 1
-    assert len(pipelines[0].extract.steps) == 1
-    assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
-
-    assert len(pipelines[0].transform.steps) == 1
-    assert isinstance(pipelines[0].transform.steps[0], MockTransform)
-
-    assert len(pipelines[0].load.steps) == 1
-    assert isinstance(pipelines[0].load.steps[0], MockLoad)
-
-   # Pipeline 2
-    assert len(pipelines[1].extract.steps) == 1
-    assert isinstance(pipelines[1].extract.steps[0], MockExtractor)
-
-    assert len(pipelines[1].load.steps) == 1
-    assert isinstance(pipelines[1].load.steps[0], MockLoad)
+        assert len(pipelines) == 1
+        assert isinstance(pipeline, Pipeline)
+        assert pipeline.name == "pipeline1"
 
 
+        assert len(pipeline.extract.steps) == 1
+        assert isinstance(pipeline.extract.steps[0], MockExtractor)
+
+        assert len(pipeline.load.steps) == 1
+        assert isinstance(pipeline.load.steps[0], MockLoad)
 
 
-def test_parse_elt_pipeline() -> None:
-    # Setup Required Plugins
-    plugins = {
-        EXTRACT_PHASE: [
-            ("extract_plugin1", MockExtractor),
-        ],
-        LOAD_PHASE: [
-            ("load_plugin1", MockLoad),
-        ],        
-        LOAD_TRANSFORM_PHASE: [
-            ("upsert_transformation", MockLoadTransform)
-        ]
+    def test_parse_etl_multiple_pipelines(self) -> None:
+        # Register Required Plugins
+        plugins = {
+            EXTRACT_PHASE: [
+                ("extract_plugin1", MockExtractor),
+            ],
+            TRANSFORM_PHASE: [
+                ("aggregate_sum_etl", MockTransform)
+            ],
+            LOAD_PHASE: [
+                ("load_plugin1", MockLoad),
+                ("load_plugin2", MockLoad),
+            ],
+        }
+        setup_plugins(plugins)
 
-    }
-    setup_plugins(plugins)
+        yaml_str = """
+        pipelines:
+          pipeline1:
+            type: ETL
+            phases:
+              extract:
+                steps:
+                  - id: mock_extract1
+                    plugin: extract_plugin1
+              transform:
+                steps:
+                  - id: mock_tranformation1
+                    plugin: aggregate_sum_etl
+              load:
+                steps:
+                  - id: mock_load1
+                    plugin: load_plugin1
+          pipeline2:
+            type: ETL
+            phases:
+              extract:
+                steps:
+                  - id: mock_extract2
+                    plugin: extract_plugin1
+              load:
+                steps:
+                  - id: mock_load2
+                    plugin: load_plugin2
+        """
 
-    yaml_str = """
-    pipelines:
-      pipeline1:
-        type: ETL
-        phases:
-          extract:
-            steps: 
-              - id: mock_extract1
-                plugin: extract_plugin1
-          load:
-            steps:
-              - id: mock_load1
-                plugin: load_plugin1
-          transform_at_load:
-            steps:
-              - id: mock_tranformation1
-                plugin: upsert_transformation
-    """
+        yaml_parser = YamlParser(yaml_text=yaml_str)
+        pipeline_parser = PipelineParser(yaml_parser)
+        pipelines = pipeline_parser.parse_pipelines()
 
+        assert len(pipelines) == 2
+        assert isinstance(pipelines[0], Pipeline)
+        assert isinstance(pipelines[1], Pipeline)
 
-    pipelines = parser.start_parser(yaml_str)
+        # Pipeline 1
+        assert len(pipelines[0].extract.steps) == 1
+        assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
 
-    assert len(pipelines) == 1
-    assert isinstance(pipelines[0], Pipeline)
-    assert pipelines[0].name == "pipeline1"
+        assert len(pipelines[0].transform.steps) == 1
+        assert isinstance(pipelines[0].transform.steps[0], MockTransform)
 
+        assert len(pipelines[0].load.steps) == 1
+        assert isinstance(pipelines[0].load.steps[0], MockLoad)
 
-    assert len(pipelines[0].extract.steps) == 1
-    assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
+       # Pipeline 2
+        assert len(pipelines[1].extract.steps) == 1
+        assert isinstance(pipelines[1].extract.steps[0], MockExtractor)
 
-    assert len(pipelines[0].load.steps) == 1
-    assert isinstance(pipelines[0].load.steps[0], MockLoad)
-
-
-    assert len(pipelines[0].load_transform.steps) == 1
-    assert isinstance(pipelines[0].load_transform.steps[0], MockLoadTransform)
-
-
-
-
-def test_parse_etlt_pipeline() -> None:
-    # Setup Required Plugins
-    plugins = {
-        EXTRACT_PHASE: [
-            ("extract_plugin1", MockExtractor),
-        ],
-        TRANSFORM_PHASE: [
-            ("transform_plugin", MockTransform)
-        ],
-        LOAD_PHASE: [
-            ("load_plugin1", MockLoad),
-        ],
-        LOAD_TRANSFORM_PHASE: [
-            ("upsert_transformation", MockLoadTransform)
-        ]
-    }
-
-    setup_plugins(plugins)
-
-    yaml_str = """
-    pipelines:
-      pipeline_ETLT:
-        type: ETLT
-        phases:
-          extract:
-            steps: 
-              - id: mock_extract1
-                plugin: extract_plugin1
-          transform:
-            steps:
-              - id: mock_tranformation1
-                plugin: transform_plugin
-          load:
-            steps:
-              - id: mock_load1
-                plugin: load_plugin1
-          transform_at_load:
-            steps:
-              - id: mock_tranformation1
-                plugin: upsert_transformation
-    """
-
-    pipelines = parser.start_parser(yaml_str)
-
-    assert len(pipelines) == 1
-    assert isinstance(pipelines[0], Pipeline)
-    assert pipelines[0].name == "pipeline_ETLT"
+        assert len(pipelines[1].load.steps) == 1
+        assert isinstance(pipelines[1].load.steps[0], MockLoad)
 
 
-    assert len(pipelines[0].extract.steps) == 1
-    assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
+    def test_parse_elt_pipeline(self) -> None:
+        # Register Required Plugins
+        plugins = {
+            EXTRACT_PHASE: [
+                ("extract_plugin1", MockExtractor),
+            ],
+            LOAD_PHASE: [
+                ("load_plugin1", MockLoad),
+            ],        
+            LOAD_TRANSFORM_PHASE: [
+                ("upsert_transformation", MockLoadTransform)
+            ]
 
-    assert len(pipelines[0].transform.steps) == 1
-    assert isinstance(pipelines[0].transform.steps[0], MockTransform)
+        }
+        setup_plugins(plugins)
 
-    assert len(pipelines[0].load.steps) == 1
-    assert isinstance(pipelines[0].load.steps[0], MockLoad)
+        yaml_str = """
+        pipelines:
+          pipeline1:
+            type: ETL
+            phases:
+              extract:
+                steps: 
+                  - id: mock_extract1
+                    plugin: extract_plugin1
+              load:
+                steps:
+                  - id: mock_load1
+                    plugin: load_plugin1
+              transform_at_load:
+                steps:
+                  - id: mock_tranformation1
+                    plugin: upsert_transformation
+        """
+
+        yaml_parser = YamlParser(yaml_text=yaml_str)
+        pipeline_parser = PipelineParser(yaml_parser)
+        pipelines = pipeline_parser.parse_pipelines()
+
+        assert len(pipelines) == 1
+        assert isinstance(pipelines[0], Pipeline)
+        assert pipelines[0].name == "pipeline1"
 
 
-    assert len(pipelines[0].load_transform.steps) == 1
-    assert isinstance(pipelines[0].load_transform.steps[0], MockLoadTransform)
+        assert len(pipelines[0].extract.steps) == 1
+        assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
+
+        assert len(pipelines[0].load.steps) == 1
+        assert isinstance(pipelines[0].load.steps[0], MockLoad)
+
+
+        assert len(pipelines[0].load_transform.steps) == 1
+        assert isinstance(pipelines[0].load_transform.steps[0], MockLoadTransform)
+
+
+
+    def test_parse_etlt_pipeline(self) -> None:
+        # Setup Required Plugins
+        plugins = {
+            EXTRACT_PHASE: [
+                ("extract_plugin1", MockExtractor),
+            ],
+            TRANSFORM_PHASE: [
+                ("transform_plugin", MockTransform)
+            ],
+            LOAD_PHASE: [
+                ("load_plugin1", MockLoad),
+            ],
+            LOAD_TRANSFORM_PHASE: [
+                ("upsert_transformation", MockLoadTransform)
+            ]
+        }
+
+        setup_plugins(plugins)
+
+        yaml_str = """
+        pipelines:
+          pipeline_ETLT:
+            type: ETLT
+            phases:
+              extract:
+                steps: 
+                  - id: mock_extract1
+                    plugin: extract_plugin1
+              transform:
+                steps:
+                  - id: mock_tranformation1
+                    plugin: transform_plugin
+              load:
+                steps:
+                  - id: mock_load1
+                    plugin: load_plugin1
+              transform_at_load:
+                steps:
+                  - id: mock_tranformation1
+                    plugin: upsert_transformation
+        """
+
+        yaml_parser = YamlParser(yaml_text=yaml_str)
+        pipeline_parser = PipelineParser(yaml_parser)
+        pipelines = pipeline_parser.parse_pipelines()
+
+        assert len(pipelines) == 1
+        assert isinstance(pipelines[0], Pipeline)
+        assert pipelines[0].name == "pipeline_ETLT"
+
+
+        assert len(pipelines[0].extract.steps) == 1
+        assert isinstance(pipelines[0].extract.steps[0], MockExtractor)
+
+        assert len(pipelines[0].transform.steps) == 1
+        assert isinstance(pipelines[0].transform.steps[0], MockTransform)
+
+        assert len(pipelines[0].load.steps) == 1
+        assert isinstance(pipelines[0].load.steps[0], MockLoad)
+
+
+        assert len(pipelines[0].load_transform.steps) == 1
+        assert isinstance(pipelines[0].load_transform.steps[0], MockLoadTransform)
 
