@@ -8,13 +8,13 @@ import pytest
 
 # Project
 from core.models.phases import PipelinePhase
-from plugins.registry import  PluginFactory, PluginLoader
+from plugins.registry import PluginFactory, PluginLoader
 from tests.resources.constants import EXTRACT_PHASE
 from tests.resources.mocks import MockExtractor, MockLoadTransform
 
 
 
-class TestPluginLoader:
+class TestUnitPluginLoader:
 
     @pytest.fixture(autouse=True)
     def plugin_loader(self) -> PluginLoader:
@@ -60,7 +60,7 @@ class TestPluginLoader:
 
 
 @pytest.mark.usefixtures("plugin_registry_setup")
-class TestPluginFactory:
+class TestUnitPluginFactory:
     """Tests for the PluginFactory class."""
 
     @staticmethod

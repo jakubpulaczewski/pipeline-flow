@@ -1,39 +1,52 @@
+# Standard Imports
 
-# This would need to be changed here.
-import plugins # This will automatically register built-in plugins
+# Third Party
+import pytest
+from plugins.registry import PluginLoader, PluginFactory
+from core.models.phases import PipelinePhase, IExtractor, ILoader
 
-from tests.resources.plugins.custom_extractor import CustomExtractor
+# Project
 
-# @pytest.fixture
-# def mock_load_plugin_from_file(mocker) -> MagicMock:
-#     return mocker.patch('plugins.registry.load_plugin_from_file')
-# def test_load_plugins_from_path_using_dir(mock_load_plugin_from_file, custom_plugin_directory) -> None:
-#     load_plugins_from_path([custom_plugin_directory])
+@pytest.mark.usefixtures("plugin_registry_setup")
+class TestIntegrationPluginLoader:
+    
+    @pytest.fixture(autouse=True)
+    def plugin_loader(self) -> PluginLoader:
+        self.loader = PluginLoader()
 
-#     print(mock_load_plugin_from_file.mock_calls)
-#     assert len(mock_load_plugin_from_file.mock_calls) == 2
-#     assert call('tests/resources/plugins/custom_extractor.py') in mock_load_plugin_from_file.mock_calls
-#     assert call('tests/resources/plugins/custom_loader.py') in mock_load_plugin_from_file.mock_calls
+    @pytest.mark.asyncio
+    async def test_load_custom_single_plugin(self):
+        # Ensure the registry is empty before loading the plugin
+        assert PluginFactory._registry == {}
+        
+        # Load the custom plugin
+        plugin = {'tests/resources/plugins/custom_extractor.py'}
+        self.loader.load_custom_plugins(plugin)
+
+        # Get the loaded custom plugin and run extract data
+        plugin_class = PluginFactory._registry[PipelinePhase.EXTRACT_PHASE]["custom_extract"]
+        extracted_data = await plugin_class(id='custom_plugin').extract_data()
 
 
-# def test_load_plugins_from_path_using_file(mock_load_plugin_from_file, custom_plugin_file_path) -> None:
+        assert issubclass(plugin_class, IExtractor)
+        assert extracted_data == 'Pandas S3 Loaded Data'
 
-#     load_plugins_from_path([custom_plugin_file_path])
+    
+    def test_load_custom_multiple_plugins(self):
+        # Ensure the registry is empty before loading the plugin
+        assert PluginFactory._registry == {}
 
-#     mock_load_plugin_from_file.assert_called_once_with('tests/resources/plugins/custom_extractor.py')
+        # Load the custom plugin
+        plugins = {
+             '/workspaces/workflow/tests/resources/plugins/custom_extractor.py',
+             '/workspaces/workflow/tests/resources/plugins/custom_loader.py'
+        }
+        self.loader.load_custom_plugins(plugins)
+
+        # Get the custom plugins
+        extractor_plugin = PluginFactory._registry[PipelinePhase.EXTRACT_PHASE]["custom_extract"]
+        loader_plugin = PluginFactory._registry[PipelinePhase.LOAD_PHASE]["custom_load"]
 
 
-# @pytest.mark.asyncio
-# async def test_load_plugin_from_file_success(custom_plugin_file_path) -> None:
-#     # Register the dynamically loaded module under a consistent name
-#     load_plugin_from_file(custom_plugin_file_path)
-
-#     plugin_class = PluginFactory._registry[PipelinePhase.EXTRACT_PHASE]["custom_extract"]
-#     extracted_data = await plugin_class(id='custom_plugin').extract_data()
-
-#     # Compare classes by their full-qualified name
-#     assert plugin_class.__module__ == CustomExtractor.__module__
-#     assert plugin_class.__name__ == CustomExtractor.__name__
-#     assert issubclass(plugin_class, IExtractor)
-
-#     assert extracted_data == 'Pandas S3 Loaded Data'
+        assert issubclass(extractor_plugin, IExtractor)
+        assert issubclass(loader_plugin, ILoader)

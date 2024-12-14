@@ -40,8 +40,11 @@ class PluginLoader:
     @staticmethod
     def load_plugin_from_file(plugin_file: str) -> None:
         # Get the module name from the file and remove .py extension
-        fq_module_name = plugin_file.replace(os.sep, '.')[:-3]  
-
+        if plugin_file.startswith('/'):
+            fq_module_name = plugin_file.replace(os.sep, '.')[1:-3]  
+        else:
+            fq_module_name =  plugin_file.replace(os.sep, '.')[:-3]  
+        
         # Check if the module is already loaded to avoid re-importing
         if fq_module_name not in sys.modules:
             logger.debug(f"Loading module {fq_module_name}")

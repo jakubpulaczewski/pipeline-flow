@@ -35,16 +35,16 @@ class TestIntegrationPluginParser:
         plugins:
           custom:
             files:
-              - /workspaces/workflow/tests/resources/plugins/custom_extractor.py
-              - /workspaces/workflow/tests/resources/plugins/custom_loader.py
+              - tests/resources/plugins/custom_extractor.py
+              - tests/resources/plugins/custom_loader.py
         """
         yaml_parser = YamlParser(yaml_text=yaml_str)
         plugin_parser = PluginParser(yaml_parser)
         result = plugin_parser.get_custom_plugin_files()
 
         expected = {
-             '/workspaces/workflow/tests/resources/plugins/custom_extractor.py',
-             '/workspaces/workflow/tests/resources/plugins/custom_loader.py'
+             'tests/resources/plugins/custom_extractor.py',
+             'tests/resources/plugins/custom_loader.py'
         }
 
         assert result == expected
@@ -54,17 +54,17 @@ class TestIntegrationPluginParser:
         plugins:
           custom:
             dirs:
-              - /workspaces/workflow/tests/resources/plugins
+              - tests/resources/plugins
             files:
-              - /workspaces/workflow/tests/resources/plugins/custom_loader.py
+              - tests/resources/plugins/custom_loader.py
         """
         yaml_parser = YamlParser(yaml_text=yaml_str)
         plugin_parser = PluginParser(yaml_parser)
         result = plugin_parser.get_custom_plugin_files()
 
         expected = {
-             '/workspaces/workflow/tests/resources/plugins/custom_extractor.py',
-             '/workspaces/workflow/tests/resources/plugins/custom_loader.py'
+             'tests/resources/plugins/custom_extractor.py',
+             'tests/resources/plugins/custom_loader.py'
         }
 
         assert result == expected
