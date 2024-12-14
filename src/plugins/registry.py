@@ -1,38 +1,95 @@
 # Standard Imports
 from __future__ import annotations
 
-import importlib
-from typing import Type, TYPE_CHECKING
+import os
+import sys
+import importlib.util
 
 # Third Party Imports
 
 # Project Imports
-from common.type_def import PLUGIN_BASE_CALLABLE
+
+
 from common.utils.logger import setup_logger
 
-import core.models.phases as phase
-#from core.models.phases import PipelinePhase
+# import core.models.phases as phase
+from core.models.phases import (
+    PipelinePhase, 
+    PLUGIN_PHASE_INTERFACE_MAP, 
+    PluginCallable
+)
 
 
 logger = setup_logger(__name__)
 
 PLUGIN_NAME = str
 
+# Decorator for plugin registration
+def plugin(plugin_phase: str | PipelinePhase, plugin_name: str):
+
+    if (type(plugin_phase) == str):
+        plugin_phase = PipelinePhase(plugin_phase)
+
+    def decorator(plugin_class):
+        PluginFactory.register(plugin_phase, plugin_name, plugin_class)
+        return plugin_class
+    return decorator
+
+class PluginLoader:
+
+    @staticmethod
+    def load_plugin_from_file(plugin_file: str) -> None:
+        # Get the module name from the file and remove .py extension
+        fq_module_name = plugin_file.replace(os.sep, '.')[:-3]  
+
+        # Check if the module is already loaded to avoid re-importing
+        if fq_module_name not in sys.modules:
+            logger.debug(f"Loading module {fq_module_name}")
+            spec = importlib.util.spec_from_file_location(fq_module_name, plugin_file)
+            plugin_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(plugin_module)
+            logger.info(f"Loaded plugin from {plugin_file} as {fq_module_name}")
+        else:
+            importlib.reload(sys.modules[fq_module_name])
+            logger.debug(f"Module {fq_module_name} has been re-loaded.")
+
+
+    def load_custom_plugins(self, custom_files: set[str]) -> None:
+        logger.info(f"Planning to load all custom files: {custom_files}")
+        for custom_file in custom_files:
+            self.load_plugin_from_file(custom_file)
+
+        logger.info("Loaded all custom plugins.")
+            
+        
+    def load_community_plugins(self):
+        ...
+    # custom_plugin_files = self.get_custom_plugin_files()
+
+    # for path in custom_plugin_files:
+    #      self.load_plugin_from_file(path)       
+            
+            
+
+
+class PluginValidator:
+    # TODO: TO implmenent some of kind validaotr
+    ...
 
 class PluginFactory:
     """A Plugin Factory that dynamically registers, removes and fetches plugins.
 
-    Registry example: {'extract': {'s3': S3Plugin}}
+    Registry example: {EXTRACT_PHASE: {'s3': S3Plugin}}
     """
 
-    _registry: dict[phase.PipelinePhase, dict[PLUGIN_NAME, PLUGIN_BASE_CALLABLE]] = {}
+    _registry: dict[PipelinePhase, dict[PLUGIN_NAME, PluginCallable]] = {}
 
     @staticmethod
-    def _validate_plugin_registration(
-        pipeline_phase: phase.PipelinePhase, plugin_class: PLUGIN_BASE_CALLABLE
+    def _validate_plugin_interface(
+        pipeline_phase: PipelinePhase, plugin_class: PluginCallable
     ):
-        expected_inteface = phase.PipelinePhase.get_plugin_interface_for_phase(pipeline_phase)
-
+        expected_inteface = PLUGIN_PHASE_INTERFACE_MAP.get(pipeline_phase, None)
+                                                            
         if not expected_inteface:
             raise ValueError("No interface defined for phase %s", pipeline_phase)
 
@@ -44,13 +101,13 @@ class PluginFactory:
     @classmethod
     def register(
         cls,
-        pipeline_phase: phase.PipelinePhase,
+        pipeline_phase: PipelinePhase,
         plugin: str,
-        plugin_class: PLUGIN_BASE_CALLABLE,
+        plugin_class: PluginCallable,
     ) -> bool:
         """Regisers a plugin for a given Pipeline type and plugin."""
         # Validates the plugin implements the correct interface for the given phrase.
-        cls._validate_plugin_registration(pipeline_phase, plugin_class)
+        cls._validate_plugin_interface(pipeline_phase, plugin_class)
 
         # Initialise the Pipeline phase in the registry.
         if pipeline_phase not in cls._registry:
@@ -73,7 +130,7 @@ class PluginFactory:
         return True
 
     @classmethod
-    def remove(cls, pipeline_phase: phase.PipelinePhase, plugin: str) -> bool:
+    def remove(cls, pipeline_phase: PipelinePhase, plugin: str) -> bool:
         """Remove a plugin for a given Pipeline type and plugin."""
         if pipeline_phase in cls._registry and plugin in cls._registry[pipeline_phase]:
             del cls._registry[pipeline_phase][plugin]
@@ -90,115 +147,12 @@ class PluginFactory:
 
     @classmethod
     def get(
-        cls, pipeline_phase: phase.PipelinePhase, plugin: str
-    ) -> PLUGIN_BASE_CALLABLE:
+        cls, pipeline_phase: PipelinePhase, plugin: str
+    ) -> PluginCallable:
         """Retrieve a plugin for a given ETL type and plugin."""
         etl_class = cls._registry.get(pipeline_phase, {}).get(plugin, None)
 
         if not etl_class:
-            raise ValueError("Plugin class '%s' was not found", etl_class)
+            raise ValueError("Plugin class was not found for following plugin `{}`.".format(plugin))
         logger.debug("Plugin class '%s' has been successfully retrieved.", etl_class)
         return etl_class
-
-
-class PluginConfig:
-    """A config plugin class that contains default Plugins"""
-
-    _DEFAULT_EXTRACT_PLUGINS = {"pandas": ["s3"]}
-    _DEFAULT_LOAD_PLUGINS = {"pandas": ["s3"]}
-
-    # Mapping Pipeline phases to their respective default plugins
-
-
-    @staticmethod
-    def plugin_phase_mapper(pipeline_phase: str) -> dict[str, list[str]] | None:
-        
-        _STAGE_PLUGIN_MAP = {
-            phase.PipelinePhase.EXTRACT_PHASE: PluginConfig._DEFAULT_EXTRACT_PLUGINS,
-            phase.PipelinePhase.LOAD_PHASE: PluginConfig._DEFAULT_LOAD_PLUGINS,
-        }
-        return _STAGE_PLUGIN_MAP.get(pipeline_phase.lower())
-
-
-class PluginLoader:
-    ...
-#     """A plugin loader class that initialiazes plugins at run time.
-
-#     An example of plugins using yaml syntax:
-
-#     plugins:
-#         extract: [s3]
-#         load: [s3, jdbc]
-#     """
-
-#     def __init__(self, plugins: dict[str, list[str]], engine: str) -> None:
-#         self._validate_plugins(plugins)
-#         self.plugins = plugins
-#         self.engine = engine
-
-#     @staticmethod
-#     def _validate_plugins(plugins: dict[str, list[str]]) -> None:
-#         if not isinstance(plugins, dict):
-#             logger.error(
-#                 "Invalid type for 'plugins': expected 'dict', got '%s'",
-#                 type(plugins).__name__,
-#             )
-#             raise TypeError(
-#                 f"Expected plugins to be a dict, got {type(plugins).__name__}"
-#             )
-
-#         allowed_phases = {phase.PipelinePhase.EXTRACT_PHASE, phase.PipelinePhase.LOAD_PHASE}
-
-#         if not all(key in allowed_phases for key in plugins.keys()):
-#             err_message = "Plugins must only contain 'EXTRACT' and 'LOAD' keys."
-#             logger.error(err_message)
-#             raise ValueError(err_message)
-
-#     def _initialize_plugin(self, phase: str, plugin_list: list[str]) -> None:
-#         """Initializes plugin modules for a given ETL phase."""
-#         logger.info(
-#             "Initializing plugin list %s for ETL phase %s with engine %s",
-#             plugin_list,
-#             phase,
-#             self.engine,
-#         )
-
-#         default_plugins = PluginConfig.plugin_phase_mapper(phase)[self.engine]
-#         combined_plugins = set(default_plugins + plugin_list)
-
-#         if not combined_plugins:
-#             raise ValueError("No plugins to load for phase {}".format(phase))
-
-#         for plugin in combined_plugins:
-#             try:
-#                 module = importlib.import_module(
-#                     f"plugins.{phase}.{self.engine}.{plugin}"
-#                 )
-#                 module.initialize()
-#             except ModuleNotFoundError:
-#                 logger.error(
-#                     "Plugin module not found: plugins.%s.%s.%s",
-#                     phase,
-#                     self.engine,
-#                     plugin,
-#                 )
-#                 raise
-
-#         logger.info("All plugins have been initialized.")
-
-#     def loader(self) -> None:
-#         """Load the plugins defined in the plugins list."""
-#         # For each phase in plugins, initialize the plugins for that phase.
-#         for phase, plugin_list in self.plugins.items():
-#             self._initialize_plugin(phase.lower(), plugin_list)
-
-
-class PluginModuleInterface:
-    """A plugin has a single function called initialize."""
-
-    @staticmethod
-    def initialize() -> None:
-        """initialize the plugin module."""
-        raise NotImplementedError(
-            "The method has not been implemented. You must implement it in your python module."
-        )
