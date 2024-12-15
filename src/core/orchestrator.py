@@ -2,7 +2,7 @@
 import asyncio
 
 # Project Imports
-from common.utils.logger import setup_logger
+from common.logger import setup_logger
 from core.models.pipeline import Pipeline
 from core.pipeline_strategy import PipelineStrategyFactory
 
@@ -15,8 +15,8 @@ logger = setup_logger(__name__)
 class PipelineOrchestrator:
     """Emphasizes the role of the class in executing the pipelines."""
 
-    def __init__(self, concurrency: int = 2):
-        self.concurrency = concurrency  # TODO: set to something
+    def __init__(self, concurrency: int = 1):
+        self.concurrency = concurrency
         self.pipeline_queue = asyncio.Queue()
 
 

@@ -8,7 +8,7 @@ from typing import Callable
 # Third Party Imports
 from common.type_def import ExtractedData, TransformedData
     
-from common.utils.logger import setup_logger
+from common.logger import setup_logger
 from core.models.exceptions import (
     ExtractException,
     LoadException,

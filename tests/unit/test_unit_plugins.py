@@ -59,7 +59,6 @@ class TestUnitPluginLoader:
 
 
 
-@pytest.mark.usefixtures("plugin_registry_setup")
 class TestUnitPluginFactory:
     """Tests for the PluginFactory class."""
 

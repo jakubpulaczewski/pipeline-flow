@@ -7,7 +7,7 @@ from core.models.phases import PipelinePhase, IExtractor, ILoader
 
 # Project
 
-@pytest.mark.usefixtures("plugin_registry_setup")
+
 class TestIntegrationPluginLoader:
     
     @pytest.fixture(autouse=True)

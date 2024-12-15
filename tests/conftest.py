@@ -11,15 +11,21 @@ from core.models.phases import (
     TransformLoadPhase,
     TransformPhase,
 )
-
 from core.models.pipeline import Pipeline
+from plugins.registry import  PluginFactory
 
-from tests.common.mocks import (
+from tests.resources.mocks import (
     MockExtractor, 
     MockLoad, 
     MockTransform, 
     MockLoadTransform
 )
+@pytest.fixture(autouse=True)
+def plugin_registry_setup():
+    PluginFactory._registry = {}  # Ensure a clean state before each test
+    yield
+    PluginFactory._registry = {}  # Clean up after each test
+
 
 @pytest.fixture
 def extractor_plugin_data():

@@ -77,7 +77,7 @@ class TestIntegrationPluginParser:
         plugin_parser = PluginParser(yaml_parser)
         result = plugin_parser.get_custom_plugin_files()
 
-        assert result == set()
+        assert result == None
 
 
 class TestIntegrationPipelineParser:

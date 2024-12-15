@@ -10,9 +10,8 @@ import importlib.util
 # Project Imports
 
 
-from common.utils.logger import setup_logger
-
-# import core.models.phases as phase
+from common.utils import SingletonMeta
+from common.logger import setup_logger
 from core.models.phases import (
     PipelinePhase, 
     PLUGIN_PHASE_INTERFACE_MAP, 
@@ -66,11 +65,7 @@ class PluginLoader:
             
         
     def load_community_plugins(self):
-        ...
-    # custom_plugin_files = self.get_custom_plugin_files()
-
-    # for path in custom_plugin_files:
-    #      self.load_plugin_from_file(path)       
+        raise NotImplementedError("Will be implemented in the future.")   
             
             
 
@@ -79,7 +74,7 @@ class PluginValidator:
     # TODO: TO implmenent some of kind validaotr
     ...
 
-class PluginFactory:
+class PluginFactory(metaclass=SingletonMeta):
     """A Plugin Factory that dynamically registers, removes and fetches plugins.
 
     Registry example: {EXTRACT_PHASE: {'s3': S3Plugin}}

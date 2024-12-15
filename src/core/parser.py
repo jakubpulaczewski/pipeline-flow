@@ -1,6 +1,6 @@
 # Standard Imports
 from __future__ import annotations
-from typing import TYPE_CHECKING,  Self
+from typing import  Self
 from enum import Enum
 
 import os
@@ -19,16 +19,22 @@ from core.models.phases import (
 )
 
 from plugins.registry import PluginFactory
-from common.utils.logger import setup_logger
+from common.logger import setup_logger
 
 
 logger = setup_logger(__name__)
 
+DEFAULT_CONCURRENCY = 2
 
 class YamlAttribute(Enum):
     PIPELINES = "pipelines"
     PLUGINS = "plugins"
     ENGINE = "engine"
+    CONCURRENCY = "concurrency"
+
+class YamlConfig:
+    ...
+
 
 
 class YamlParser:
@@ -46,38 +52,39 @@ class YamlParser:
         except yaml.YAMLError as e:
             raise yaml.YAMLError(f"Invalid YAML file: {e}")
 
-    @staticmethod
-    def parse_yaml_file(file_path: str) -> dict:
+    def parse_yaml_file(self, file_path: str) -> dict:
         try:
             with open(file_path, "r") as file:
-                return YamlParser.parse_yaml_text(file)
+                return self.parse_yaml_text(file)
 
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
 
-    @staticmethod
-    def parse_yaml(yaml_text: str = None, file_path: str = None):
+    def parse_yaml(self, yaml_text: str = None, file_path: str = None):
         if file_path:
-            return YamlParser.parse_yaml_file(file_path)
+            return self.parse_yaml_file(file_path)
         elif yaml_text:
-            return YamlParser.parse_yaml_text(yaml_text)
+            return self.parse_yaml_text(yaml_text)
 
         raise ValueError("Either `yaml_text` or `file_path` must be provided")
 
 
-    def get_pipelines_data(self) -> dict:
+    def get_pipelines_data(self: Self) -> dict:
         """Return the 'pipelines' section from the parsed YAML."""
         return self.parsed_yaml.get(YamlAttribute.PIPELINES.value, {})
-
-    def get_engine(self: Self) -> str | None:
-        return self.parsed_yaml.get(YamlAttribute.ENGINE.value, {})
 
     def get_plugins(self: Self) -> str | None:
         return self.parsed_yaml.get(YamlAttribute.PLUGINS.value, {})
 
+    # TODO: TO delete.
+    # def get_engine(self: Self) -> str | None:
+    #     return self.parsed_yaml.get(YamlAttribute.ENGINE.value, {})
+        
+    # def get_concurrency(self: Self) -> int:
+    #     return self.parsed_yaml.get(YamlAttribute.CONCURRENCY.value, DEFAULT_CONCURRENCY)
 
 class PluginParser:
-    def __init__(self, yaml_parser: YamlParser):
+    def __init__(self, yaml_parser: YamlParser) -> None:
         self.yaml_parser = yaml_parser
         self.plugins_data = yaml_parser.get_plugins()
 
@@ -98,7 +105,10 @@ class PluginParser:
 
     def get_custom_plugin_files(self) -> set[str]:
         plugin_data = self.plugins_data.get("custom", {})
-
+        if not plugin_data:
+            logger.debug("No custom plugins found in YAML.")
+            return None
+        
         # Gather files from dirs and individual files
         files_from_dir = self.get_all_files(plugin_data.get("dirs", []))
         files = self.get_all_files(plugin_data.get("files", []))
@@ -106,24 +116,9 @@ class PluginParser:
         # Combine both sets of files
         return files_from_dir.union(files)
 
-    # def gest_community_plugin_files(self) -> set[str]:
-    #     plugin_data = self.plugins_data.get("community", {})
-
-    #     result = {}
-
-    #     for str_phase, plugin_list in plugin_data.items():
-    #         phase = PipelinePhase(str_phase)
+    def gest_community_plugin_files(self) -> set[str]:
+        raise NotImplementedError("This will be implemented.")
             
-    #         if phase == PipelinePhase.TRANSFORM_PHASE:
-    #             result[phase] = f"community_plugins.transform.{self.yaml_parser.get_engine()}"
-    #         else:
-    #             result[phase] = plugin_list
-
-            
-
-
-
-
 
 class PipelineParser:
 
@@ -167,7 +162,7 @@ class PipelineParser:
         phase_class = PHASE_CLASS_MAP.get(phase_name)
 
         if not phase_class:
-            return ValueError("Unknown phase: %s", phase_name)
+            raise ValueError(f"Unknown phase: {phase_name}")
         return phase_class
 
 

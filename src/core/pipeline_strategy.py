@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 # Project Imports
 from common.type_def import ExtractedData, LoadedData, TransformedData
-from common.utils.logger import setup_logger
+from common.logger import setup_logger
 
 if TYPE_CHECKING:
     from core.models.phase_wrappers import (
