@@ -56,6 +56,10 @@ class TestUnitPluginLoader:
         assert len(mock_load_plugin.mock_calls) == 2
 
 
+    def test_load_core_engine_transformations(self) -> None:
+        self.loader.load_core_engine_transformations('native')
+
+        assert len(PluginFactory._registry[PipelinePhase.TRANSFORM_PHASE].keys()) > 0
 
 
 

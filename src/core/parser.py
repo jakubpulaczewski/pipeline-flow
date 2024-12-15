@@ -20,21 +20,28 @@ from core.models.phases import (
 
 from plugins.registry import PluginFactory
 from common.logger import setup_logger
+from common.utils import SingletonMeta
 
 
 logger = setup_logger(__name__)
 
 DEFAULT_CONCURRENCY = 2
+DEFAULT_ENGINE = 'native'
+
+class YamlConfig(metaclass=SingletonMeta):
+    engine: str
+    concurrency: int
+
+    def __init__(self, engine: str = DEFAULT_ENGINE, concurrency: int = DEFAULT_CONCURRENCY):
+        self.engine = engine
+        self.concurrency = concurrency
+
 
 class YamlAttribute(Enum):
     PIPELINES = "pipelines"
     PLUGINS = "plugins"
     ENGINE = "engine"
     CONCURRENCY = "concurrency"
-
-class YamlConfig:
-    ...
-
 
 
 class YamlParser:
@@ -68,6 +75,17 @@ class YamlParser:
 
         raise ValueError("Either `yaml_text` or `file_path` must be provided")
 
+    def initialize_yaml_config(self):
+        # Create the map of attributes with their values
+        attrs_map = {
+            YamlAttribute.ENGINE.value: self.get_engine(),
+            YamlAttribute.CONCURRENCY.value: self.get_concurrency()
+        }
+
+        # Filter out the None values
+        attrs = {key: value for key, value in attrs_map.items() if value is not None}
+
+        return YamlConfig(**attrs)
 
     def get_pipelines_data(self: Self) -> dict:
         """Return the 'pipelines' section from the parsed YAML."""
@@ -76,12 +94,12 @@ class YamlParser:
     def get_plugins(self: Self) -> str | None:
         return self.parsed_yaml.get(YamlAttribute.PLUGINS.value, {})
 
-    # TODO: TO delete.
-    # def get_engine(self: Self) -> str | None:
-    #     return self.parsed_yaml.get(YamlAttribute.ENGINE.value, {})
+    def get_engine(self: Self) -> str | None:
+        return self.parsed_yaml.get(YamlAttribute.ENGINE.value)
         
-    # def get_concurrency(self: Self) -> int:
-    #     return self.parsed_yaml.get(YamlAttribute.CONCURRENCY.value, DEFAULT_CONCURRENCY)
+    def get_concurrency(self: Self) -> int:
+        return self.parsed_yaml.get(YamlAttribute.CONCURRENCY.value)
+
 
 class PluginParser:
     def __init__(self, yaml_parser: YamlParser) -> None:
@@ -116,7 +134,7 @@ class PluginParser:
         # Combine both sets of files
         return files_from_dir.union(files)
 
-    def gest_community_plugin_files(self) -> set[str]:
+    def get_community_plugin_files(self) -> set[str]:
         raise NotImplementedError("This will be implemented.")
             
 

@@ -10,65 +10,70 @@ from core.models.phase_wrappers import ExtractResult
 from core.models.exceptions import ExtractException
 from core.orchestrator import PipelineOrchestrator
 from core.pipeline_strategy import PipelineType, PipelineStrategyFactory, ETLStrategy
+from core.parser import YamlConfig
 
 
-def test_can_execute_no_depedency(etl_pipeline_factory) -> None:
+@pytest.fixture()
+def orchestrator():
+    config = YamlConfig(engine='native', concurrency=2)
+    return PipelineOrchestrator(config=config)
+
+def test_can_execute_no_depedency(orchestrator, etl_pipeline_factory) -> None:
     job1 = etl_pipeline_factory(name="Job1")
     executed_jobs = set()
 
-    result = PipelineOrchestrator._can_execute(  # pylint: disable=protected-access
+    result = orchestrator._can_execute(  # pylint: disable=protected-access
         job1, executed_jobs
     )
     assert result is True
 
 
-def test_can_execute_one_depedency(etl_pipeline_factory) -> None:
+def test_can_execute_one_depedency(orchestrator, etl_pipeline_factory) -> None:
     job1 = etl_pipeline_factory(name="Job2", needs="Job1")
     executed_jobs = {"Job1"}
 
-    result = PipelineOrchestrator._can_execute(  # pylint: disable=protected-access
+    result = orchestrator._can_execute(  # pylint: disable=protected-access
         job1, executed_jobs
     )
     assert result is True
 
 
-def test_can_execute_multiple_depedencies(etl_pipeline_factory) -> None:
+def test_can_execute_multiple_depedencies(orchestrator, etl_pipeline_factory) -> None:
     job1 = etl_pipeline_factory(name="Job3", needs=["Job1", "Job2"])
     executed_jobs = {"Job1", "Job2"}
 
-    result = PipelineOrchestrator._can_execute(  # pylint: disable=protected-access
+    result = orchestrator._can_execute(  # pylint: disable=protected-access
         job1, executed_jobs
     )
     assert result is True
 
 
-def test_can_execute_one_job_dependency_failure(etl_pipeline_factory) -> None:
+def test_can_execute_one_job_dependency_failure(orchestrator, etl_pipeline_factory) -> None:
     job1 = etl_pipeline_factory(name="Job1", needs=["Job2"])
     executed_jobs = {}
 
-    result = PipelineOrchestrator._can_execute(  # pylint: disable=protected-access
+    result = orchestrator._can_execute(  # pylint: disable=protected-access
         job1, executed_jobs
     )
     assert result is False
 
 
-def test_can_execute_multiple_job_dependencies_failure(etl_pipeline_factory) -> None:
+def test_can_execute_multiple_job_dependencies_failure(orchestrator, etl_pipeline_factory) -> None:
     job1 = etl_pipeline_factory(name="Job3", needs=["Job1", "Job2"])
     executed_jobs = {"Job1"}
 
-    result = PipelineOrchestrator._can_execute(  # pylint: disable=protected-access
+    result = orchestrator._can_execute(  # pylint: disable=protected-access
         job1, executed_jobs
     )
     assert result is False
 
 
 @pytest.mark.asyncio
-async def test_pipeline_queue_producer(etl_pipeline_factory) -> None:
+async def test_pipeline_queue_producer(orchestrator, etl_pipeline_factory) -> None:
     jobs = [
         etl_pipeline_factory(name="Job1"),
         etl_pipeline_factory(name="Job2", needs=["Job1"])
     ]
-    orchestrator = PipelineOrchestrator()
     await orchestrator.pipeline_queue_producer(jobs)
 
     assert orchestrator.pipeline_queue.qsize() == 2
@@ -79,15 +84,14 @@ async def test_pipeline_queue_producer(etl_pipeline_factory) -> None:
 
 
 @pytest.mark.asyncio
-async def test_empty_pipeline_queue_exception() -> None:
-    orchestrator = PipelineOrchestrator()
+async def test_empty_pipeline_queue_exception(orchestrator) -> None:
 
     with pytest.raises(ValueError, match="The Pipeline queue is empty. There is nothing to execute."):
         await orchestrator._execute_pipeline()
 
 
 @pytest.mark.asyncio
-async def test_execute_pipeline_exception(mocker, etl_pipeline_factory) -> None:
+async def test_execute_pipeline_exception(mocker, orchestrator, etl_pipeline_factory) -> None:
     # Setup
     mocker.patch.object(PipelineStrategyFactory, "get_pipeline_strategy", return_value=ETLStrategy)
 
@@ -95,7 +99,6 @@ async def test_execute_pipeline_exception(mocker, etl_pipeline_factory) -> None:
         side_effect=ExtractException("Error during extraction: error123", ExtractResult(name='extractor_id', success=False, error='error123')))
 
     etl_pipeline = etl_pipeline_factory(name="Job1")
-    orchestrator = PipelineOrchestrator()
 
     await orchestrator.pipeline_queue_producer([etl_pipeline])
 
@@ -110,13 +113,12 @@ async def test_execute_pipeline_exception(mocker, etl_pipeline_factory) -> None:
 
 
 @pytest.mark.asyncio
-async def test_etl_pipeline_execution(mocker, etl_pipeline_factory) -> None:
+async def test_etl_pipeline_execution(mocker, orchestrator, etl_pipeline_factory) -> None:
     # Setup
     pipeline_strategy_mock = mocker.patch.object(PipelineStrategyFactory, "get_pipeline_strategy", return_value=ETLStrategy)
     execute_mock = mocker.patch.object(ETLStrategy, "execute", return_value=True)
 
     etl_pipeline = etl_pipeline_factory(name="Job1")
-    orchestrator = PipelineOrchestrator()
 
     await orchestrator.pipeline_queue_producer([etl_pipeline])
     
@@ -144,7 +146,7 @@ async def execute_pipeline_mock(jobs):
 
 
 @pytest.mark.asyncio
-async def test_execute_pipelines_success(mocker, etl_pipeline_factory) -> None:
+async def test_execute_pipelines_success(mocker, orchestrator, etl_pipeline_factory) -> None:
     job1 = etl_pipeline_factory(name="Job1")
     job2 = etl_pipeline_factory(name="Job2")
     job3 = etl_pipeline_factory(name="Job3", needs=["Job1", "Job2"])
@@ -156,7 +158,6 @@ async def test_execute_pipelines_success(mocker, etl_pipeline_factory) -> None:
         new_callable=AsyncMock,
         side_effect=await execute_pipeline_mock(jobs),
     )
-    orchestrator = PipelineOrchestrator()
 
     executed = await orchestrator.execute_pipelines(pipelines=jobs)
 
@@ -171,18 +172,17 @@ async def test_execute_pipelines_success(mocker, etl_pipeline_factory) -> None:
 
 
 @pytest.mark.asyncio
-async def test_execute_pipelines_circular_dependency(etl_pipeline_factory) -> None:
+async def test_execute_pipelines_circular_dependency(orchestrator, etl_pipeline_factory) -> None:
     job1 = etl_pipeline_factory(name="Job1", needs="Job2")
     job2 = etl_pipeline_factory(name="Job2", needs="Job1")
     jobs = [job1, job2]
 
     with pytest.raises(ValueError, match="Circular dependency detected!"):
-        await PipelineOrchestrator().execute_pipelines(pipelines=jobs)
+        await orchestrator.execute_pipelines(pipelines=jobs)
 
 
 @pytest.mark.asyncio
-async def test_execute_pipelines_no_pipelines() -> None:
-    orchestrator = PipelineOrchestrator()
+async def test_execute_pipelines_no_pipelines(orchestrator) -> None:
 
     with pytest.raises(ValueError, match="The Pipeline list is empty. There is nothing to execute."):
         executed = await orchestrator.execute_pipelines(pipelines=[])

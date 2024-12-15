@@ -1,13 +1,13 @@
 # Standard Imports
 import asyncio
 
+# Third Party Imports
+
 # Project Imports
 from common.logger import setup_logger
 from core.models.pipeline import Pipeline
 from core.pipeline_strategy import PipelineStrategyFactory
-
-# Third Party Imports
-
+from core.parser import YamlConfig
 
 logger = setup_logger(__name__)
 
@@ -15,8 +15,8 @@ logger = setup_logger(__name__)
 class PipelineOrchestrator:
     """Emphasizes the role of the class in executing the pipelines."""
 
-    def __init__(self, concurrency: int = 1):
-        self.concurrency = concurrency
+    def __init__(self, config: YamlConfig):
+        self.concurrency = config.concurrency
         self.pipeline_queue = asyncio.Queue()
 
 

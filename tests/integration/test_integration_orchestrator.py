@@ -7,11 +7,13 @@ import pytest
 
 # Project Imports
 from core.orchestrator import PipelineOrchestrator
+from core.parser import YamlConfig
 
 
-@pytest.fixture
+@pytest.fixture()
 def orchestrator():
-    return PipelineOrchestrator()
+    config = YamlConfig(engine='native', concurrency=2)
+    return PipelineOrchestrator(config=config)
 
 
 @pytest.mark.asyncio

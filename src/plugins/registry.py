@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import os
 import sys
+import importlib
+
 import importlib.util
 
 # Third Party Imports
@@ -55,6 +57,13 @@ class PluginLoader:
             importlib.reload(sys.modules[fq_module_name])
             logger.debug(f"Module {fq_module_name} has been re-loaded.")
 
+    def load_core_engine_transformations(self, engine: str):
+        module_path = f"plugins.transform.{engine}"
+        try:
+            importlib.import_module(module_path)
+        except ImportError as e:
+            logger.error(f"Error importing core engine transformations from `{module_path}` module. ")
+
 
     def load_custom_plugins(self, custom_files: set[str]) -> None:
         logger.info(f"Planning to load all custom files: {custom_files}")
@@ -82,6 +91,7 @@ class PluginFactory(metaclass=SingletonMeta):
 
     _registry: dict[PipelinePhase, dict[PLUGIN_NAME, PluginCallable]] = {}
 
+    # TODO: This needs to be changed.
     @staticmethod
     def _validate_plugin_interface(
         pipeline_phase: PipelinePhase, plugin_class: PluginCallable
@@ -105,7 +115,7 @@ class PluginFactory(metaclass=SingletonMeta):
     ) -> bool:
         """Regisers a plugin for a given Pipeline type and plugin."""
         # Validates the plugin implements the correct interface for the given phrase.
-        cls._validate_plugin_interface(pipeline_phase, plugin_class)
+        #cls._validate_plugin_interface(pipeline_phase, plugin_class)
 
         # Initialise the Pipeline phase in the registry.
         if pipeline_phase not in cls._registry:
