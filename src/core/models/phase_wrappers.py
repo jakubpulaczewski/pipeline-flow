@@ -1,14 +1,17 @@
 # Standard Imports
 from __future__ import annotations
 
-from dataclasses import dataclass
+import logging
+
 from functools import wraps
 from typing import Callable
 
 # Third Party Imports
 from common.type_def import ExtractedData, TransformedData
-    
-from common.logger import setup_logger
+
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
+
 from core.models.exceptions import (
     ExtractException,
     LoadException,
@@ -17,28 +20,29 @@ from core.models.exceptions import (
 
 # Project Imports
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
-@dataclass
+
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class ExtractResult:
     name: str
     success: bool
     result: ExtractedData | None = None
-    error: Exception | None = None
+    error: str | None = None
 
 @dataclass
 class LoadResult:
     name: str
     success: bool
-    error: Exception | None = None
+    error: str | None = None
 
 @dataclass
 class TransformResult:
     name: str
     success: bool
     result: TransformedData | None = None
-    error: Exception | None = None
+    error: str | None = None
 
 
 ExtractFunction = Callable[[], ExtractResult]

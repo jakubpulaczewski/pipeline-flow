@@ -4,6 +4,7 @@ from typing import  Self
 from enum import Enum
 
 import os
+import logging
 
 # Third-party imports
 import yaml
@@ -19,11 +20,10 @@ from core.models.phases import (
 )
 
 from plugins.registry import PluginFactory
-from common.logger import setup_logger
 from common.utils import SingletonMeta
 
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 DEFAULT_CONCURRENCY = 2
 DEFAULT_ENGINE = 'native'

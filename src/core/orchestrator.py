@@ -1,15 +1,15 @@
 # Standard Imports
+import logging
 import asyncio
 
 # Third Party Imports
 
 # Project Imports
-from common.logger import setup_logger
 from core.models.pipeline import Pipeline
 from core.pipeline_strategy import PipelineStrategyFactory
 from core.parser import YamlConfig
 
-logger = setup_logger(__name__)
+logger =  logging.getLogger(__name__)
 
 
 class PipelineOrchestrator:

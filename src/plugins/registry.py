@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sys
+import logging
 import importlib
 
 import importlib.util
@@ -13,7 +14,6 @@ import importlib.util
 
 
 from common.utils import SingletonMeta
-from common.logger import setup_logger
 from core.models.phases import (
     PipelinePhase, 
     PLUGIN_PHASE_INTERFACE_MAP, 
@@ -21,7 +21,7 @@ from core.models.phases import (
 )
 
 
-logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 PLUGIN_NAME = str
 
@@ -77,12 +77,6 @@ class PluginLoader:
         raise NotImplementedError("Will be implemented in the future.")   
             
             
-
-
-class PluginValidator:
-    # TODO: TO implmenent some of kind validaotr
-    ...
-
 class PluginFactory(metaclass=SingletonMeta):
     """A Plugin Factory that dynamically registers, removes and fetches plugins.
 
@@ -91,19 +85,21 @@ class PluginFactory(metaclass=SingletonMeta):
 
     _registry: dict[PipelinePhase, dict[PLUGIN_NAME, PluginCallable]] = {}
 
-    # TODO: This needs to be changed.
     @staticmethod
     def _validate_plugin_interface(
-        pipeline_phase: PipelinePhase, plugin_class: PluginCallable
+        pipeline_phase: PipelinePhase, plugin_callable: PluginCallable
     ):
-        expected_inteface = PLUGIN_PHASE_INTERFACE_MAP.get(pipeline_phase, None)
-                                                            
-        if not expected_inteface:
-            raise ValueError("No interface defined for phase %s", pipeline_phase)
+        expected_inteface = PLUGIN_PHASE_INTERFACE_MAP.get(pipeline_phase)
+                                                        
+        if pipeline_phase == PipelinePhase.TRANSFORM_PHASE:           
+             # Plugin can be either callable or a subclass of the expected interface
+            if callable(plugin_callable):
+               return 
+            
 
-        if not issubclass(plugin_class, expected_inteface):
+        if not issubclass(plugin_callable, expected_inteface):
             raise TypeError(
-                f"Plugin class '{plugin_class.__name__}' must be a subclass of '{expected_inteface.__name__}' "
+                f"Plugin class '{plugin_callable.__name__}' must be a subclass of '{expected_inteface.__name__}' "
             )
 
     @classmethod
@@ -111,11 +107,11 @@ class PluginFactory(metaclass=SingletonMeta):
         cls,
         pipeline_phase: PipelinePhase,
         plugin: str,
-        plugin_class: PluginCallable,
+        plugin_callable: PluginCallable,
     ) -> bool:
         """Regisers a plugin for a given Pipeline type and plugin."""
         # Validates the plugin implements the correct interface for the given phrase.
-        #cls._validate_plugin_interface(pipeline_phase, plugin_class)
+        #cls._validate_plugin_interface(pipeline_phase, plugin_callable)
 
         # Initialise the Pipeline phase in the registry.
         if pipeline_phase not in cls._registry:
@@ -129,7 +125,7 @@ class PluginFactory(metaclass=SingletonMeta):
             )
             return False
 
-        cls._registry[pipeline_phase][plugin] = plugin_class
+        cls._registry[pipeline_phase][plugin] = plugin_callable
         logger.debug(
             "Plugin `%s` for phase `%s` registered successfully.",
             plugin,

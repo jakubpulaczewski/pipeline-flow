@@ -1,37 +1,29 @@
-from __future__ import annotations
-
+# Standard Imports
 import logging
+import logging.config
 import os
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from logging import Logger
-
-DEFAULT_LOG_LEVEL = os.environ.get("LOG_LEVEL") or logging.INFO
+# Third-party imports
 
 
-def setup_logger(name: str = None) -> Logger:
-    """Setup and return a logger with a given name."
+# Project Imports
 
-    Args:
-        name (str, optional): Name of the python file. Defaults to None.
 
-    Returns:
-        Logger: A logger object
-    """
+def setup_logger() -> None:
+    log_level = os.getenv("LOG_LEVEL", "info").lower()
 
-    logger = logging.getLogger(name)
-    logger.setLevel(DEFAULT_LOG_LEVEL)
+    config_files = {
+        "info": "logging/info_logging.conf",
+        "debug": "logging/debug_logging.conf",
+    }
 
-    # Ensure we have at least one handler.
-    # In real-world scenarios, you might want to add more handlers (e.g., file handlers).
-    if not logger.handlers:
-        ch = logging.StreamHandler()
-        ch.setLevel(DEFAULT_LOG_LEVEL)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
+    config_file = config_files.get(log_level)
 
-    return logger
+    if not config_file:
+        raise ValueError(f"Invalid logging level: {log_level}. Expected 'info' or 'debug'.")
+
+    if not os.path.isfile(config_file):
+        raise FileNotFoundError(f"Logging configuration file not found: {config_file}")
+
+    # Load logging configuration from the selected config file
+    logging.config.fileConfig(config_file, disable_existing_loggers=False)

@@ -2,25 +2,22 @@
 from __future__ import annotations
 
 import asyncio
-import functools as fn
+import logging
+
 from abc import ABC, abstractmethod
-from concurrent.futures import Executor, ProcessPoolExecutor
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 # Third Party Imports
 
 # Project Imports
-from common.type_def import ExtractedData, LoadedData, TransformedData
-from common.logger import setup_logger
+import common.utils as utils
+from common.type_def import ExtractedData, TransformedData
 
 if TYPE_CHECKING:
     from core.models.phase_wrappers import (
-        ExtractFunction,
         ExtractResult,
         TransformResult,
-        TransformFunction,
         LoadResult,
-        LoadFunction
     )
 
     from core.models.phases import (
@@ -39,23 +36,7 @@ from core.models.pipeline import Pipeline, PipelineType
 
 
 
-logger = setup_logger(__name__)
-
-async def run_in_executor(
-    executor: Executor | None,
-    func: ExtractFunction | TransformFunction | LoadFunction,
-    *args: Any,
-    **kwargs: Any,
-) -> ExtractResult | TransformResult | LoadResult:
-    """
-    Run asyncio's executor asynchronously.
-
-    If the executor is None, use the default ThreadPoolExecutor.
-    """
-    return await asyncio.get_running_loop().run_in_executor(
-        executor,
-        fn.partial(func, *args, **kwargs),
-    )
+logger = logging.getLogger(__name__)
 
 
 class PipelineStrategy:
@@ -127,7 +108,7 @@ class ETLStrategy(PipelineStrategy):
         merged_data = await self.merg_temp(extracted_data)
 
         # Transform (CPU-bound work, so offload to executor)
-        transformed_data = await run_in_executor(
+        transformed_data = await utils.run_in_executor(
             None, #
             self.run_transformer,
             merged_data,
@@ -165,7 +146,7 @@ class ETLTStrategy(PipelineStrategy):
         # TODO: need to perform merger in the main event loop or in a dedicated CPU-bound executor.
         merged_data = await self.merg_temp(extracted_data)
 
-        transformed_data = await run_in_executor(
+        transformed_data = await utils.run_in_executor(
             None, #
             self.run_transformer,
             merged_data,

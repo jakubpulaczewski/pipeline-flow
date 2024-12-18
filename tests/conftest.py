@@ -1,5 +1,5 @@
 # Standard Imports
-
+import os
 # Third-party Imports
 import pytest
 
@@ -20,6 +20,10 @@ from tests.resources.mocks import (
     MockTransform, 
     MockLoadTransform
 )
+@pytest.fixture(autouse=True)
+def setup_logging_level():
+    os.environ["LOG_LEVEL"] = "debug"
+
 @pytest.fixture(autouse=True)
 def plugin_registry_setup():
     PluginFactory._registry = {}  # Ensure a clean state before each test
