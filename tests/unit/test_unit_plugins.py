@@ -9,7 +9,7 @@ import pytest
 # Project
 from core.models.phases import PipelinePhase
 from plugins.registry import PluginFactory, PluginLoader
-from tests.resources.constants import EXTRACT_PHASE
+from tests.resources.constants import EXTRACT_PHASE, TRANSFORM_PHASE
 from tests.resources.mocks import MockExtractor, MockLoadTransform
 
 
@@ -134,3 +134,12 @@ class TestUnitPluginFactory:
         with pytest.raises(TypeError):
             PluginFactory._validate_plugin_interface(EXTRACT_PHASE, MockLoadTransform)
 
+    @staticmethod
+    def test_validate_transform_core_simple_transformation() -> None:
+        def native_transform(id: str):
+            def inner(data) -> list[str]:
+                return [
+                    item.capitalize() for item in data
+                ]
+            return inner
+        PluginFactory._validate_plugin_interface(TRANSFORM_PHASE, native_transform(id="id123"))
