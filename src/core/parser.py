@@ -19,7 +19,7 @@ from core.models.phases import (
     PHASE_CLASS_MAP
 )
 
-from plugins.registry import PluginFactory
+from plugins.registry import PluginRegistry
 from common.utils import SingletonMeta
 
 
@@ -196,7 +196,7 @@ class PipelineParser:
             if not plugin_name:
                 raise ValueError("The attribute 'plugin` is empty.")
             
-            plugin = PluginFactory.get(phase_pipeline, plugin_name)(**step)
+            plugin = PluginRegistry.get(phase_pipeline, plugin_name)(**step)
             plugin_callables.append(plugin)
         
         return plugin_callables

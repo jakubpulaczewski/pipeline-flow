@@ -7,7 +7,7 @@ import pytest
 # Project Imports
 from core.loaders import PluginLoader
 from core.models.phases import PipelinePhase, IExtractor, ILoader
-from plugins.registry import PluginFactory
+from plugins.registry import PluginRegistry
 
 
 class TestIntegrationPluginLoader:
@@ -19,14 +19,14 @@ class TestIntegrationPluginLoader:
     @pytest.mark.asyncio
     async def test_load_custom_single_plugin(self):
         # Ensure the registry is empty before loading the plugin
-        assert PluginFactory._registry == {}
+        assert PluginRegistry._registry == {}
         
         # Load the custom plugin
         plugin = {'tests/resources/plugins/custom_extractor.py'}
         self.loader.load_custom_plugins(plugin)
 
         # Get the loaded custom plugin and run extract data
-        plugin_class = PluginFactory._registry[PipelinePhase.EXTRACT_PHASE]["custom_extract"]
+        plugin_class = PluginRegistry._registry[PipelinePhase.EXTRACT_PHASE]["custom_extract"]
         extracted_data = await plugin_class(id='custom_plugin').extract_data()
 
 
@@ -36,7 +36,7 @@ class TestIntegrationPluginLoader:
     
     def test_load_custom_multiple_plugins(self):
         # Ensure the registry is empty before loading the plugin
-        assert PluginFactory._registry == {}
+        assert PluginRegistry._registry == {}
 
         # Load the custom plugin
         plugins = {
@@ -46,8 +46,8 @@ class TestIntegrationPluginLoader:
         self.loader.load_custom_plugins(plugins)
 
         # Get the custom plugins
-        extractor_plugin = PluginFactory._registry[PipelinePhase.EXTRACT_PHASE]["custom_extract"]
-        loader_plugin = PluginFactory._registry[PipelinePhase.LOAD_PHASE]["custom_load"]
+        extractor_plugin = PluginRegistry._registry[PipelinePhase.EXTRACT_PHASE]["custom_extract"]
+        loader_plugin = PluginRegistry._registry[PipelinePhase.LOAD_PHASE]["custom_load"]
 
 
         assert issubclass(extractor_plugin, IExtractor)

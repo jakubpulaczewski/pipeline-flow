@@ -26,13 +26,13 @@ def plugin(plugin_phase: str | PipelinePhase, plugin_name: str):
         plugin_phase = PipelinePhase(plugin_phase)
 
     def decorator(plugin_class):
-        PluginFactory.register(plugin_phase, plugin_name, plugin_class)
+        PluginRegistry.register(plugin_phase, plugin_name, plugin_class)
         return plugin_class
     return decorator
 
 
             
-class PluginFactory(metaclass=SingletonMeta):
+class PluginRegistry(metaclass=SingletonMeta):
     """A Plugin Factory that dynamically registers, removes and fetches plugins.
 
     Registry example: {EXTRACT_PHASE: {'s3': S3Plugin}}
@@ -75,7 +75,7 @@ class PluginFactory(metaclass=SingletonMeta):
         # Check if the plugin has been registered.
         if plugin in cls._registry[pipeline_phase]:
             logger.warning(
-                "Plugin for `%s` phase already exists in PluginFactory class.",
+                "Plugin for `%s` phase already exists in PluginRegistry class.",
                 pipeline_phase,
             )
             return False

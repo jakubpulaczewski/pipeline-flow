@@ -11,7 +11,7 @@ from core.parser import (
 )
 
 from core.models.pipeline import Pipeline
-from plugins.registry import PluginFactory
+from plugins.registry import PluginRegistry
 
 from tests.resources.constants import (
 	EXTRACT_PHASE, 
@@ -25,7 +25,7 @@ from tests.resources.mocks import MockExtractor, MockTransform, MockLoad, MockLo
 def setup_plugins(plugin_dict):
 	for phase, plugins in plugin_dict.items():
 		for plugin_name, plugin_callable in plugins:
-			PluginFactory.register(phase, plugin_name, plugin_callable)
+			PluginRegistry.register(phase, plugin_name, plugin_callable)
 
 
 class TestIntegrationPluginParser:

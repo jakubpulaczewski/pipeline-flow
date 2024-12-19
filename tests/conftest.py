@@ -12,7 +12,7 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.models.pipeline import Pipeline
-from plugins.registry import  PluginFactory
+from plugins.registry import  PluginRegistry
 
 from tests.resources.mocks import (
     MockExtractor, 
@@ -26,9 +26,9 @@ def setup_logging_level():
 
 @pytest.fixture(autouse=True)
 def plugin_registry_setup():
-    PluginFactory._registry = {}  # Ensure a clean state before each test
+    PluginRegistry._registry = {}  # Ensure a clean state before each test
     yield
-    PluginFactory._registry = {}  # Clean up after each test
+    PluginRegistry._registry = {}  # Clean up after each test
 
 
 @pytest.fixture

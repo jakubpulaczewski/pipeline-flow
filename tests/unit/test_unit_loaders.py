@@ -8,7 +8,7 @@ import pytest
 # Project
 from core.models.phases import PipelinePhase
 from core.loaders import PluginLoader
-from plugins.registry import PluginFactory
+from plugins.registry import PluginRegistry
 
 
 class TestUnitPluginLoader:
@@ -46,4 +46,4 @@ class TestUnitPluginLoader:
     def test_load_core_engine_transformations(self) -> None:
         self.loader.load_core_engine_transformations('native')
 
-        assert len(PluginFactory._registry[PipelinePhase.TRANSFORM_PHASE].keys()) > 0
+        assert len(PluginRegistry._registry[PipelinePhase.TRANSFORM_PHASE].keys()) > 0

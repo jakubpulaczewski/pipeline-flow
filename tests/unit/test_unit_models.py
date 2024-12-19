@@ -12,7 +12,7 @@ from core.models.phases import (
 )
 
 from core.models.pipeline import PipelineType
-from plugins.registry import PluginFactory
+from plugins.registry import PluginRegistry
 from tests.resources.mocks import MockExtractor, MockLoad, MockTransform, MockLoadTransform
 
 @pytest.mark.asyncio

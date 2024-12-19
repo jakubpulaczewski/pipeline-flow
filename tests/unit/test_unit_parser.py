@@ -19,7 +19,7 @@ from core.parser import (
 )
 from core.models.pipeline import Pipeline
 from core.models.phases import ExtractPhase, TransformPhase, TransformLoadPhase, LoadPhase
-from plugins.registry import PluginFactory
+from plugins.registry import PluginRegistry
 from tests.resources.constants import ETL, EXTRACT_PHASE, TRANSFORM_PHASE, LOAD_PHASE
 from tests.resources.mocks import MockExtractor, MockLoad, MockTransform, MockLoadTransform
 
@@ -320,7 +320,7 @@ class TestUnitPipelineParser:
 
     def test_parse_one_plugin(self, extractor_plugin_data):
         steps = [extractor_plugin_data]
-        with patch.object(PluginFactory, "get", return_value=MockExtractor) as mock:
+        with patch.object(PluginRegistry, "get", return_value=MockExtractor) as mock:
             result = self.pipeline_parser.parse_plugins_by_phase(EXTRACT_PHASE, steps)
 
             assert len(result) == 1
@@ -340,7 +340,7 @@ class TestUnitPipelineParser:
         
 
         with patch.object(
-            PluginFactory, "get", side_effect=[MockExtractor, MockExtractor]
+            PluginRegistry, "get", side_effect=[MockExtractor, MockExtractor]
         ) as mock:
             result = self.pipeline_parser.parse_plugins_by_phase(EXTRACT_PHASE, steps)
 
