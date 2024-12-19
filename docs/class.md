@@ -1,7 +1,7 @@
 ```mermaid
 classDiagram
 
-    class PluginFactory {
+    class PluginRegistry {
     }
 
  
@@ -21,26 +21,6 @@ classDiagram
     }
 
 
-    class IExtractor {
-        <<interface>>
-        +extract_data()
-    }
-
-    class ILoader {
-        <<interface>>
-        +load_data(data)
-    }
-
-
-    class ITransform {
-        <<interface>>
-        +transform_data(data)
-    }
-
-    class ILoadTransform {
-        <<interface>>
-        +transform_data()
-    }
 
     class ExtractPhase {
     }
@@ -100,7 +80,7 @@ classDiagram
     ELTStrategy ..|> PipelineStrategy
     ETLTStrategy ..|> PipelineStrategy
 
-    PluginFactory --> PipelinePhase
+    PluginRegistry --> PipelinePhase
 ```
 
 
@@ -116,3 +96,24 @@ o--	Aggregation
 ..>	Dependency
 ..|>	Realization
 ..	Link (Dashed)
+
+    class IExtractor {
+        <<interface>>
+        +extract_data()
+    }
+
+    class ILoader {
+        <<interface>>
+        +load_data(data)
+    }
+
+
+    class ITransform {
+        <<interface>>
+        +transform_data(data)
+    }
+
+    class ILoadTransform {
+        <<interface>>
+        +transform_data()
+    }
