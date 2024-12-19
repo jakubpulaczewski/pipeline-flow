@@ -80,7 +80,7 @@ def transformer_plugin_data():
 
 @pytest.fixture
 def second_transformer_plugin_data():
-    return {"id": "transformer_id2", "plugin": "mock_transformer_2"}
+    return {"id": "transformer_id_2", "plugin": "mock_transformer_2"}
 
 
 @pytest.fixture

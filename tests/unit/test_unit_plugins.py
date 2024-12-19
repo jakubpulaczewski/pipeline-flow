@@ -34,16 +34,6 @@ class TestUnitPluginLoader:
         mock_module.assert_called_once()
         mock_spec.return_value.loader.exec_module.assert_called_once()
 
-
-    def test_load_plugin_from_file_reload_module(self, mocker) -> None:
-        mock_reload = mocker.patch("importlib.reload")
-
-        plugin = 'plugins/registry.py'
-        self.loader.load_plugin_from_file(plugin)
-
-        print(mock_reload.mock_calls)
-        mock_reload.assert_called_once_with(sys.modules['plugins.registry'])
-
     
     def test_load_custom_plugins(self, mocker) -> None:
         mock_load_plugin = mocker.patch.object(self.loader, "load_plugin_from_file")

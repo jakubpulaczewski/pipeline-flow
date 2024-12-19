@@ -16,6 +16,7 @@ class TestIntegrationPluginLoader:
 
     @pytest.mark.asyncio
     async def test_load_custom_single_plugin(self):
+        # TODO: Investigate why it fails when all tests are run.
         # Ensure the registry is empty before loading the plugin
         assert PluginFactory._registry == {}
         

@@ -47,22 +47,23 @@ class PluginLoader:
             fq_module_name =  plugin_file.replace(os.sep, '.')[:-3]  
         
         # Check if the module is already loaded to avoid re-importing
-        if fq_module_name not in sys.modules:
+        if fq_module_name in sys.modules:
+            logger.debug(f"Module {fq_module_name} has been re-loaded.")
+            return
+        
+        try:
             logger.debug(f"Loading module {fq_module_name}")
             spec = importlib.util.spec_from_file_location(fq_module_name, plugin_file)
             plugin_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(plugin_module)
             logger.info(f"Loaded plugin from {plugin_file} as {fq_module_name}")
-        else:
-            importlib.reload(sys.modules[fq_module_name])
-            logger.debug(f"Module {fq_module_name} has been re-loaded.")
-
-    def load_core_engine_transformations(self, engine: str):
-        module_path = f"plugins.transform.{engine}"
-        try:
-            importlib.import_module(module_path)
         except ImportError as e:
-            logger.error(f"Error importing core engine transformations from `{module_path}` module. ")
+            logger.error(f"Error importing plugin from `{fq_module_name}` module. ")
+
+
+    def load_core_engine_transformations(self, engine: str) -> None:
+        core_engine_file = f"src/plugins/transform/{engine}.py"
+        self.load_plugin_from_file(core_engine_file)
 
 
     def load_custom_plugins(self, custom_files: set[str]) -> None:
@@ -74,7 +75,10 @@ class PluginLoader:
             
         
     def load_community_plugins(self):
-        raise NotImplementedError("Will be implemented in the future.")   
+        raise NotImplementedError("Will be implemented in the future.")  
+    
+    def load_plugins():
+        ...
             
             
 class PluginFactory(metaclass=SingletonMeta):

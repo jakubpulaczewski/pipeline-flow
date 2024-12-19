@@ -45,11 +45,15 @@ class YamlAttribute(Enum):
 
 
 class YamlParser:
+    """ Loads a YAML and initialiases YAML Config."""
 
     def __init__(self, yaml_text: str = None, file_path: str = None):
-        """Initialize and parse the YAML text or file into a dictionary."""
+        if not (yaml_text or file_path):
+            raise ValueError("Either `yaml_text` or `file_path` must be provided")
+
         self.parsed_yaml = self.parse_yaml(yaml_text, file_path)
 
+    
     @staticmethod
     def parse_yaml_text(yaml_text: str) -> dict:
         if not yaml_text:
@@ -59,21 +63,22 @@ class YamlParser:
         except yaml.YAMLError as e:
             raise yaml.YAMLError(f"Invalid YAML file: {e}")
 
-    def parse_yaml_file(self, file_path: str) -> dict:
+    @staticmethod
+    def parse_yaml_file(file_path: str) -> dict:
         try:
             with open(file_path, "r") as file:
-                return self.parse_yaml_text(file)
+                return YamlParser.parse_yaml_text(file)
 
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
 
-    def parse_yaml(self, yaml_text: str = None, file_path: str = None):
+    @staticmethod
+    def parse_yaml(yaml_text: str = None, file_path: str = None):
         if file_path:
-            return self.parse_yaml_file(file_path)
+            return YamlParser.parse_yaml_file(file_path)
         elif yaml_text:
-            return self.parse_yaml_text(yaml_text)
+            return YamlParser.parse_yaml_text(yaml_text)
 
-        raise ValueError("Either `yaml_text` or `file_path` must be provided")
 
     def initialize_yaml_config(self):
         # Create the map of attributes with their values
@@ -87,11 +92,11 @@ class YamlParser:
 
         return YamlConfig(**attrs)
 
-    def get_pipelines_data(self: Self) -> dict:
+    def get_pipelines_dict(self: Self) -> dict:
         """Return the 'pipelines' section from the parsed YAML."""
         return self.parsed_yaml.get(YamlAttribute.PIPELINES.value, {})
 
-    def get_plugins(self: Self) -> str | None:
+    def get_plugins_dict(self: Self) -> str | None:
         return self.parsed_yaml.get(YamlAttribute.PLUGINS.value, {})
 
     def get_engine(self: Self) -> str | None:
@@ -102,10 +107,8 @@ class YamlParser:
 
 
 class PluginParser:
-    def __init__(self, yaml_parser: YamlParser) -> None:
-        self.yaml_parser = yaml_parser
-        self.plugins_data = yaml_parser.get_plugins()
-
+    def __init__(self, plugins_payload: dict) -> None:
+        self.plugins_payload = plugins_payload
 
     @staticmethod
     def get_all_files(paths: list[str]) -> set[str]:
@@ -121,37 +124,45 @@ class PluginParser:
         return files
 
 
-    def get_custom_plugin_files(self) -> set[str]:
-        plugin_data = self.plugins_data.get("custom", {})
-        if not plugin_data:
-            logger.debug("No custom plugins found in YAML.")
-            return None
+    def fetch_custom_plugin_files(self) -> set[str | None]:
+        custom_payload = self.plugins_payload.get("custom", {})
+        if not custom_payload:
+            logger.debug("No custom plugins found in the YAML.")
+            return set()
         
         # Gather files from dirs and individual files
-        files_from_dir = self.get_all_files(plugin_data.get("dirs", []))
-        files = self.get_all_files(plugin_data.get("files", []))
+        files_from_dir = self.get_all_files(custom_payload.get("dirs", []))
+        files = self.get_all_files(custom_payload.get("files", []))
 
         # Combine both sets of files
         return files_from_dir.union(files)
 
-    def get_community_plugin_files(self) -> set[str]:
-        raise NotImplementedError("This will be implemented.")
-            
+    def fetch_community_plugin_modules(self) -> set[str | None]:        
+        comm_payload = self.plugins_payload.get("community", {})
+        if not comm_payload:
+            logger.debug("No community plugins found in the YAML.")
+            return set()
+    
+        base_module = "community.plugins."
 
+        comm_plugins = { base_module + plugin for plugin in comm_payload }
+        return comm_plugins
+    
+    
 class PipelineParser:
 
-    def __init__(self, yaml_parser: YamlParser):
-        self.pipelines_data = yaml_parser.get_pipelines_data()
 
-        if not self.pipelines_data:
-            raise ValueError("Pipeline attributes are empty")
+    def parse_pipelines(self: Self, pipelines_data) -> list[Pipeline]:
+        pipelines_data = pipelines_data
 
-    def parse_pipelines(self: Self) -> list[Pipeline]:
-
+        if not pipelines_data:
+            raise ValueError("No Pipelines detected.")
+        
         return [
             self.create_pipeline(pipeline_name, pipeline_data)
-            for pipeline_name, pipeline_data in self.pipelines_data.items()
+            for pipeline_name, pipeline_data in pipelines_data.items()
         ]
+
 
     def create_pipeline(self: Self, pipeline_name: str, pipeline_data: dict) -> Pipeline:
         """Parse a single pipeline's data and return a pipeline instance."""
@@ -169,19 +180,10 @@ class PipelineParser:
 
     def create_phase(self, phase_name: str, phase_data: dict) -> PhaseInstance:
         phase_pipeline = PipelinePhase(phase_name)
-        phase_class = self.get_phase_class(phase_pipeline)
+        phase_class = PHASE_CLASS_MAP.get(phase_pipeline)
 
         phase_data["steps"] = self.parse_plugins_by_phase(phase_pipeline, phase_data.get("steps", []))
-
         return phase_class(**phase_data)
-
-    @staticmethod
-    def get_phase_class(phase_name: PipelinePhase) -> PhaseInstance:
-        phase_class = PHASE_CLASS_MAP.get(phase_name)
-
-        if not phase_class:
-            raise ValueError(f"Unknown phase: {phase_name}")
-        return phase_class
 
 
     @staticmethod

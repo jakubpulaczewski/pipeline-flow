@@ -30,7 +30,7 @@ def setup_plugins(plugin_dict):
 
 class TestIntegrationPluginParser:
     
-    def test_get_custom_plugin_files_with_only_files(self) -> None:
+    def test_fetch_custom_plugin_files_with_only_files(self) -> None:
         yaml_str = """
         plugins:
           custom:
@@ -38,9 +38,10 @@ class TestIntegrationPluginParser:
               - tests/resources/plugins/custom_extractor.py
               - tests/resources/plugins/custom_loader.py
         """
-        yaml_parser = YamlParser(yaml_text=yaml_str)
-        plugin_parser = PluginParser(yaml_parser)
-        result = plugin_parser.get_custom_plugin_files()
+        plugins_payload = YamlParser(yaml_text=yaml_str).get_plugins_dict()
+        plugin_parser = PluginParser(plugins_payload)
+
+        result = plugin_parser.fetch_custom_plugin_files()
 
         expected = {
              'tests/resources/plugins/custom_extractor.py',
@@ -49,7 +50,7 @@ class TestIntegrationPluginParser:
 
         assert result == expected
 
-    def test_get_custom_plugin_files_with_dirs_and_files(self) -> None:
+    def test_fetch_custom_plugin_files_with_dirs_and_files(self) -> None:
         yaml_str = """
         plugins:
           custom:
@@ -58,9 +59,10 @@ class TestIntegrationPluginParser:
             files:
               - tests/resources/plugins/custom_loader.py
         """
-        yaml_parser = YamlParser(yaml_text=yaml_str)
-        plugin_parser = PluginParser(yaml_parser)
-        result = plugin_parser.get_custom_plugin_files()
+        plugins_payload = YamlParser(yaml_text=yaml_str).get_plugins_dict()
+        plugin_parser = PluginParser(plugins_payload)
+
+        result = plugin_parser.fetch_custom_plugin_files()
 
         expected = {
              'tests/resources/plugins/custom_extractor.py',
@@ -70,17 +72,17 @@ class TestIntegrationPluginParser:
         assert result == expected
 
     def test_get_custom_plugin_fils_empty(self) -> None:
-        yaml_str = """
-        test: 123
-        """
-        yaml_parser = YamlParser(yaml_text=yaml_str)
-        plugin_parser = PluginParser(yaml_parser)
-        result = plugin_parser.get_custom_plugin_files()
+        plugin_parser = PluginParser(plugins_payload={})
+        result = plugin_parser.fetch_custom_plugin_files()
 
-        assert result == None
+        assert result == set()
 
 
 class TestIntegrationPipelineParser:
+
+    @pytest.fixture(autouse=True)
+    def pipeline_parser(self) -> PipelineParser:
+        self.pipeline_parser = PipelineParser()
 
     def test_parse_pipeline_without_registered_plugins(self):
         yaml_str = """
@@ -103,9 +105,8 @@ class TestIntegrationPipelineParser:
         """
 
         with pytest.raises(ValueError, match="Plugin class was not found for following plugin `mock_s3`."):
-            yaml_parser = YamlParser(yaml_text=yaml_str)
-            pipeline_parser = PipelineParser(yaml_parser)
-            pipeline_parser.parse_pipelines()
+            pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+            self.pipeline_parser.parse_pipelines(pipelines_data=pipelines_data)
 
 
     def test_parse_etl_pipeline_with_empty_mandatory_phases(self):
@@ -135,9 +136,8 @@ class TestIntegrationPipelineParser:
             ValueError,
             match="Validation Failed! Mandatory phase 'PipelinePhase.EXTRACT_PHASE' cannot be empty or missing plugins.",
         ):
-            yaml_parser = YamlParser(yaml_text=yaml_str)
-            pipeline_parser = PipelineParser(yaml_parser)
-            pipeline_parser.parse_pipelines()
+            pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+            self.pipeline_parser.parse_pipelines(pipelines_data)
     
     def test_parse_etl_pipeline_with_only_mandatory_phases(self) -> None:
         # Register Plugins
@@ -161,9 +161,8 @@ class TestIntegrationPipelineParser:
                   - id: mock_load1
                     plugin: load_plugin
         """
-        yaml_parser = YamlParser(yaml_text=yaml_str)
-        pipeline_parser = PipelineParser(yaml_parser)
-        pipelines = pipeline_parser.parse_pipelines()
+        pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)
 
         pipeline = pipelines[0]
 
@@ -225,9 +224,8 @@ class TestIntegrationPipelineParser:
                     plugin: load_plugin2
         """
 
-        yaml_parser = YamlParser(yaml_text=yaml_str)
-        pipeline_parser = PipelineParser(yaml_parser)
-        pipelines = pipeline_parser.parse_pipelines()
+        pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)
 
         assert len(pipelines) == 2
         assert isinstance(pipelines[0], Pipeline)
@@ -286,9 +284,8 @@ class TestIntegrationPipelineParser:
                     plugin: upsert_transformation
         """
 
-        yaml_parser = YamlParser(yaml_text=yaml_str)
-        pipeline_parser = PipelineParser(yaml_parser)
-        pipelines = pipeline_parser.parse_pipelines()
+        pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)
 
         assert len(pipelines) == 1
         assert isinstance(pipelines[0], Pipeline)
@@ -349,9 +346,8 @@ class TestIntegrationPipelineParser:
                     plugin: upsert_transformation
         """
 
-        yaml_parser = YamlParser(yaml_text=yaml_str)
-        pipeline_parser = PipelineParser(yaml_parser)
-        pipelines = pipeline_parser.parse_pipelines()
+        pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)
 
         assert len(pipelines) == 1
         assert isinstance(pipelines[0], Pipeline)
