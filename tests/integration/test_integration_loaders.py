@@ -1,11 +1,13 @@
 # Standard Imports
 
-# Third Party
+# Third Party Imports
 import pytest
-from plugins.registry import PluginLoader, PluginFactory
-from core.models.phases import PipelinePhase, IExtractor, ILoader
 
-# Project
+
+# Project Imports
+from core.loaders import PluginLoader
+from core.models.phases import PipelinePhase, IExtractor, ILoader
+from plugins.registry import PluginFactory
 
 
 class TestIntegrationPluginLoader:
@@ -16,7 +18,6 @@ class TestIntegrationPluginLoader:
 
     @pytest.mark.asyncio
     async def test_load_custom_single_plugin(self):
-        # TODO: Investigate why it fails when all tests are run.
         # Ensure the registry is empty before loading the plugin
         assert PluginFactory._registry == {}
         
@@ -51,3 +52,7 @@ class TestIntegrationPluginLoader:
 
         assert issubclass(extractor_plugin, IExtractor)
         assert issubclass(loader_plugin, ILoader)
+    
+    # def test_load_plugins_success():
+    #     #TODO: Create a test for this.
+    #     ...
