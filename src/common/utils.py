@@ -4,16 +4,16 @@ import threading
 import functools as fn
 
 from concurrent.futures import Executor
-from typing import TYPE_CHECKING, Any
+from typing import  Any
 
 # Third-party imports
 
 # Project Imports
+from common.type_def import TransformedData
+
 from core.models.phase_wrappers import (
     ExtractFunction,
-    TransformResult,
     TransformFunction,
-    LoadResult,
     LoadFunction
 )
 class SingletonMeta(type):
@@ -37,7 +37,7 @@ async def run_in_executor(
     func: ExtractFunction | TransformFunction | LoadFunction,
     *args: Any,
     **kwargs: Any,
-) ->  TransformResult | LoadResult:
+) -> TransformedData :
     """
     Run asyncio's executor asynchronously.
 

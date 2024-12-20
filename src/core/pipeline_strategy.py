@@ -11,25 +11,20 @@ from typing import TYPE_CHECKING
 
 # Project Imports
 import common.utils as utils
-from common.type_def import ExtractedData, TransformedData
+from common.type_def import ExtractedData, TransformedData, TransformLoadedData
 
 if TYPE_CHECKING:
-    from core.models.phase_wrappers import (
-        TransformResult,
-        LoadResult,
-    )
-
     from core.models.phases import (
         ExtractPhase,
         TransformPhase,
         LoadPhase,
-        TransformLoadPhase,
-        iMerger
+        TransformLoadPhase
     )
 from core.models.phase_wrappers import (
     extract_decorator,
     transform_decorator,
-    load_decorator
+    load_decorator,
+    transform_load_decorator
 )
 
 from core.models.pipeline import Pipeline, PipelineType
@@ -68,20 +63,19 @@ class PipelineStrategy(ABC):
         return extracted_data
 
     @staticmethod
-    def run_transformer(data: ExtractedData, transformations: TransformPhase) -> TransformResult:
+    def run_transformer(data: ExtractedData, transformations: TransformPhase) -> TransformedData:
         for tf in transformations.steps:
             logger.info(f"Applying transformation: {tf.id}")
-            decorated_tf = transform_decorator(tf.id, tf.transform_data)
-            transformed_data = decorated_tf(data)
+            transformed_data = transform_decorator(tf.id, tf.transform_data)(data)
 
             logger.info(f"Transformation {tf.id} succeeded.")
             # Continue passing the transformed data to the next step
-            data = transformed_data.result
+            data = transformed_data
             
         return transformed_data
 
     @staticmethod
-    async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPhase) -> LoadResult:
+    async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPhase) -> list[dict]:
         async with asyncio.TaskGroup() as load_tg:
             results = []
             for load in destinations.steps:
@@ -91,10 +85,10 @@ class PipelineStrategy(ABC):
             return results
 
     @staticmethod
-    def run_transformer_after_load(transformations: TransformLoadPhase) -> TransformResult:
+    def run_transformer_after_load(transformations: TransformLoadPhase) -> list[dict]:
         results = []
         for tf in transformations.steps:
-            decorated_tf = transform_decorator(tf.id, tf.transform_data)
+            decorated_tf = transform_load_decorator(tf.id, tf.transform_data)
             result = decorated_tf()
             results.append(result)
         return results
@@ -113,7 +107,7 @@ class ETLStrategy(PipelineStrategy):
             pipeline.transform,
         )
 
-        loaded = await self.run_loader(transformed_data.result, pipeline.load)
+        loaded = await self.run_loader(transformed_data, pipeline.load)
 
         return True
 
@@ -144,7 +138,7 @@ class ETLTStrategy(PipelineStrategy):
             pipeline.transform,
         )
 
-        loaded = await self.run_loader(transformed_data.result, pipeline.load)
+        loaded = await self.run_loader(transformed_data, pipeline.load)
 
         transform_load_result = self.run_transformer_after_load(pipeline.load_transform)
 

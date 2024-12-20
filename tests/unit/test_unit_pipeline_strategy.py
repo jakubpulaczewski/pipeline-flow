@@ -18,10 +18,6 @@ from core.pipeline_strategy import (
     PipelineStrategy,
     PipelineStrategyFactory
 )
-from core.models.phase_wrappers import (
-    TransformResult,
-    LoadResult
-)
 
 from tests.resources.mocks import (
     MockTransformAddSuffix,
@@ -67,12 +63,8 @@ def test_run_transformer(mock_transformer) -> None:
 
     result = PipelineStrategy.run_transformer("DATA", transformations)
 
-    assert result == TransformResult(
-        name="transformer_id",
-        success=True,
-        result="transformed_etl_data",
-        error=None,
-    )
+    assert result == "transformed_etl_data"
+
 
 def test_run_transformer_multiple() -> None:
     data = "initial_data"
@@ -85,12 +77,7 @@ def test_run_transformer_multiple() -> None:
 
     result = PipelineStrategy.run_transformer(data, transformations)
 
-    assert result == TransformResult(
-        name='to_upper', 
-        success=True, 
-        result='INITIAL_DATA_SUFFIX', 
-        error=None
-    )
+    assert result == 'INITIAL_DATA_SUFFIX'
 
 
 @pytest.mark.asyncio
@@ -103,9 +90,7 @@ async def test_run_loader(mock_loader) -> None:
     )
     result = await PipelineStrategy.run_loader(data, destinations)
 
-    assert result == [
-        LoadResult(name='loader_id', success=True, error=None)
-    ]
+    assert result == [{'id': 'loader_id', 'success': True}]
 
 @pytest.mark.asyncio
 async def test_run_loader_multiple(mock_loader, second_mock_loader) -> None:
@@ -118,8 +103,8 @@ async def test_run_loader_multiple(mock_loader, second_mock_loader) -> None:
     )
     result = await PipelineStrategy.run_loader(data, destinations)
     assert result == [
-        LoadResult(name='loader_id', success=True, error=None),
-        LoadResult(name='loader_id_2', success=True, error=None)
+        {'id': 'loader_id', 'success': True},
+        {'id': 'loader_id_2', 'success': True}
     ]
 
 
@@ -130,7 +115,7 @@ def test_run_transformer_after_load(mock_load_transformer) -> None:
     result = PipelineStrategy.run_transformer_after_load(transformations)
     
     assert result == [
-        TransformResult(name='mock_transform_load_id', success=True, result=None, error=None)
+        {'id': 'mock_transform_load_id', 'success': True},
     ]
 
 
@@ -142,8 +127,8 @@ def test_run_transformer_after_load_multiple(mock_load_transformer, second_mock_
     result = PipelineStrategy.run_transformer_after_load(transformations)
     
     assert result == [
-        TransformResult(name='mock_transform_load_id', success=True, result=None, error=None),
-        TransformResult(name='mock_transform_load_id_2', success=True, result=None, error=None)
+        {'id': 'mock_transform_load_id', 'success': True},
+        {'id': 'mock_transform_load_id_2', 'success': True}
     ]
 
 
