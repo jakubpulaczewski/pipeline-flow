@@ -19,7 +19,6 @@ from core.pipeline_strategy import (
     PipelineStrategyFactory
 )
 from core.models.phase_wrappers import (
-    ExtractResult,
     TransformResult,
     LoadResult
 )
@@ -47,37 +46,20 @@ async def test_run_extractor(extractor_mock) -> None:
     extract = ExtractPhase(steps=[extractor_mock])
     result = await PipelineStrategy.run_extractor(extract)
 
-    assert result == {
-        'extractor_id': ExtractResult(
-            name='extractor_id', 
-            success=True, 
-            result='extracted_data',
-            error=None
-        )
-    }
+    assert result == 'extracted_data'
+
+
 
 @pytest.mark.asyncio
-async def test_run_extractor_multiple(extractor_mock, second_extractor_mock) -> None:
+async def test_run_extractor_multiple(extractor_mock, second_extractor_mock, merger_mock) -> None:
     extracts = ExtractPhase(
-        steps=[extractor_mock, second_extractor_mock]
+        steps=[extractor_mock, second_extractor_mock],
+        merge=merger_mock
     )
 
     result = await PipelineStrategy.run_extractor(extracts)
 
-    assert result == {
-        'extractor_id': ExtractResult(
-            name='extractor_id', 
-            success=True, 
-            result='extracted_data', 
-            error=None
-        ),
-        'extractor_id_2': ExtractResult(
-            name='extractor_id_2', 
-            success=True, 
-            result='extracted_data', 
-            error=None
-        )
-    }
+    assert result == 'merged_data'
 
 
 def test_run_transformer(mock_transformer) -> None:

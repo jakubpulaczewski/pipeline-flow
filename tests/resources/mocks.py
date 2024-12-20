@@ -17,7 +17,7 @@ from core.models.phases import(
 
 class MockMerger(iMerger):
 
-    def merge(self, extracted_data: dict[str, ExtractedData]):
+    def merge_data(self, extracted_data: dict[str, ExtractedData]):
         return "merged_data"
 
 class MockExtractor(IExtractor):

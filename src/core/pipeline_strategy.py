@@ -15,7 +15,6 @@ from common.type_def import ExtractedData, TransformedData
 
 if TYPE_CHECKING:
     from core.models.phase_wrappers import (
-        ExtractResult,
         TransformResult,
         LoadResult,
     )
@@ -24,7 +23,8 @@ if TYPE_CHECKING:
         ExtractPhase,
         TransformPhase,
         LoadPhase,
-        TransformLoadPhase
+        TransformLoadPhase,
+        iMerger
     )
 from core.models.phase_wrappers import (
     extract_decorator,
@@ -45,8 +45,9 @@ class PipelineStrategy(ABC):
     def execute(self, pipeline: Pipeline) -> bool:
         raise NotImplementedError("This has to be implemented by the subclasses.")
 
+
     @staticmethod
-    async def run_extractor(extracts: ExtractPhase) -> dict[str, ExtractResult]:
+    async def run_extractor(extracts: ExtractPhase) -> ExtractedData:
         data = {}
 
         async with asyncio.TaskGroup() as extract_tg:
@@ -55,13 +56,16 @@ class PipelineStrategy(ABC):
                 decorated_extract = extract_decorator(extract.id, extract.extract_data)
                 extracted_data = await extract_tg.create_task(decorated_extract())
 
-                # TODO: Should this be moved to Like a validator class that checks everything????
                 if extract.id in data:
                     raise ValueError("The `ID` is not unique. There already exists an 'ID' with this name.")
                 
                 data[extract.id] = extracted_data
 
-        return data
+            if extracts.merge:
+                return extracts.merge.merge_data(data)
+
+        del data
+        return extracted_data
 
     @staticmethod
     def run_transformer(data: ExtractedData, transformations: TransformPhase) -> TransformResult:
@@ -96,22 +100,16 @@ class PipelineStrategy(ABC):
         return results
 
 
-    @staticmethod
-    async def merg_temp(extracted_data):
-        return next(iter(extracted_data.values())).result
     
 class ETLStrategy(PipelineStrategy):
     async def execute(self, pipeline: Pipeline) -> bool:
         extracted_data = await self.run_extractor(pipeline.extract)
         
-        # TODO: need to perform merger in the main event loop or in a dedicated CPU-bound executor.
-        merged_data = await self.merg_temp(extracted_data)
-
         # Transform (CPU-bound work, so offload to executor)
         transformed_data = await utils.run_in_executor(
             None, #
             self.run_transformer,
-            merged_data,
+            extracted_data,
             pipeline.transform,
         )
 
@@ -125,13 +123,9 @@ class ELTStrategy(PipelineStrategy):
 
     async def execute(self, pipeline: Pipeline) -> bool:
         extracted_data = await self.run_extractor(pipeline.extract)
-        # TODO: need to perform merger in the main event loop or in a dedicated CPU-bound executor.
-        merged_data = await self.merg_temp(extracted_data)
 
-        # Load
-        load_result = await self.run_loader(merged_data, pipeline.load)
+        load_result = await self.run_loader(extracted_data, pipeline.load)
 
-        # Transform
         transform_load_result = self.run_transformer_after_load(pipeline.load_transform)
 
         return True
@@ -143,19 +137,15 @@ class ETLTStrategy(PipelineStrategy):
     async def execute(self, pipeline: Pipeline) -> bool:
         extracted_data = await self.run_extractor(pipeline.extract)
         
-        # TODO: need to perform merger in the main event loop or in a dedicated CPU-bound executor.
-        merged_data = await self.merg_temp(extracted_data)
-
         transformed_data = await utils.run_in_executor(
             None, #
             self.run_transformer,
-            merged_data,
+            extracted_data,
             pipeline.transform,
         )
 
         loaded = await self.run_loader(transformed_data.result, pipeline.load)
 
-        # Transform
         transform_load_result = self.run_transformer_after_load(pipeline.load_transform)
 
         return True

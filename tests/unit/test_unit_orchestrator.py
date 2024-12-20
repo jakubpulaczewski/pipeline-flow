@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 # Project Imports
-from core.models.phase_wrappers import ExtractResult
 from core.models.exceptions import ExtractException
 from core.orchestrator import PipelineOrchestrator
 from core.pipeline_strategy import PipelineType, PipelineStrategyFactory, ETLStrategy
@@ -96,7 +95,7 @@ async def test_execute_pipeline_exception(mocker, orchestrator, etl_pipeline_fac
     mocker.patch.object(PipelineStrategyFactory, "get_pipeline_strategy", return_value=ETLStrategy)
 
     execute_mock = mocker.patch.object(ETLStrategy, "execute", 
-        side_effect=ExtractException("Error during extraction: error123", ExtractResult(name='extractor_id', success=False, error='error123')))
+        side_effect=ExtractException("Error during extraction: error123"))
 
     etl_pipeline = etl_pipeline_factory(name="Job1")
 

@@ -39,13 +39,6 @@ class IExtractor(pyd.BaseModel, ABC):
             "The method has not been implemented. You must implement it"
         )
   
-class iMerger(ABC):
-    
-    @abstractmethod
-    def merge(self, extracted_data: dict[str, ExtractedData]):
-        raise NotImplementedError(
-            "The method has not been implemented. You must implement it"
-        )
 
 class ILoader(pyd.BaseModel, ABC):
     """An interface of the Load Step."""
@@ -83,10 +76,20 @@ class ILoadTransform(pyd.BaseModel, ABC):
         )
 
 
+class iMerger(ABC):
+    
+    @abstractmethod
+    def merge_data(self, extracted_data: dict[str, ExtractedData]) -> ExtractedData:
+        raise NotImplementedError(
+            "The method has not been implemented. You must implement it"
+        )
+
+
 class BasePhase[T](pyd.BaseModel, ABC):
     model_config = pyd.ConfigDict(arbitrary_types_allowed=True)
     steps: list[T] | None = []
     storage: StoragePhase | None = None
+
 
 class ExtractPhase(BasePhase[IExtractor]):
     pre: list[Callable] | None = []
@@ -102,6 +105,9 @@ class LoadPhase(BasePhase[ILoader]):
 
 class TransformLoadPhase(BasePhase[ILoadTransform]):
     pass
+
+
+
 
 
 PHASE_CLASS_MAP = {

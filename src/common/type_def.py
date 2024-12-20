@@ -11,6 +11,6 @@ from typing import  Any, Type, TypeVar
 ExtractedData = TypeVar("ExtractedData", bound=Any)
 TransformedData = TypeVar("TransformedData", bound=Any)
 LoadedData = TypeVar("LoadedData", bound=Any)
-type Data = ExtractedData | TransformedData | LoadedData
+type Data = ExtractedData |  TransformedData | LoadedData
 
 

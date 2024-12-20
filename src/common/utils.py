@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any
 # Project Imports
 from core.models.phase_wrappers import (
     ExtractFunction,
-    ExtractResult,
     TransformResult,
     TransformFunction,
     LoadResult,
@@ -38,7 +37,7 @@ async def run_in_executor(
     func: ExtractFunction | TransformFunction | LoadFunction,
     *args: Any,
     **kwargs: Any,
-) -> ExtractResult | TransformResult | LoadResult:
+) ->  TransformResult | LoadResult:
     """
     Run asyncio's executor asynchronously.
 

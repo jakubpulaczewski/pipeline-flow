@@ -18,7 +18,8 @@ from tests.resources.mocks import (
     MockExtractor, 
     MockLoad, 
     MockTransform, 
-    MockLoadTransform
+    MockLoadTransform,
+    MockMerger
 )
 @pytest.fixture(autouse=True)
 def setup_logging_level():
@@ -114,6 +115,11 @@ def merger_plugin_data():
     return {
         'plugin': 'mock_merger'
     }
+
+@pytest.fixture
+def merger_mock(merger_plugin_data):
+    return MockMerger()
+
 
 def pipeline_factory(default_config):
     # Factory function for creating pipelines

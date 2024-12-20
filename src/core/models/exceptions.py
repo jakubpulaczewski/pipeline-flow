@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 # Project Imports
 if TYPE_CHECKING:
     from core.models.phase_wrappers import (
-        ExtractResult,
         TransformResult,
         LoadResult
     )
@@ -18,12 +17,12 @@ if TYPE_CHECKING:
 class ExtractException(Exception):
     """A custom exception is raised when a problem occurs when trying to extract data from a source"""
 
-    def __init__(self, message: str, extract_result: ExtractResult) -> None:
+    def __init__(self, message: str) -> None:
         super().__init__(message)
-        self.extract_result = extract_result
+        self.message = message
 
     def __str__(self) -> str:
-        return f"{super().__str__()}\ExtractResult: {self.extract_result}"
+        return f"{super().__str__()}"
 
 
 class TransformException(Exception):

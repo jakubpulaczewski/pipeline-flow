@@ -23,14 +23,6 @@ from core.models.exceptions import (
 logger = logging.getLogger(__name__)
 
 
-
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
-class ExtractResult:
-    name: str
-    success: bool
-    result: ExtractedData | None = None
-    error: str | None = None
-
 @dataclass
 class LoadResult:
     name: str
@@ -45,23 +37,22 @@ class TransformResult:
     error: str | None = None
 
 
-ExtractFunction = Callable[[], ExtractResult]
+ExtractFunction = Callable[[], ExtractedData]
 TransformFunction = Callable[[str | ExtractedData], TransformResult]
 LoadFunction = Callable[[ExtractedData | TransformedData], LoadResult]
 
 
 def extract_decorator(id: str, extract_function: ExtractFunction) -> ExtractFunction:
     @wraps(extract_function)
-    async def wrapper(*args, **kwargs) -> ExtractResult:
+    async def wrapper(*args, **kwargs) -> ExtractedData:
         try:
             result = await extract_function(*args, **kwargs)
-            return ExtractResult(name=id, success=True, result=result)
+            return result
 
         except Exception as e:
-            error_message = f"Error during extraction: {e}"
+            error_message = f"Error during extraction (ID: {id}): {e}"
             logger.error(error_message)
-            extract_result = ExtractResult(name=id, success=False, error=str(e))
-            raise ExtractException(error_message, extract_result) from e
+            raise ExtractException(error_message) from e
 
     return wrapper
 

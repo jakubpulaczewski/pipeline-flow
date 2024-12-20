@@ -185,6 +185,8 @@ class PipelineParser:
         
         # Parse plugins for different attributes
         # TODO: Potentially need to be changed as root_validators.
+        # If there are mroe than two extracts, merge should be inputted otherwise fail.
+        # Write tests for it. #TODO: Both unit and integrations!!
         if "steps" in phase_data:
             phase_data["steps"] = self.parse_plugins_by_phase(phase_pipeline, phase_data["steps"])
 
