@@ -25,7 +25,7 @@ class PipelineType(Enum):
     ELT = "ELT"
     ETLT = "ETLT"
 
-
+# TODO: Remove it and move it to TransformPhase
 MANDATORY_PHASES_BY_PIPELINE_TYPE = {
     PipelineType.ETL: {
         PipelinePhase.EXTRACT_PHASE: True,
@@ -83,6 +83,7 @@ class Pipeline(pyd.BaseModel):
     def load_transform(self) -> TransformLoadPhase:
         return self.phases[PipelinePhase.TRANSFORM_AT_LOAD_PHASE]
 
+    # TODO: Remove it and move it to TransformPhase
     @pyd.model_validator(mode="after")
     def validate_pipeline_phase_mandatory(self: Self) -> Self:
         for phase, mandatory_phase in MANDATORY_PHASES_BY_PIPELINE_TYPE[self.type].items():

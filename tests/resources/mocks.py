@@ -11,8 +11,14 @@ from core.models.phases import(
     IExtractor,
     ILoader,
     ILoadTransform, 
-    ITransform
+    ITransform,
+    iMerger
 )
+
+class MockMerger(iMerger):
+
+    def merge(self, extracted_data: dict[str, ExtractedData]):
+        return "merged_data"
 
 class MockExtractor(IExtractor):
 

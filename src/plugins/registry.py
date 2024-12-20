@@ -20,11 +20,7 @@ logger = logging.getLogger(__name__)
 PLUGIN_NAME = str
 
 # Decorator for plugin registration
-def plugin(plugin_phase: str | PipelinePhase, plugin_name: str):
-
-    if (type(plugin_phase) == str):
-        plugin_phase = PipelinePhase(plugin_phase)
-
+def plugin(plugin_phase: PipelinePhase, plugin_name: str):
     def decorator(plugin_class):
         PluginRegistry.register(plugin_phase, plugin_name, plugin_class)
         return plugin_class

@@ -109,6 +109,11 @@ def mock_load_transformer(transform_at_load_plugin_data):
 def second_mock_load_transformer(second_transform_at_load_plugin_data):
     return MockLoadTransform(id=second_transform_at_load_plugin_data['id'])
 
+@pytest.fixture
+def merger_plugin_data():
+    return {
+        'plugin': 'mock_merger'
+    }
 
 def pipeline_factory(default_config):
     # Factory function for creating pipelines

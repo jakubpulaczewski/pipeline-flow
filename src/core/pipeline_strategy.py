@@ -39,7 +39,7 @@ from core.models.pipeline import Pipeline, PipelineType
 logger = logging.getLogger(__name__)
 
 
-class PipelineStrategy:
+class PipelineStrategy(ABC):
 
     @abstractmethod
     def execute(self, pipeline: Pipeline) -> bool:

@@ -182,26 +182,38 @@ class PipelineParser:
         phase_pipeline = PipelinePhase(phase_name)
         phase_class = PHASE_CLASS_MAP.get(phase_pipeline)
 
-        phase_data["steps"] = self.parse_plugins_by_phase(phase_pipeline, phase_data.get("steps", []))
+        
+        # Parse plugins for different attributes
+        # TODO: Potentially need to be changed as root_validators.
+        if "steps" in phase_data:
+            phase_data["steps"] = self.parse_plugins_by_phase(phase_pipeline, phase_data["steps"])
+
+        if "pre" in phase_data:
+            phase_data["pre"] = self.parse_plugins_by_phase(phase_pipeline, phase_data["pre"])
+        
+        if "post" in phase_data:
+            phase_data["post"] =  self.parse_plugins_by_phase(phase_pipeline, phase_data["post"])
+        
+        if "merge" in phase_data:
+            phase_data["merge"] = self.parse_plugin_by_phase(phase_pipeline, phase_data["merge"])
+
         return phase_class(**phase_data)
 
-
-    @staticmethod
-    def parse_plugins_by_phase(phase_pipeline: PipelinePhase, steps: list[dict]) -> list[PluginCallable]:
-        plugin_callables = []
-
-        for step in steps:
-            plugin_name = step.pop("plugin", None)
-
-            if not plugin_name:
-                raise ValueError("The attribute 'plugin` is empty.")
-            
-            plugin = PluginRegistry.get(phase_pipeline, plugin_name)(**step)
-            plugin_callables.append(plugin)
+    
+    def parse_plugins_by_phase(self, phase_pipeline: PipelinePhase, plugins: list[dict]) -> list[PluginCallable]:
+        return [
+            self.parse_plugin_by_phase(phase_pipeline, data) for data in plugins
+        ]
+  
         
-        return plugin_callables
-            
-
-
-
+    @staticmethod
+    def parse_plugin_by_phase(phase_pipeline: PipelinePhase, plugin_data: dict) -> PluginCallable:
+        """Parse and return a single plugin."""
+        plugin_name = plugin_data.pop("plugin", None)
+        if not plugin_name:
+            raise ValueError("The attribute 'plugin' is empty.")
+        
+        # Create the plugin instance from the registry based on phase and plugin name
+        plugin = PluginRegistry.get(phase_pipeline, plugin_name)(**plugin_data)
+        return plugin
 

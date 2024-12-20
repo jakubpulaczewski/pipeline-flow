@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum, unique
-from typing import Type, TYPE_CHECKING
+from typing import Callable, Type, TYPE_CHECKING
 
 # Third-party Imports
 import pydantic as pyd
 
-# Project imports
+# Project Imports
 if TYPE_CHECKING:
     from common.type_def import ExtractedData, TransformedData
 
@@ -27,16 +27,22 @@ class PipelinePhase(Enum):
     TRANSFORM_PHASE = "transform"
     TRANSFORM_AT_LOAD_PHASE = "transform_at_load"
 
-
 class IExtractor(pyd.BaseModel, ABC):
     """An interface of the Extract Step."""
-
     id: str
     config: dict | None = None
 
     @abstractmethod
     async def extract_data(self) -> ExtractedData:
         """Collects data from a source."""
+        raise NotImplementedError(
+            "The method has not been implemented. You must implement it"
+        )
+  
+class iMerger(ABC):
+    
+    @abstractmethod
+    def merge(self, extracted_data: dict[str, ExtractedData]):
         raise NotImplementedError(
             "The method has not been implemented. You must implement it"
         )
@@ -79,21 +85,20 @@ class ILoadTransform(pyd.BaseModel, ABC):
 
 class BasePhase[T](pyd.BaseModel, ABC):
     model_config = pyd.ConfigDict(arbitrary_types_allowed=True)
-    steps: list[T] | None
+    steps: list[T] | None = []
     storage: StoragePhase | None = None
 
-
 class ExtractPhase(BasePhase[IExtractor]):
-    pass
-
+    pre: list[Callable] | None = []
+    post: list[Callable] | None = []
+    merge: iMerger | None = None
 
 class TransformPhase(BasePhase[ITransform]):
     pass
 
-
 class LoadPhase(BasePhase[ILoader]):
-    pass
-
+    pre: list[Callable] = []
+    post: list[Callable] = []
 
 class TransformLoadPhase(BasePhase[ILoadTransform]):
     pass

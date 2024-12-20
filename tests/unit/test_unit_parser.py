@@ -21,8 +21,13 @@ from core.models.pipeline import Pipeline
 from core.models.phases import ExtractPhase, TransformPhase, TransformLoadPhase, LoadPhase
 from plugins.registry import PluginRegistry
 from tests.resources.constants import ETL, EXTRACT_PHASE, TRANSFORM_PHASE, LOAD_PHASE
-from tests.resources.mocks import MockExtractor, MockLoad, MockTransform, MockLoadTransform
-
+from tests.resources.mocks import (
+    MockExtractor, 
+    MockLoad, 
+    MockTransform, 
+    MockLoadTransform, 
+    MockMerger
+)
 
 
 
@@ -319,12 +324,10 @@ class TestUnitPipelineParser:
         self.pipeline_parser = PipelineParser()
 
     def test_parse_one_plugin(self, extractor_plugin_data):
-        steps = [extractor_plugin_data]
         with patch.object(PluginRegistry, "get", return_value=MockExtractor) as mock:
-            result = self.pipeline_parser.parse_plugins_by_phase(EXTRACT_PHASE, steps)
+            result = self.pipeline_parser.parse_plugin_by_phase(EXTRACT_PHASE, extractor_plugin_data)
 
-            assert len(result) == 1
-            assert result[0] == MockExtractor(
+            assert result == MockExtractor(
                 id="extractor_id", plugin="mock_extractor", config=None
             )
 
@@ -374,6 +377,38 @@ class TestUnitPipelineParser:
 
         assert result == ExtractPhase(steps=[MockExtractor(id='extractor_id')])
 
+    def test_create_phase_extract_with_merge(self, mocker, extractor_plugin_data, second_extractor_plugin_data, merger_plugin_data) -> None:
+        mocker.patch.object(
+            self.pipeline_parser, 
+            'parse_plugins_by_phase', 
+            return_value=[
+                MockExtractor(id='extractor_id'),
+                MockExtractor(id='extractor_id_2')
+            ]
+        )
+
+        mocker.patch.object(
+            self.pipeline_parser, 
+            'parse_plugin_by_phase', 
+            return_value=MockMerger()
+        )
+
+
+        result = self.pipeline_parser.create_phase(
+            phase_name='extract',
+            phase_data={
+                'steps': [extractor_plugin_data, second_extractor_plugin_data],
+                'merge': merger_plugin_data
+            }
+        )
+
+        assert isinstance(result, ExtractPhase)
+        assert result.steps == [
+            MockExtractor(id='extractor_id'),
+            MockExtractor(id='extractor_id_2')
+        ]
+
+        assert isinstance(result.merge, MockMerger)
 
     def test_create_phase_transform(self, mocker, transformer_plugin_data):
         mocker.patch.object(
