@@ -12,7 +12,8 @@ from common.type_def import ExtractedData, TransformedData, TransformLoadedData
 from core.models.exceptions import (
     ExtractException,
     LoadException,
-    TransformException
+    TransformException,
+    TransformLoadException
 )
 
 # Project Imports
@@ -79,6 +80,6 @@ def transform_load_decorator(id: str, transform_function: TransformFunction) -> 
         except Exception as e:
             error_message = f"Error during `transform_at_load` (ID: {id}): {e}"
             logger.error(error_message)
-            raise TransformException(error_message) from e
+            raise TransformLoadException(error_message) from e
 
     return wrapper

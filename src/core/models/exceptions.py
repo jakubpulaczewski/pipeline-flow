@@ -37,3 +37,13 @@ class LoadException(Exception):
 
     def __str__(self) -> str:
         return f"{super().__str__()}"
+
+class TransformLoadException(Exception):
+    """A custom exception is raised when a problem occurs when trying to execute transformation on data"""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self) -> str:
+        return f"{super().__str__()}"
