@@ -14,9 +14,6 @@ from core.models.phases import (
 from core.models.pipeline import PipelineType
 
 
-# TODO: need more tests with Pipeline validators here..
-
-
 def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:
     pipeline = etl_pipeline_factory(name="Job1")
 
