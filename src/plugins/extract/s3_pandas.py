@@ -1,11 +1,9 @@
 """ A Pandas plug-in for extracting and loading data from S3. """
 
 
+from plugins.registry import plugin
 from core.models.phases import PipelinePhase, IExtractor
-from plugins.registry import  plugin
 from common.type_def import ExtractedData
-
-
 
 @plugin(PipelinePhase.EXTRACT_PHASE, "pandas_s3_extract")
 class PandasS3ExtractPlugin(IExtractor):

@@ -5,6 +5,8 @@ import pytest
 
 
 # Project Imports
+from plugins.registry import PluginRegistry
+
 from core.models.phases import (
     ExtractPhase,
     LoadPhase,
@@ -12,7 +14,6 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.models.pipeline import Pipeline
-from plugins.registry import  PluginRegistry
 
 from tests.resources.mocks import (
     MockExtractor, 
@@ -95,11 +96,11 @@ def second_mock_transformer(second_transformer_plugin_data):
 
 @pytest.fixture
 def transform_at_load_plugin_data():
-    return {"id": "mock_transform_load_id"}
+    return {"id": "mock_transform_load_id", "plugin": 'mock_transformer_loader'}
 
 @pytest.fixture
 def second_transform_at_load_plugin_data():
-    return {"id": "mock_transform_load_id_2"}
+    return {"id": "mock_transform_load_id_2", "plugin": 'mock_transformer_loader_2'}
 
 
 @pytest.fixture
@@ -128,10 +129,10 @@ def pipeline_factory(default_config):
         config.update(overrides)
 
         phases = {
-            "extract": ExtractPhase(steps=config.get("extract")),
-            "transform": TransformPhase(steps=config.get("transform")) if config['type'] == "ETL" or config['type'] == "ETLT" else None,
-            "load": LoadPhase(steps=config.get("load")),
-            "transform_at_load": TransformLoadPhase(steps=config.get("transform_at_load")) if config['type'] == "ELT" or config['type'] == "ETLT" else None,
+            "extract": ExtractPhase.model_construct(steps=config.get("extract")),
+            "transform": TransformPhase.model_construct(steps=config.get("transform")) if config['type'] == "ETL" or config['type'] == "ETLT" else None,
+            "load": LoadPhase.model_construct(steps=config.get("load")),
+            "transform_at_load": TransformLoadPhase.model_construct(steps=config.get("transform_at_load")) if config['type'] == "ELT" or config['type'] == "ETLT" else None,
         }
 
         # Include only-non empty values

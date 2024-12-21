@@ -1,5 +1,7 @@
 # Standard Imports
 from __future__ import annotations
+from typing import TYPE_CHECKING
+from types import FunctionType
 import logging
 
 # Third Party Imports
@@ -8,12 +10,8 @@ import logging
 import plugins # Imports core plugins defined in __init__.py
 
 from common.utils import SingletonMeta
-from core.models.phases import (
-    PipelinePhase, 
-    PLUGIN_PHASE_INTERFACE_MAP, 
-    PluginCallable
-)
-
+if TYPE_CHECKING:
+    from core.models.phases import PluginCallable, PipelinePhase
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +38,19 @@ class PluginRegistry(metaclass=SingletonMeta):
     def _validate_plugin_interface(
         pipeline_phase: PipelinePhase, plugin_callable: PluginCallable
     ):
+        from core.models.phases import PLUGIN_PHASE_INTERFACE_MAP
+        
         expected_inteface = PLUGIN_PHASE_INTERFACE_MAP.get(pipeline_phase)
-                                                        
-        if pipeline_phase == PipelinePhase.TRANSFORM_PHASE:           
-             # Plugin can be either callable or a subclass of the expected interface
-            if callable(plugin_callable):
-               return 
-            
 
+        if not expected_inteface:
+            raise ValueError(f"No interface defined for pipeline phase '{pipeline_phase.name}'.")
+
+        #  Generalized validation: Check callable or subclass
+        is_function = lambda obj: isinstance(obj, FunctionType)
+
+        if is_function(plugin_callable):
+             return 
+        
         if not issubclass(plugin_callable, expected_inteface):
             raise TypeError(
                 f"Plugin class '{plugin_callable.__name__}' must be a subclass of '{expected_inteface.__name__}' "

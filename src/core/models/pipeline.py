@@ -1,11 +1,18 @@
 # Standard Imports
 from __future__ import annotations
 
+import logging
 from enum import Enum, unique
-from typing import Self
+from typing import Annotated
 
 # Third-party Imports
-import pydantic as pyd
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    InstanceOf,
+    ValidationInfo,
+    field_validator
+)
 
 # Project imports
 from core.models.phases import (
@@ -17,6 +24,7 @@ from core.models.phases import (
     TransformLoadPhase
 )
 
+logger = logging.getLogger(__name__)
 
 @unique
 class PipelineType(Enum):
@@ -25,7 +33,6 @@ class PipelineType(Enum):
     ELT = "ELT"
     ETLT = "ETLT"
 
-# TODO: Remove it and move it to TransformPhase
 MANDATORY_PHASES_BY_PIPELINE_TYPE = {
     PipelineType.ETL: {
         PipelinePhase.EXTRACT_PHASE: True,
@@ -45,10 +52,10 @@ MANDATORY_PHASES_BY_PIPELINE_TYPE = {
     },
 }
 
-class Pipeline(pyd.BaseModel):
-    model_config = pyd.ConfigDict(arbitrary_types_allowed=True)
+class Pipeline(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    name: str
+    name: Annotated[str, "Name of the pipeline job"]
     type: PipelineType
     phases: dict[PipelinePhase, PhaseInstance]
 
@@ -82,15 +89,37 @@ class Pipeline(pyd.BaseModel):
     @property
     def load_transform(self) -> TransformLoadPhase:
         return self.phases[PipelinePhase.TRANSFORM_AT_LOAD_PHASE]
+    
 
-    # TODO: Remove it and move it to TransformPhase
-    @pyd.model_validator(mode="after")
-    def validate_pipeline_phase_mandatory(self: Self) -> Self:
-        for phase, mandatory_phase in MANDATORY_PHASES_BY_PIPELINE_TYPE[self.type].items():
-            if mandatory_phase:
-                if phase not in self.phases or not self.phases[phase].steps:
-                    raise ValueError(
-                        f"Validation Failed! Mandatory phase '{phase}' cannot be empty or missing plugins."
-                    )
 
-        return self
+    @field_validator('phases')
+    @classmethod
+    def validate_phase_existence(cls, phases: dict[PipelinePhase, PhaseInstance], info: ValidationInfo):
+        pipeline_type = info.data['type']
+
+        pipeline_phases = MANDATORY_PHASES_BY_PIPELINE_TYPE[pipeline_type]
+        mandatory_phases = {phase for phase, is_mandatory in pipeline_phases.items() if is_mandatory}
+        optional_phases = {phase for phase, is_mandatory in pipeline_phases.items() if not is_mandatory}
+        # Compute missing and extra phases
+        provided_phases = set(phases.keys())
+
+        missing_phases = set(mandatory_phases) - set(provided_phases| optional_phases)
+        extra_phases = set(provided_phases) - (mandatory_phases | optional_phases)
+
+
+        if missing_phases or extra_phases:
+            if missing_phases:
+                logger.error(
+                    f"Validation Error: Missing phases for pipeline type '{pipeline_type}': {missing_phases}"
+                )
+            if extra_phases:
+                logger.warning(
+                    f"Validation Warning: Extra phases provided for pipeline type '{pipeline_type}': {extra_phases}"
+                )
+            raise ValueError(
+                f"Validation Error: The provided phases do not match the required phases for pipeline type '{pipeline_type}'. "
+                f"Missing phases: {missing_phases}. Extra phases: {extra_phases}."
+            )
+            
+        logger.info(f"Phase validation successful for pipeline type '{pipeline_type}'")
+        return phases

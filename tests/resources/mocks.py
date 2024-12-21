@@ -1,4 +1,5 @@
 # Standard Imports
+from functools import wraps
 
 
 # Third-party Imports
@@ -40,6 +41,12 @@ class MockTransformToUpper(ITransform):
     def transform_data(self, data: ExtractedData) -> TransformedData:
         return data.upper()
 
+
+def upper_case_and_suffix_transform(id: str):
+    @wraps(upper_case_and_suffix_transform)
+    def inner(data: ExtractedData) -> str:
+        return data.upper() + "transformed_suffix"
+    return inner
 
 class MockLoadTransform(ILoadTransform):
 

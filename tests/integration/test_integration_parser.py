@@ -109,14 +109,13 @@ class TestIntegrationPipelineParser:
             self.pipeline_parser.parse_pipelines(pipelines_data=pipelines_data)
 
 
-    def test_parse_etl_pipeline_with_empty_mandatory_phases(self):
+    def test_parse_etl_pipeline_with_missing_extract_phase(self):
         # Register Plugins
         plugins = {
             TRANSFORM_PHASE: [("transform_plugin", MockTransform)],
             LOAD_PHASE: [("load_plugin", MockLoad)],
         }
         setup_plugins(plugins)
-
 
         yaml_str = """
         pipelines:
@@ -134,11 +133,52 @@ class TestIntegrationPipelineParser:
         """
         with pytest.raises(
             ValueError,
-            match="Validation Failed! Mandatory phase 'PipelinePhase.EXTRACT_PHASE' cannot be empty or missing plugins.",
+            match="Validation Error: The provided phases do not match the required phases for pipeline type 'PipelineType.ETL'. Missing phases: {<PipelinePhase.EXTRACT_PHASE: 'extract'>}.",
         ):
             pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
             self.pipeline_parser.parse_pipelines(pipelines_data)
     
+    def test_parse_etl_pipeline_with_extra_phases(self):
+        # Register Plugins
+        plugins = {
+            EXTRACT_PHASE: [("extractor_plugin", MockExtractor)],
+            TRANSFORM_PHASE: [("transform_plugin", MockTransform)],
+            LOAD_PHASE: [("load_plugin", MockLoad)],
+            LOAD_TRANSFORM_PHASE: [("transform_at_load_plugin", MockLoadTransform)]
+        }
+        setup_plugins(plugins)
+
+        yaml_str = """
+        pipelines:
+          pipeline1:
+            type: ETL
+            phases:
+              extract:
+                steps:
+                  - id: mock_extract1
+                    plugin: extractor_plugin
+              transform:
+                steps:
+                  - id: mock_tranformation1
+                    plugin: transform_plugin
+              load:
+                steps:
+                  - id: mock_load1
+                    plugin: load_plugin
+              transform_at_load:
+                steps:
+                  - id: mock_transfor_at_load
+                    plugin: transform_at_load_plugin
+        """
+        with pytest.raises(
+            ValueError,
+            match="Extra phases: {<PipelinePhase.TRANSFORM_AT_LOAD_PHASE: 'transform_at_load'>}",
+        ):
+            pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+            self.pipeline_parser.parse_pipelines(pipelines_data)
+           
+           
+        
     def test_parse_etl_pipeline_with_only_mandatory_phases(self) -> None:
         # Register Plugins
         plugins = {
@@ -268,7 +308,7 @@ class TestIntegrationPipelineParser:
         yaml_str = """
         pipelines:
           pipeline1:
-            type: ETL
+            type: ELT
             phases:
               extract:
                 steps: 

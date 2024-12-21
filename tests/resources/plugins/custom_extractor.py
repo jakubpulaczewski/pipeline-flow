@@ -1,5 +1,5 @@
-from core.models.phases import PipelinePhase, IExtractor
 from plugins.registry import  plugin
+from core.models.phases import PipelinePhase, IExtractor
 
 
 @plugin(PipelinePhase.EXTRACT_PHASE, "custom_extract")
