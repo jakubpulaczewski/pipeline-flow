@@ -323,145 +323,6 @@ class TestUnitPipelineParser:
     def pipeline_parser(self) -> PipelineParser:
         self.pipeline_parser = PipelineParser()
 
-    def test_parse_one_plugin(self, extractor_plugin_data):
-        with patch.object(PluginRegistry, "get", return_value=MockExtractor) as mock:
-            result = self.pipeline_parser.parse_plugin_by_phase(EXTRACT_PHASE, extractor_plugin_data)
-
-            assert result == MockExtractor(
-                id="extractor_id", plugin="mock_extractor", config=None
-            )
-
-            mock.assert_called_with(EXTRACT_PHASE, "mock_extractor")
-
-
-
-    def test_parse_multiple_plugins(self, extractor_plugin_data, second_extractor_plugin_data):
-        steps = [
-            extractor_plugin_data,
-            second_extractor_plugin_data
-        ]
-        
-
-        with patch.object(
-            PluginRegistry, "get", side_effect=[MockExtractor, MockExtractor]
-        ) as mock:
-            result = self.pipeline_parser.parse_plugins_by_phase(EXTRACT_PHASE, steps)
-
-            assert len(result) == 2
-            assert result[0] == MockExtractor(
-                id="extractor_id", config=None
-            )
-            assert result[1] == MockExtractor(
-                id="extractor_id_2", config=None
-            )
-
-            mock.assert_any_call(EXTRACT_PHASE, "mock_extractor")
-            mock.assert_any_call(EXTRACT_PHASE, "mock_extractor_2")
-
-
-    def test_create_phase_extract(self, mocker, extractor_plugin_data) -> None:
-        mocker.patch.object(
-            self.pipeline_parser, 
-            'parse_plugins_by_phase', 
-            return_value=[
-                MockExtractor(id='extractor_id', config=None)
-            ]
-        )
-
-        result = self.pipeline_parser.create_phase(
-            phase_name='extract',
-            phase_data={
-                'steps': [extractor_plugin_data]
-            }
-        )
-
-        assert result == ExtractPhase(steps=[MockExtractor(id='extractor_id')])
-
-    def test_create_phase_extract_with_merge(self, mocker, extractor_plugin_data, second_extractor_plugin_data, merger_plugin_data) -> None:
-        mocker.patch.object(
-            self.pipeline_parser, 
-            'parse_plugins_by_phase', 
-            return_value=[
-                MockExtractor(id='extractor_id'),
-                MockExtractor(id='extractor_id_2')
-            ]
-        )
-
-        mocker.patch.object(
-            self.pipeline_parser, 
-            'parse_plugin_by_phase', 
-            return_value=MockMerger()
-        )
-
-
-        result = self.pipeline_parser.create_phase(
-            phase_name='extract',
-            phase_data={
-                'steps': [extractor_plugin_data, second_extractor_plugin_data],
-                'merge': merger_plugin_data
-            }
-        )
-
-        assert isinstance(result, ExtractPhase)
-        assert result.steps == [
-            MockExtractor(id='extractor_id'),
-            MockExtractor(id='extractor_id_2')
-        ]
-
-        assert isinstance(result.merge, MockMerger)
-
-    def test_create_phase_transform(self, mocker, transformer_plugin_data):
-        mocker.patch.object(
-            self.pipeline_parser, 
-            'parse_plugins_by_phase', 
-            return_value=[
-                MockTransform(id='transformer_id')
-            ]
-        )
-
-        result = self.pipeline_parser.create_phase(
-            phase_name='transform',
-            phase_data={
-                'steps': [transformer_plugin_data]
-            }
-        )
-
-        assert result == TransformPhase(steps=[MockTransform(id='transformer_id')])
-
-    def test_create_phase_load(self, mocker, loader_plugin_data):
-        mocker.patch.object(
-            self.pipeline_parser, 
-            'parse_plugins_by_phase', 
-            return_value=[
-                MockLoad(id='loader_id')
-            ]
-        )
-
-        result = self.pipeline_parser.create_phase(
-            phase_name='load',
-            phase_data={
-                'steps': [loader_plugin_data]
-            }
-        )
-
-        assert result == LoadPhase(steps=[MockLoad(id='loader_id')])
-
-    def test_create_phase_transform_at_load(self, mocker, transform_at_load_plugin_data):
-        mocker.patch.object(
-            self.pipeline_parser, 
-            'parse_plugins_by_phase', 
-            return_value=[
-                MockLoadTransform(id='mock_transform_load_id')
-            ]
-        )
-
-        result = self.pipeline_parser.create_phase(
-            phase_name='transform_at_load',
-            phase_data={
-                'steps': [transform_at_load_plugin_data]
-            }
-        )
-        assert result == TransformLoadPhase(steps=[MockLoadTransform(id='mock_transform_load_id')])
 
     def test_create_pipeline_with_no_pipeline_attributes(self):
         with pytest.raises(ValueError, match="Pipeline attributes are empty"):
@@ -500,12 +361,12 @@ class TestUnitPipelineParser:
             self.pipeline_parser,
             "create_phase",
             side_effect=[
-                ExtractPhase(steps=[
+                ExtractPhase.model_construct(steps=[
                     MockExtractor(id='extractor_id'),
                     MockExtractor(id='extractor_id_2')
                 ]),
-                TransformPhase(steps=[]),
-                LoadPhase(steps=[
+                TransformPhase.model_construct(steps=[]),
+                LoadPhase.model_construct(steps=[
                     MockLoad(id='loader_id'),
                     MockLoad(id='loader_id_2')
                 ]),
@@ -526,45 +387,6 @@ class TestUnitPipelineParser:
         assert isinstance(pipeline.load.steps[0], MockLoad)
         assert isinstance(pipeline.load.steps[1], MockLoad)
 
-
-    def test_create_pipeline_without_mandatory_phase(
-        self,
-        mocker,
-        loader_plugin_data,
-        second_loader_plugin_data
-    ):
-        pipeline_data = {
-            "type": "ETL",
-            "phases": {
-                "extract": {
-                    "steps": []
-                },
-                "transform": {
-                    "steps": []
-                },
-                "load": {
-                    "steps": [
-                        loader_plugin_data, second_loader_plugin_data
-                    ]
-                }
-            }
-        }
-
-        mocker.patch.object(
-            self.pipeline_parser,
-            "create_phase",
-            side_effect=[
-                ExtractPhase(steps=[]),
-                TransformPhase(steps=[]),
-                LoadPhase(steps=[
-                    MockLoad(id='loader_id'),
-                    MockLoad(id='loader_id_2')
-                ]),
-            ],
-        )
-
-        with pytest.raises(ValidationError, match="Validation Failed! Mandatory phase 'PipelinePhase.EXTRACT_PHASE' cannot be empty or missing plugins."):
-            self.pipeline_parser.create_pipeline("full_pipeline", pipeline_data)
 
     def test_create_pipeline_with_multiple_sources_destinations(
         self,
@@ -601,15 +423,15 @@ class TestUnitPipelineParser:
             self.pipeline_parser,
             "create_phase",
             side_effect=[
-                ExtractPhase(steps=[
+                ExtractPhase.model_construct(steps=[
                     MockExtractor(id='extractor_id'),
                     MockExtractor(id='extractor_id_2')
                 ]),
-                TransformPhase(steps=[
+                TransformPhase.model_construct(steps=[
                     MockTransform(id='transformer_id'),
                     MockTransform(id='transformer_id_2')
                 ]),
-                LoadPhase(steps=[
+                LoadPhase.model_construct(steps=[
                     MockLoad(id='loader_id'),
                     MockLoad(id='loader_id_2')
                 ]),

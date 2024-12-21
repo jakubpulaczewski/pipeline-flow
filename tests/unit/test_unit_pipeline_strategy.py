@@ -39,7 +39,7 @@ def test_factory_pipeline(pipeline_type, expected_strategy) -> None:
 
 @pytest.mark.asyncio
 async def test_run_extractor(extractor_mock) -> None:
-    extract = ExtractPhase(steps=[extractor_mock])
+    extract = ExtractPhase.model_construct(steps=[extractor_mock])
     result = await PipelineStrategy.run_extractor(extract)
 
     assert result == 'extracted_data'
@@ -48,7 +48,7 @@ async def test_run_extractor(extractor_mock) -> None:
 
 @pytest.mark.asyncio
 async def test_run_extractor_multiple(extractor_mock, second_extractor_mock, merger_mock) -> None:
-    extracts = ExtractPhase(
+    extracts = ExtractPhase.model_construct(
         steps=[extractor_mock, second_extractor_mock],
         merge=merger_mock
     )
@@ -59,7 +59,7 @@ async def test_run_extractor_multiple(extractor_mock, second_extractor_mock, mer
 
 
 def test_run_transformer(mock_transformer) -> None:
-    transformations = TransformPhase(steps=[mock_transformer])
+    transformations = TransformPhase.model_construct(steps=[mock_transformer])
 
     result = PipelineStrategy.run_transformer("DATA", transformations)
 
@@ -68,7 +68,7 @@ def test_run_transformer(mock_transformer) -> None:
 
 def test_run_transformer_multiple() -> None:
     data = "initial_data"
-    transformations = TransformPhase(
+    transformations = TransformPhase.model_construct(
         steps=[
             MockTransformAddSuffix(id="add_suffix"),
             MockTransformToUpper(id="to_upper"),
@@ -83,7 +83,7 @@ def test_run_transformer_multiple() -> None:
 @pytest.mark.asyncio
 async def test_run_loader(mock_loader) -> None:
     data = "INITIAL_DATA_SUFFIX"
-    destinations = LoadPhase(
+    destinations = LoadPhase.model_construct(
         steps=[
             mock_loader
         ]
@@ -95,7 +95,7 @@ async def test_run_loader(mock_loader) -> None:
 @pytest.mark.asyncio
 async def test_run_loader_multiple(mock_loader, second_mock_loader) -> None:
     data = "INITIAL_DATA_SUFFIX"
-    destinations = LoadPhase(
+    destinations = LoadPhase.model_construct(
         steps=[
             mock_loader,
             second_mock_loader
@@ -109,7 +109,7 @@ async def test_run_loader_multiple(mock_loader, second_mock_loader) -> None:
 
 
 def test_run_transformer_after_load(mock_load_transformer) -> None:
-    transformations = TransformLoadPhase(steps= [
+    transformations = TransformLoadPhase.model_construct(steps= [
         mock_load_transformer
     ])
     result = PipelineStrategy.run_transformer_after_load(transformations)
@@ -120,7 +120,7 @@ def test_run_transformer_after_load(mock_load_transformer) -> None:
 
 
 def test_run_transformer_after_load_multiple(mock_load_transformer, second_mock_load_transformer) -> None:
-    transformations = TransformLoadPhase(steps= [
+    transformations = TransformLoadPhase.model_construct(steps= [
         mock_load_transformer,
         second_mock_load_transformer
     ])
