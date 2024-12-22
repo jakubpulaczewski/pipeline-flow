@@ -16,8 +16,8 @@ from core.models.phases import (
 from core.models.pipeline import Pipeline
 
 from tests.resources.mocks import (
-    MockExtractor, 
-    MockLoad, 
+    MockExtractor,
+    MockLoad,
     MockTransform, 
     MockLoadTransform,
     MockMerger
@@ -69,6 +69,7 @@ def second_loader_plugin_data():
 @pytest.fixture
 def mock_loader(loader_plugin_data):
     return MockLoad(id=loader_plugin_data['id'])
+
 
 @pytest.fixture
 def second_mock_loader(second_loader_plugin_data):
@@ -137,6 +138,7 @@ def pipeline_factory(default_config):
 
         # Include only-non empty values
         phases = {k: v for k, v in phases.items() if v}
+        print(phases)
 
         return Pipeline(
             name=config["name"],
@@ -205,3 +207,29 @@ def etlt_pipeline_factory(
 
     pipeline = pipeline_factory(default_config=default_config)
     return pipeline
+
+
+@pytest.fixture
+def flexible_pipeline_factory():
+    def _flexible_pipeline_factory(
+        name: str,
+        pipeline_type: str = "ETL",
+        extract: list = None,
+        transform: list = None,
+        load: list = None,
+        transform_at_load: list = None,
+        needs: list[str] = None,
+    ):  
+        default_config = {
+            "name": name,
+            "type": pipeline_type,
+            "extract": extract or [],
+            "transform": transform or [],
+            "load": load or [],
+            "transform_at_load": transform_at_load or [],
+            "needs": needs,
+        }
+        
+        return pipeline_factory(default_config)
+
+    return _flexible_pipeline_factory
