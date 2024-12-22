@@ -10,12 +10,6 @@ from typing import  Any
 
 # Project Imports
 from common.type_def import TransformedData
-
-from core.models.phase_wrappers import (
-    ExtractFunction,
-    TransformFunction,
-    LoadFunction
-)
 class SingletonMeta(type):
 
     _instances = {}
@@ -34,7 +28,7 @@ class SingletonMeta(type):
 
 async def run_in_executor(
     executor: Executor | None,
-    func: ExtractFunction | TransformFunction | LoadFunction,
+    func: Any,
     *args: Any,
     **kwargs: Any,
 ) -> TransformedData :
