@@ -29,7 +29,7 @@ from tests.resources.mocks import (
     MockAwaitExtractor,
     MockAwaitLoader,
     MockAwaitTransformer,
-    MockAwaitLoadTransform
+    MockAwaitLoadTransformer
 )
 
 async def async_pre_1():
@@ -266,8 +266,8 @@ class TestUnitPipelineStrategyConcurrency:
     def test_run_transformer_after_load_multiple_with_delay() -> None:
         tf = TransformLoadPhase.model_construct(
             steps=[
-                MockAwaitLoadTransform(id='await_transform_load_id', delay=0.1),
-                MockAwaitLoadTransform(id='await_transform_load_id2', delay=0.2)
+                MockAwaitLoadTransformer(id='await_transform_load_id', delay=0.1),
+                MockAwaitLoadTransformer(id='await_transform_load_id2', delay=0.2)
             ]
         )
 

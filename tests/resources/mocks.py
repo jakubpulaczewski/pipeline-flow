@@ -67,7 +67,7 @@ class MockLoadTransform(ILoadTransform):
     def transform_data(self) -> None:
         return None
 
-class MockAwaitLoadTransform(ILoadTransform):
+class MockAwaitLoadTransformer(ILoadTransform):
     delay: float
 
     def transform_data(self) -> None:
