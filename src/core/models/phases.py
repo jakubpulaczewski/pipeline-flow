@@ -112,23 +112,29 @@ def serialize_plugins(phase_pipeline: PipelinePhase) -> object:
         raise TypeError(f"Expected a list or dict, but got {type(value).__name__}")
     return validator
 
+def unique_id_validator(steps):
+    done = []
+    for step in steps:
+        if step.id in done:
+            raise ValueError("The `ID` is not unique. There already exists an 'ID' with this name.")
+        done.append(step.id)
+    
+    return steps
+
 
 class ExtractPhase(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     steps: Annotated[
         list[IExtractor], 
         Field(min_length=1), 
-        BeforeValidator(serialize_plugins(PipelinePhase.EXTRACT_PHASE))
+        BeforeValidator(serialize_plugins(PipelinePhase.EXTRACT_PHASE)),
+        AfterValidator(unique_id_validator)
     ]
     pre: Annotated[
         list[FunctionType] | None, 
         BeforeValidator(serialize_plugins(PipelinePhase.EXTRACT_PHASE))
     ] = None
 
-    post: Annotated[
-        list[FunctionType] | None, 
-        BeforeValidator(serialize_plugins(PipelinePhase.EXTRACT_PHASE))
-    ] = None
 
     merge: Annotated[
         iMerger | None, 
@@ -183,8 +189,6 @@ PHASE_CLASS_MAP = {
     PipelinePhase.TRANSFORM_AT_LOAD_PHASE: TransformLoadPhase,
 }
 
-# Create a reverse mapping
-CLASS_PHASE_MAP = {v: k for k, v in PHASE_CLASS_MAP.items()}
 
 PLUGIN_PHASE_INTERFACE_MAP: dict[PipelinePhase, PluginCallable] = {
     PipelinePhase.EXTRACT_PHASE: IExtractor,

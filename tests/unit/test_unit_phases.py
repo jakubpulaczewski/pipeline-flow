@@ -113,6 +113,21 @@ def test_create_phase_extract_with_merge_failure(plugin_registry_mock, extractor
         )
 
 
+def test_create_phase_with_same_id_failure(plugin_registry_mock) -> None:
+    with pytest.raises(ValueError, match="The `ID` is not unique. There already exists an 'ID' with this name"):
+        ExtractPhase(
+            steps=[
+                {
+                    "id": "extractor_id",
+                    "plugin": "mock_extractor",
+                },
+                {
+                    "id": "extractor_id", 
+                    "plugin": "mock_extractor_2"
+                }
+        ])
+
+
 def test_create_phase_transform_without_steps_success():
     transform = TransformPhase(steps=[])
 
