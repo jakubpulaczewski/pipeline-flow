@@ -1,6 +1,8 @@
 # Standard Imports
-from functools import wraps
+import asyncio
+import time
 
+from functools import wraps
 
 # Third-party Imports
 import pytest
@@ -26,13 +28,26 @@ class MockExtractor(IExtractor):
     async def extract_data(self) -> ExtractedData:
         return "extracted_data"
 
+class MockAwaitExtractor(IExtractor):
+    delay: float
+
+    async def extract_data(self) -> ExtractedData:
+        await asyncio.sleep(self.delay)
+        return "extracted_data"
 
 class MockTransform(ITransform):
 
     def transform_data(self, data: ExtractedData) -> TransformedData:
         return "transformed_etl_data"
-    
 
+
+class MockAwaitTransformer(ITransform):
+    delay: float
+
+    def transform_data(self, data: ExtractedData) -> TransformedData:
+        time.sleep(self.delay)
+        return "TF" + data
+    
 class MockTransformAddSuffix(ITransform):
     def transform_data(self, data: ExtractedData) -> TransformedData:
         return f"{data}_suffix"
@@ -49,12 +64,24 @@ def upper_case_and_suffix_transform(id: str):
     return inner
 
 class MockLoadTransform(ILoadTransform):
-
     def transform_data(self) -> None:
         return None
 
+class MockAwaitLoadTransform(ILoadTransform):
+    delay: float
+
+    def transform_data(self) -> None:
+        time.sleep(self.delay)
+        return None
 
 class MockLoad(ILoader):
 
     async def load_data(self, data: ExtractedData | TransformedData) -> None:
+        return None
+
+class MockAwaitLoader(ILoader):
+    delay: float = 0.3
+
+    async def load_data(self, data: ExtractedData | TransformedData) -> None:
+        await asyncio.sleep(self.delay)
         return None

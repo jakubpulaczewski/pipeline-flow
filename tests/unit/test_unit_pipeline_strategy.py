@@ -1,4 +1,7 @@
 # Standard Imports
+import asyncio
+import time
+from unittest.mock import AsyncMock, patch
 
 # Third-party Imports
 import pytest
@@ -11,6 +14,7 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.models.pipeline import PipelineType
+from core.models.phases import PipelinePhase
 from core.pipeline_strategy import (
     ETLStrategy,
     ELTStrategy,
@@ -21,8 +25,28 @@ from core.pipeline_strategy import (
 
 from tests.resources.mocks import (
     MockTransformAddSuffix,
-    MockTransformToUpper
+    MockTransformToUpper,
+    MockAwaitExtractor,
+    MockAwaitLoader,
+    MockAwaitTransformer,
+    MockAwaitLoadTransform
 )
+
+async def async_pre_1():
+    await asyncio.sleep(0.2)
+    return "Async 1 result"
+
+async def async_pre_2():
+    await asyncio.sleep(0.4)
+    return "Async 2 result"
+
+def sync_pre_1():
+    time.sleep(0.5)
+    return "Sync 1 result"
+
+def sync_pre_2():
+    time.sleep(0.3)
+    return "Sync 2 result"
 
 
 
@@ -38,7 +62,7 @@ def test_factory_pipeline(pipeline_type, expected_strategy) -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_extractor(extractor_mock) -> None:
+async def test_run_extractor_without_delay(extractor_mock) -> None:
     extract = ExtractPhase.model_construct(steps=[extractor_mock])
     result = await PipelineStrategy.run_extractor(extract)
 
@@ -47,7 +71,7 @@ async def test_run_extractor(extractor_mock) -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_extractor_multiple(extractor_mock, second_extractor_mock, merger_mock) -> None:
+async def test_run_extractor_multiple_without_delay(extractor_mock, second_extractor_mock, merger_mock) -> None:
     extracts = ExtractPhase.model_construct(
         steps=[extractor_mock, second_extractor_mock],
         merge=merger_mock
@@ -81,7 +105,7 @@ def test_run_transformer_multiple() -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_loader(mock_loader) -> None:
+async def test_run_loader_without_delay(mock_loader) -> None:
     data = "INITIAL_DATA_SUFFIX"
     destinations = LoadPhase.model_construct(
         steps=[
@@ -93,7 +117,7 @@ async def test_run_loader(mock_loader) -> None:
     assert result == [{'id': 'loader_id', 'success': True}]
 
 @pytest.mark.asyncio
-async def test_run_loader_multiple(mock_loader, second_mock_loader) -> None:
+async def test_run_loader_multiple_without_delay(mock_loader, second_mock_loader) -> None:
     data = "INITIAL_DATA_SUFFIX"
     destinations = LoadPhase.model_construct(
         steps=[
@@ -132,3 +156,123 @@ def test_run_transformer_after_load_multiple(mock_load_transformer, second_mock_
     ]
 
 
+class TestUnitPipelineStrategyConcurrency:
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def test_execute_processing_steps() -> None:
+        start = time.time()
+        result = await PipelineStrategy._execute_processing_steps(
+            PipelinePhase.EXTRACT_PHASE,
+            [async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
+        )
+        total = time.time() - start
+
+        # Concurrency validation
+        assert 0.6 > total > 0.5, "Delay Should be 0.5 seconds"
+        assert result == ['Async 1 result', 'Async 2 result', 'Sync 1 result', 'Sync 2 result']
+
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def test_run_extractor_with_pre_processing() -> None:
+        # Set the side_effect function
+        
+        start = time.time()
+        extract = ExtractPhase.model_construct(
+            steps=[MockAwaitExtractor(id='await_extractor_id', delay=0.2)],
+            pre=[async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
+        )
+
+        result = await PipelineStrategy.run_extractor(extract)
+        total = time.time() - start
+        # Concurrency validation
+        assert 0.8 > total >= 0.7, "Delay Should be (0.2) Extract + (0.5) Pre processing "
+        assert result == 'extracted_data'
+
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def test_run_extractor_multiple_with_delay(merger_mock) -> None:
+        extract = ExtractPhase.model_construct(
+            steps=[
+                MockAwaitExtractor(id='await_extractor_id', delay=0.2),
+                MockAwaitExtractor(id='await_extractor_id_2', delay=0.3)
+            ],
+            merge=merger_mock
+        )
+        start = time.time()
+        extracted_data = await PipelineStrategy.run_extractor(extract)
+        total = time.time() - start
+
+        assert 0.4 > total >= 0.3, "Delay Should be 0.3 second for asychronously executing two extracts"
+        assert extracted_data == 'merged_data'
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def test_run_loader_with_pre_processing() -> None:
+        start = time.time()
+        destinations = LoadPhase.model_construct(
+            steps=[MockAwaitLoader(id='await_loader_id', delay=0.2)],
+            pre=[async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
+        )
+
+        result = await PipelineStrategy.run_loader("DATA", destinations)
+        total = time.time() - start
+
+        # Concurrency validation
+        assert 0.8 > total >= 0.7, "Delay Should be (0.2) Load + (0.5) Pre processing "
+        assert result == [{'id': 'await_loader_id', 'success': True}]
+
+
+    @staticmethod
+    @pytest.mark.asyncio
+    async def test_run_loader_multiple_with_delay() -> None:
+        destinations = LoadPhase.model_construct(
+            steps=[
+                MockAwaitLoader(id='await_loader_id', delay=0.4),
+                MockAwaitLoader(id='await_loader_id_2', delay=0.2)
+            ]
+        )
+        start = time.time()
+        extracted_data = await PipelineStrategy.run_loader("DATA", destinations)
+        total = time.time() - start
+
+        assert 0.5 > total >= 0.4, "Delay Should be 0.4 second for asychronously executing two loads"
+
+        assert extracted_data == [
+            {'id': 'await_loader_id', 'success': True}, 
+            {'id': 'await_loader_id_2', 'success': True}
+        ]
+
+    @staticmethod
+    def test_run_transformer_multiple_with_delay() -> None:
+        tf = TransformPhase.model_construct(
+            steps=[
+                MockAwaitTransformer(id='await_transformer_id', delay=0.2),
+                MockAwaitTransformer(id='await_transformer_id_2', delay=0.3)
+            ]
+        )
+
+        start = time.time()
+        PipelineStrategy.run_transformer("DATA", tf)
+        total = time.time() - start
+
+        assert 0.6 > total >= 0.5, 'Delay Should be 0.5 seconds for sychronous transformations.'
+
+
+
+    @staticmethod
+    def test_run_transformer_after_load_multiple_with_delay() -> None:
+        tf = TransformLoadPhase.model_construct(
+            steps=[
+                MockAwaitLoadTransform(id='await_transform_load_id', delay=0.1),
+                MockAwaitLoadTransform(id='await_transform_load_id2', delay=0.2)
+            ]
+        )
+
+        start = time.time()
+        PipelineStrategy.run_transformer_after_load(tf)
+        total = time.time() - start
+
+        assert 0.4 > total >= 0.3, 'Delay Should be 0.3 seconds for sychronous transformations.'
