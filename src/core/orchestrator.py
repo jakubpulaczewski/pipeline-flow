@@ -6,7 +6,7 @@ import asyncio
 
 # Project Imports
 from core.models.pipeline import Pipeline
-from core.pipeline_strategy import PIPELINE_STRATEGY_MAP
+from core.executor import PIPELINE_STRATEGY_MAP
 from core.parser import YamlConfig
 
 logger =  logging.getLogger(__name__)

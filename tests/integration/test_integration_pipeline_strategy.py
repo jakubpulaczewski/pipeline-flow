@@ -12,7 +12,7 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.models.pipeline import Pipeline, PipelineType
-from core.pipeline_strategy import (
+from core.executor import (
     ETLStrategy, 
     ELTStrategy, 
     ETLTStrategy

@@ -8,7 +8,7 @@ import pytest
 # Project Imports
 from core.models.exceptions import ExtractException
 from core.orchestrator import PipelineOrchestrator
-from core.pipeline_strategy import PIPELINE_STRATEGY_MAP, ETLStrategy
+from core.executor import PIPELINE_STRATEGY_MAP, ETLStrategy
 from core.parser import YamlConfig
 
 

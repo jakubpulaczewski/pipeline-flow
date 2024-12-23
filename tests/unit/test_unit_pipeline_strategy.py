@@ -13,7 +13,7 @@ from core.models.phases import (
     TransformLoadPhase,
     TransformPhase,
 )
-from core.pipeline_strategy import  PipelineExecutor
+from core.executor import  PipelineExecutor
 
 
 from tests.resources.mocks import (
