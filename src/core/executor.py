@@ -55,6 +55,7 @@ class PipelineExecutor:
             logger.error(error_message)
             raise
 
+    @time_it
     async def run_extractor(self, extracts: ExtractPhase) -> ExtractedData:
         results = {}
  
@@ -77,6 +78,7 @@ class PipelineExecutor:
         return extracts.merge.merge_data(results)
 
 
+    @time_it
     def run_transformer(self, data: ExtractedData, transformations: TransformPhase) -> TransformedData:
         try:
             for tf in transformations.steps:
@@ -93,6 +95,8 @@ class PipelineExecutor:
 
         return transformed_data
 
+
+    @time_it
     async def run_loader(self, data: ExtractedData | TransformedData, destinations: LoadPhase) -> list[dict]:
         if destinations.pre:
             await self._execute_processing_steps(PipelinePhase.LOAD_PHASE, destinations.pre)
@@ -111,6 +115,8 @@ class PipelineExecutor:
         results = [{'id': id, 'success': True} for id, task in tasks.items()]
         return results
 
+
+    @time_it
     def run_transformer_after_load(self, transformations: TransformLoadPhase) -> list[dict]:
         results = []
         for tf in transformations.steps:
