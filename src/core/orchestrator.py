@@ -6,7 +6,7 @@ import asyncio
 
 # Project Imports
 from core.models.pipeline import Pipeline
-from core.pipeline_strategy import PipelineStrategyFactory
+from core.pipeline_strategy import PIPELINE_STRATEGY_MAP
 from core.parser import YamlConfig
 
 logger =  logging.getLogger(__name__)
@@ -49,8 +49,8 @@ class PipelineOrchestrator:
                 pipeline = await self.pipeline_queue.get()
                 
                 logger.info("Executing: %s ", pipeline.name)
-                strategy = PipelineStrategyFactory.get_pipeline_strategy(pipeline.type)
-                pipeline.is_executed = await strategy.execute(pipeline)
+                strategy = PIPELINE_STRATEGY_MAP[pipeline.type]
+                pipeline.is_executed = await strategy().execute(pipeline)
                 logger.info("Completed: %s", pipeline.name)
 
 

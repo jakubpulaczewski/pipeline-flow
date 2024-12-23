@@ -4,14 +4,14 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import Callable, TYPE_CHECKING
 
 # Third Party Imports
 
 # Project Imports
-import common.utils as utils
 from common.type_def import ExtractedData, TransformedData, TransformLoadedData
+from common.decorator import time_it
 
 if TYPE_CHECKING:
     from core.models.phases import (
@@ -34,12 +34,7 @@ from core.models.phases import PipelinePhase
 logger = logging.getLogger(__name__)
 
 
-class PipelineStrategy(ABC):
-
-    @abstractmethod
-    def execute(self, pipeline: Pipeline) -> bool:
-        raise NotImplementedError("This has to be implemented by the subclasses.")
-
+class PipelineExecutor:
 
     @staticmethod
     async def _execute_processing_steps(phase: PipelinePhase, processing_steps: list[Callable]):
@@ -60,13 +55,12 @@ class PipelineStrategy(ABC):
             logger.error(error_message)
             raise
 
-    @staticmethod
-    async def run_extractor(extracts: ExtractPhase) -> ExtractedData:
+    async def run_extractor(self, extracts: ExtractPhase) -> ExtractedData:
         results = {}
  
         # Run Pre-Requisite here using extracts.pre
         if extracts.pre:
-            await PipelineStrategy._execute_processing_steps(PipelinePhase.EXTRACT_PHASE, extracts.pre)
+            await self._execute_processing_steps(PipelinePhase.EXTRACT_PHASE, extracts.pre)
 
         async with asyncio.TaskGroup() as extract_tg:
             try:
@@ -83,8 +77,7 @@ class PipelineStrategy(ABC):
         return extracts.merge.merge_data(results)
 
 
-    @staticmethod
-    def run_transformer(data: ExtractedData, transformations: TransformPhase) -> TransformedData:
+    def run_transformer(self, data: ExtractedData, transformations: TransformPhase) -> TransformedData:
         try:
             for tf in transformations.steps:
                 logger.info(f"Applying transformation: {tf.id}")
@@ -100,10 +93,9 @@ class PipelineStrategy(ABC):
 
         return transformed_data
 
-    @staticmethod
-    async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPhase) -> list[dict]:
+    async def run_loader(self, data: ExtractedData | TransformedData, destinations: LoadPhase) -> list[dict]:
         if destinations.pre:
-            await PipelineStrategy._execute_processing_steps(PipelinePhase.LOAD_PHASE, destinations.pre)
+            await self._execute_processing_steps(PipelinePhase.LOAD_PHASE, destinations.pre)
             
         async with asyncio.TaskGroup() as load_tg:
             try:
@@ -114,13 +106,12 @@ class PipelineStrategy(ABC):
                 raise LoadException(error_message) from e
                 
         if destinations.post:
-            await PipelineStrategy._execute_processing_steps(PipelinePhase.LOAD_PHASE, destinations.post)
+            await self._execute_processing_steps(PipelinePhase.LOAD_PHASE, destinations.post)
 
         results = [{'id': id, 'success': True} for id, task in tasks.items()]
         return results
 
-    @staticmethod
-    def run_transformer_after_load(transformations: TransformLoadPhase) -> list[dict]:
+    def run_transformer_after_load(self, transformations: TransformLoadPhase) -> list[dict]:
         results = []
         for tf in transformations.steps:
             try:
@@ -133,66 +124,65 @@ class PipelineStrategy(ABC):
         return results
 
 
-    
+
+class PipelineStrategy(metaclass=ABCMeta):
+
+    def __init__(self, executor: PipelineExecutor = None) -> None:
+        self.executor = executor or PipelineExecutor()
+        
+    @abstractmethod
+    def execute(self, pipeline: Pipeline) -> bool:
+        raise NotImplementedError("This has to be implemented by the subclasses.")
+
+
+
 class ETLStrategy(PipelineStrategy):
+    def __init__(self, executor: PipelineExecutor = None) -> None:
+        super().__init__(executor)
+
     async def execute(self, pipeline: Pipeline) -> bool:
-        extracted_data = await self.run_extractor(pipeline.extract)
+        extracted_data = await self.executor.run_extractor(pipeline.extract)
         
         # Transform (CPU-bound work, so offload to executor)
-        transformed_data = await utils.run_in_executor(
-            None, #
-            self.run_transformer,
-            extracted_data,
-            pipeline.transform,
-        )
-
-        loaded = await self.run_loader(transformed_data, pipeline.load)
+        transformed_data = await asyncio.get_running_loop().run_in_executor(None, self.executor.run_transformer, extracted_data, pipeline.transform)
+        
+        loaded = await self.executor.run_loader(transformed_data, pipeline.load)
 
         return True
 
 
 class ELTStrategy(PipelineStrategy):
-
+    def __init__(self, executor: PipelineExecutor = None) -> None:
+        super().__init__(executor)
 
     async def execute(self, pipeline: Pipeline) -> bool:
-        extracted_data = await self.run_extractor(pipeline.extract)
+        extracted_data = await self.executor.run_extractor(pipeline.extract)
 
-        load_result = await self.run_loader(extracted_data, pipeline.load)
+        load_result = await self.executor.run_loader(extracted_data, pipeline.load)
 
-        transform_load_result = self.run_transformer_after_load(pipeline.load_transform)
+        transform_load_result = self.executor.run_transformer_after_load(pipeline.load_transform)
 
         return True
 
 
 class ETLTStrategy(PipelineStrategy):
-
+    def __init__(self, executor: PipelineExecutor = None) -> None:
+        super().__init__(executor)
 
     async def execute(self, pipeline: Pipeline) -> bool:
-        extracted_data = await self.run_extractor(pipeline.extract)
+        extracted_data = await self.executor.run_extractor(pipeline.extract)
         
-        transformed_data = await utils.run_in_executor(
-            None, #
-            self.run_transformer,
-            extracted_data,
-            pipeline.transform,
-        )
+        transformed_data = await asyncio.get_running_loop().run_in_executor(None, self.executor.run_transformer, extracted_data, pipeline.transform)
 
-        loaded = await self.run_loader(transformed_data, pipeline.load)
+        loaded = await self.executor.run_loader(transformed_data, pipeline.load)
 
-        transform_load_result = self.run_transformer_after_load(pipeline.load_transform)
+        transform_load_result = self.executor.run_transformer_after_load(pipeline.load_transform)
 
         return True
 
 
-class PipelineStrategyFactory:
-
-    @staticmethod
-    def get_pipeline_strategy(pipeline_type: PipelineType) -> PipelineStrategy:
-        if pipeline_type == PipelineType.ETL:
-            return ETLStrategy()
-        elif pipeline_type == PipelineType.ELT:
-            return ELTStrategy()
-        elif pipeline_type == PipelineType.ETLT:
-            return ETLTStrategy()
-        else:
-            raise ValueError(f"Unknown pipeline type: {pipeline_type}")
+PIPELINE_STRATEGY_MAP = {
+    PipelineType.ETL: ETLStrategy,
+    PipelineType.ELT: ELTStrategy,
+    PipelineType.ETLT: ETLTStrategy
+}

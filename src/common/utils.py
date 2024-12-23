@@ -24,20 +24,3 @@ class SingletonMeta(type):
                 instance = super().__call__(*args, **kwargs)
                 cls._instances[cls] = instance
         return cls._instances[cls]
-
-
-async def run_in_executor(
-    executor: Executor | None,
-    func: Any,
-    *args: Any,
-    **kwargs: Any,
-) -> TransformedData :
-    """
-    Run asyncio's executor asynchronously.
-
-    If the executor is None, use the default ThreadPoolExecutor.
-    """
-    return await asyncio.get_running_loop().run_in_executor(
-        executor,
-        fn.partial(func, *args, **kwargs),
-    )

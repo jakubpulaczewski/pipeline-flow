@@ -7,20 +7,14 @@ import pytest
 
 # Project Imports
 from core.models.phases import (
+    PipelinePhase,
     ExtractPhase,
     LoadPhase,
     TransformLoadPhase,
     TransformPhase,
 )
-from core.models.pipeline import PipelineType
-from core.models.phases import PipelinePhase
-from core.pipeline_strategy import (
-    ETLStrategy,
-    ELTStrategy,
-    ETLTStrategy,
-    PipelineStrategy,
-    PipelineStrategyFactory
-)
+from core.pipeline_strategy import  PipelineExecutor
+
 
 from tests.resources.mocks import (
     MockTransformAddSuffix,
@@ -48,22 +42,10 @@ def sync_pre_2():
     return "Sync 2 result"
 
 
-
-@pytest.mark.parametrize("pipeline_type, expected_strategy", [
-    (PipelineType('ETL'), ETLStrategy),
-    (PipelineType('ELT'), ELTStrategy),
-    (PipelineType('ETLT'), ETLTStrategy)
-])
-def test_factory_pipeline(pipeline_type, expected_strategy) -> None:
-    strategy = PipelineStrategyFactory.get_pipeline_strategy(pipeline_type)
-
-    assert isinstance(strategy, expected_strategy) 
-
-
 @pytest.mark.asyncio
 async def test_run_extractor_without_delay(extractor_mock) -> None:
     extract = ExtractPhase.model_construct(steps=[extractor_mock])
-    result = await PipelineStrategy.run_extractor(extract)
+    result = await PipelineExecutor().run_extractor(extract)
 
     assert result == 'extracted_data'
 
@@ -76,7 +58,7 @@ async def test_run_extractor_multiple_without_delay(extractor_mock, second_extra
         merge=merger_mock
     )
 
-    result = await PipelineStrategy.run_extractor(extracts)
+    result = await PipelineExecutor().run_extractor(extracts)
 
     assert result == 'merged_data'
 
@@ -84,7 +66,7 @@ async def test_run_extractor_multiple_without_delay(extractor_mock, second_extra
 def test_run_transformer(mock_transformer) -> None:
     transformations = TransformPhase.model_construct(steps=[mock_transformer])
 
-    result = PipelineStrategy.run_transformer("DATA", transformations)
+    result = PipelineExecutor().run_transformer("DATA", transformations)
 
     assert result == "transformed_etl_data"
 
@@ -98,7 +80,7 @@ def test_run_transformer_multiple() -> None:
         ]
     )
 
-    result = PipelineStrategy.run_transformer(data, transformations)
+    result = PipelineExecutor().run_transformer(data, transformations)
 
     assert result == 'INITIAL_DATA_SUFFIX'
 
@@ -111,7 +93,7 @@ async def test_run_loader_without_delay(mock_loader) -> None:
             mock_loader
         ]
     )
-    result = await PipelineStrategy.run_loader(data, destinations)
+    result = await PipelineExecutor().run_loader(data, destinations)
 
     assert result == [{'id': 'loader_id', 'success': True}]
 
@@ -124,7 +106,7 @@ async def test_run_loader_multiple_without_delay(mock_loader, second_mock_loader
             second_mock_loader
         ]
     )
-    result = await PipelineStrategy.run_loader(data, destinations)
+    result = await PipelineExecutor().run_loader(data, destinations)
     assert result == [
         {'id': 'loader_id', 'success': True},
         {'id': 'loader_id_2', 'success': True}
@@ -135,7 +117,7 @@ def test_run_transformer_after_load(mock_load_transformer) -> None:
     transformations = TransformLoadPhase.model_construct(steps= [
         mock_load_transformer
     ])
-    result = PipelineStrategy.run_transformer_after_load(transformations)
+    result = PipelineExecutor().run_transformer_after_load(transformations)
     
     assert result == [
         {'id': 'mock_transform_load_id', 'success': True},
@@ -147,7 +129,7 @@ def test_run_transformer_after_load_multiple(mock_load_transformer, second_mock_
         mock_load_transformer,
         second_mock_load_transformer
     ])
-    result = PipelineStrategy.run_transformer_after_load(transformations)
+    result = PipelineExecutor().run_transformer_after_load(transformations)
     
     assert result == [
         {'id': 'mock_transform_load_id', 'success': True},
@@ -161,7 +143,7 @@ class TestUnitPipelineStrategyConcurrency:
     @pytest.mark.asyncio
     async def test_execute_processing_steps() -> None:
         start = asyncio.get_running_loop().time()
-        result = await PipelineStrategy._execute_processing_steps(
+        result = await PipelineExecutor()._execute_processing_steps(
             PipelinePhase.EXTRACT_PHASE,
             [async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
         )
@@ -183,7 +165,7 @@ class TestUnitPipelineStrategyConcurrency:
             pre=[async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
         )
 
-        result = await PipelineStrategy.run_extractor(extract)
+        result = await PipelineExecutor().run_extractor(extract)
         total = asyncio.get_running_loop().time() - start
         # Concurrency validation
         assert 0.8 > total >= 0.7, "Delay Should be (0.2) Extract + (0.5) Pre processing "
@@ -201,7 +183,7 @@ class TestUnitPipelineStrategyConcurrency:
             merge=merger_mock
         )
         start = asyncio.get_running_loop().time()
-        extracted_data = await PipelineStrategy.run_extractor(extract)
+        extracted_data = await PipelineExecutor().run_extractor(extract)
         total = asyncio.get_running_loop().time() - start
 
         assert 0.4 > total >= 0.3, "Delay Should be 0.3 second for asychronously executing two extracts"
@@ -216,7 +198,7 @@ class TestUnitPipelineStrategyConcurrency:
             pre=[async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
         )
 
-        result = await PipelineStrategy.run_loader("DATA", destinations)
+        result = await PipelineExecutor().run_loader("DATA", destinations)
         total = asyncio.get_running_loop().time() - start
 
         # Concurrency validation
@@ -234,7 +216,7 @@ class TestUnitPipelineStrategyConcurrency:
             ]
         )
         start = asyncio.get_running_loop().time()
-        extracted_data = await PipelineStrategy.run_loader("DATA", destinations)
+        extracted_data = await PipelineExecutor().run_loader("DATA", destinations)
         total = asyncio.get_running_loop().time() - start
 
         assert 0.5 > total >= 0.4, "Delay Should be 0.4 second for asychronously executing two loads"
@@ -254,7 +236,7 @@ class TestUnitPipelineStrategyConcurrency:
         )
 
         start = time.time()
-        PipelineStrategy.run_transformer("DATA", tf)
+        PipelineExecutor().run_transformer("DATA", tf)
         total = time.time() - start
 
         assert 0.6 > total >= 0.5, 'Delay Should be 0.5 seconds for sychronous transformations.'
@@ -271,7 +253,12 @@ class TestUnitPipelineStrategyConcurrency:
         )
 
         start = time.time()
-        PipelineStrategy.run_transformer_after_load(tf)
+        PipelineExecutor().run_transformer_after_load(tf)
         total = time.time() - start
 
         assert 0.4 > total >= 0.3, 'Delay Should be 0.3 seconds for sychronous transformations.'
+
+
+
+# TODO: run_transformer requires to be able to use normal functions...
+# TODO; DEtermine where to put time_it decorator.

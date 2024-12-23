@@ -10,7 +10,6 @@ import pytest
 from common.type_def import ExtractedData, TransformedData
 
 # Project Imports
-from core.models.pipeline import Pipeline
 from core.models.phases import(
     IExtractor,
     ILoader,
@@ -19,15 +18,6 @@ from core.models.phases import(
     iMerger
 )
 
-
-class MockStrategy:
- 
-    def __init__(self, execution_time: float):
-        self.execution_time = execution_time
-    
-    async def execute(self, pipeline: Pipeline) -> bool:
-        await asyncio.sleep(self.execution_time)
-        return True
 
 class MockMerger(iMerger):
 

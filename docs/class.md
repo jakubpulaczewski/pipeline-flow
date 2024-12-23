@@ -74,8 +74,6 @@ classDiagram
     Pipeline --> TransformLoadPhase
 
     PipelineOrchestrator --> Pipeline
-    PipelineOrchestrator ..> PipelineStrategyFactory
-    PipelineStrategyFactory  --> PipelineType
     ETLStrategy ..|> PipelineStrategy
     ELTStrategy ..|> PipelineStrategy
     ETLTStrategy ..|> PipelineStrategy

@@ -8,10 +8,8 @@ import pytest
 # Project Imports
 from core.models.exceptions import ExtractException
 from core.orchestrator import PipelineOrchestrator
-from core.pipeline_strategy import PipelineType, PipelineStrategyFactory, ETLStrategy
+from core.pipeline_strategy import PIPELINE_STRATEGY_MAP, ETLStrategy
 from core.parser import YamlConfig
-
-from tests.resources.mocks import MockStrategy
 
 
 @pytest.fixture
@@ -88,8 +86,6 @@ async def test_pipeline_queue_producer(orchestrator, etl_pipeline_factory) -> No
 @pytest.mark.asyncio
 async def test_execute_pipeline_exception(mocker, orchestrator, etl_pipeline_factory) -> None:
     # Setup
-    mocker.patch.object(PipelineStrategyFactory, "get_pipeline_strategy", return_value=ETLStrategy)
-
     execute_mock = mocker.patch.object(ETLStrategy, "execute", 
         side_effect=ExtractException("Error during extraction: error123"))
 
@@ -110,7 +106,6 @@ async def test_execute_pipeline_exception(mocker, orchestrator, etl_pipeline_fac
 @pytest.mark.asyncio
 async def test_etl_pipeline_execution(mocker, orchestrator, etl_pipeline_factory) -> None:
     # Setup
-    pipeline_strategy_mock = mocker.patch.object(PipelineStrategyFactory, "get_pipeline_strategy", return_value=ETLStrategy)
     execute_mock = mocker.patch.object(ETLStrategy, "execute", return_value=True)
 
     etl_pipeline = etl_pipeline_factory(name="Job1")
@@ -126,7 +121,6 @@ async def test_etl_pipeline_execution(mocker, orchestrator, etl_pipeline_factory
     assert etl_pipeline.is_executed is True
 
     execute_mock.assert_awaited_once_with(etl_pipeline)
-    pipeline_strategy_mock.assert_called_once_with(PipelineType('ETL'))
 
 
 
@@ -176,9 +170,8 @@ async def test_execute_pipelines_no_pipelines(orchestrator) -> None:
     with pytest.raises(ValueError, match="The Pipeline list is empty. There is nothing to execute."):
         executed = await orchestrator.execute_pipelines(pipelines=[])
 
-
-
-
+ 
+    
 @pytest.mark.asyncio
 async def test_execute_pipelines_semaphore_lock(mocker, etl_pipeline_factory) -> None:
     # Setup 
@@ -187,18 +180,22 @@ async def test_execute_pipelines_semaphore_lock(mocker, etl_pipeline_factory) ->
     concurrency = 2
     execution_time = 0.2
 
+
     config = YamlConfig(concurrency=concurrency)
     orchestrator = PipelineOrchestrator(config)
-    mock_strategy = MockStrategy(execution_time=execution_time)
 
 
+    async def execute_mock(pipeline) -> bool:
+        await asyncio.sleep(execution_time)
+        return True
 
     start = asyncio.get_running_loop().time()
-    with mocker.patch.object(PipelineStrategyFactory, "get_pipeline_strategy", return_value=mock_strategy):
+    with mocker.patch.object(ETLStrategy, 'execute', side_effect=execute_mock) as mock:
         executed = await orchestrator.execute_pipelines(pipelines=jobs)
 
     total_execution_time = asyncio.get_running_loop().time() - start
     expected_execution_time = (len(jobs) / concurrency) * execution_time
+
 
     assert expected_execution_time + 0.1 > total_execution_time >= expected_execution_time
 
