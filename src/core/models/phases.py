@@ -1,7 +1,7 @@
 # Standard Imports
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from enum import Enum, unique
 from typing import Annotated, Self, Type, TYPE_CHECKING
 from types import FunctionType
@@ -37,7 +37,7 @@ class PipelinePhase(Enum):
     TRANSFORM_PHASE = "transform"
     TRANSFORM_AT_LOAD_PHASE = "transform_at_load"
 
-class IExtractor(BaseModel, ABC):
+class IExtractor(BaseModel, metaclass=ABCMeta):
     """An interface of the Extract Step."""
     id: str
     config: dict | None = None
@@ -50,7 +50,7 @@ class IExtractor(BaseModel, ABC):
         )
   
 
-class ILoader(BaseModel, ABC):
+class ILoader(BaseModel, metaclass=ABCMeta):
     """An interface of the Load Step."""
     id: str
 
@@ -62,7 +62,7 @@ class ILoader(BaseModel, ABC):
         )
 
 
-class ITransform(BaseModel, ABC):
+class ITransform(BaseModel, metaclass=ABCMeta):
     """An interface for the Transform phase."""
     id: str
 
@@ -74,7 +74,7 @@ class ITransform(BaseModel, ABC):
         )
 
 
-class ILoadTransform(BaseModel, ABC):
+class ILoadTransform(BaseModel, metaclass=ABCMeta):
     """An interface for the Post-Load Transform phase."""
     id: str
 
@@ -86,7 +86,7 @@ class ILoadTransform(BaseModel, ABC):
         )
 
 
-class iMerger(BaseModel, ABC):
+class iMerger(BaseModel, metaclass=ABCMeta):
     
     @abstractmethod
     def merge_data(self, extracted_data: dict[str, ExtractedData]) -> ExtractedData:

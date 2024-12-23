@@ -1,7 +1,7 @@
 # Standard Imports
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
 # Third Party Imports
 import pydantic as pyd
@@ -10,7 +10,7 @@ import pydantic as pyd
 from common.type_def import Data
 
 
-class StoragePhase(pyd.BaseModel, ABC):
+class StoragePhase(pyd.BaseModel, ABCMeta):
     storage_type: str
     destination: str
 
