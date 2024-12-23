@@ -1,7 +1,6 @@
 # Standard Imports
 import asyncio
 import time
-from unittest.mock import AsyncMock, patch
 
 # Third-party Imports
 import pytest
@@ -161,12 +160,12 @@ class TestUnitPipelineStrategyConcurrency:
     @staticmethod
     @pytest.mark.asyncio
     async def test_execute_processing_steps() -> None:
-        start = time.time()
+        start = asyncio.get_running_loop().time()
         result = await PipelineStrategy._execute_processing_steps(
             PipelinePhase.EXTRACT_PHASE,
             [async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
         )
-        total = time.time() - start
+        total = asyncio.get_running_loop().time() - start
 
         # Concurrency validation
         assert 0.6 > total > 0.5, "Delay Should be 0.5 seconds"
@@ -178,14 +177,14 @@ class TestUnitPipelineStrategyConcurrency:
     async def test_run_extractor_with_pre_processing() -> None:
         # Set the side_effect function
         
-        start = time.time()
+        start = asyncio.get_running_loop().time()
         extract = ExtractPhase.model_construct(
             steps=[MockAwaitExtractor(id='await_extractor_id', delay=0.2)],
             pre=[async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
         )
 
         result = await PipelineStrategy.run_extractor(extract)
-        total = time.time() - start
+        total = asyncio.get_running_loop().time() - start
         # Concurrency validation
         assert 0.8 > total >= 0.7, "Delay Should be (0.2) Extract + (0.5) Pre processing "
         assert result == 'extracted_data'
@@ -201,9 +200,9 @@ class TestUnitPipelineStrategyConcurrency:
             ],
             merge=merger_mock
         )
-        start = time.time()
+        start = asyncio.get_running_loop().time()
         extracted_data = await PipelineStrategy.run_extractor(extract)
-        total = time.time() - start
+        total = asyncio.get_running_loop().time() - start
 
         assert 0.4 > total >= 0.3, "Delay Should be 0.3 second for asychronously executing two extracts"
         assert extracted_data == 'merged_data'
@@ -211,14 +210,14 @@ class TestUnitPipelineStrategyConcurrency:
     @staticmethod
     @pytest.mark.asyncio
     async def test_run_loader_with_pre_processing() -> None:
-        start = time.time()
+        start = asyncio.get_running_loop().time()
         destinations = LoadPhase.model_construct(
             steps=[MockAwaitLoader(id='await_loader_id', delay=0.2)],
             pre=[async_pre_1, async_pre_2, sync_pre_1, sync_pre_2]
         )
 
         result = await PipelineStrategy.run_loader("DATA", destinations)
-        total = time.time() - start
+        total = asyncio.get_running_loop().time() - start
 
         # Concurrency validation
         assert 0.8 > total >= 0.7, "Delay Should be (0.2) Load + (0.5) Pre processing "
@@ -234,9 +233,9 @@ class TestUnitPipelineStrategyConcurrency:
                 MockAwaitLoader(id='await_loader_id_2', delay=0.2)
             ]
         )
-        start = time.time()
+        start = asyncio.get_running_loop().time()
         extracted_data = await PipelineStrategy.run_loader("DATA", destinations)
-        total = time.time() - start
+        total = asyncio.get_running_loop().time() - start
 
         assert 0.5 > total >= 0.4, "Delay Should be 0.4 second for asychronously executing two loads"
 

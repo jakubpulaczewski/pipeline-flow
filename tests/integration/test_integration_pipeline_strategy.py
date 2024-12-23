@@ -1,5 +1,5 @@
 # Standard Imports
-import time
+import asyncio
 
 # Third-party Imports
 import pytest
@@ -72,9 +72,9 @@ async def test_etl_strategy_with_delay():
         }
     )
 
-    start = time.time()
+    start = asyncio.get_running_loop().time()
     result = await ETLStrategy().execute(pipeline)
-    total = time.time() - start
+    total = asyncio.get_running_loop().time() - start
 
     assert result == True
     assert 0.8 > total >= 0.7, "Delay Should be Extract (0.2) + Transform (0.1) + Load (0.4) "
@@ -105,9 +105,9 @@ async def test_elt_strategy_with_delay():
         }
     )
 
-    start = time.time()
+    start = asyncio.get_running_loop().time()
     result = await ELTStrategy().execute(pipeline)
-    total = time.time() - start
+    total = asyncio.get_running_loop().time() - start
 
     assert result == True
     assert 1.0 > total >= 0.9, "Delay Should be Extract (0.2) + Load (0.4) + Transform at load (0.3) "
@@ -141,9 +141,9 @@ async def test_etlt_strategy_with_delay():
         }
     )
 
-    start = time.time()
+    start = asyncio.get_running_loop().time()
     result = await ETLTStrategy().execute(pipeline)
-    total = time.time() - start
+    total = asyncio.get_running_loop().time() - start
 
     assert result == True
     assert 1.1 > total >= 1.0, "Delay Should be Extract (0.2) + Transform (0.1) + Load (0.4) + Transform at load (0.3) "

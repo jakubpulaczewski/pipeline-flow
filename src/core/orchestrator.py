@@ -18,6 +18,7 @@ class PipelineOrchestrator:
     def __init__(self, config: YamlConfig):
         self.concurrency = config.concurrency
         self.pipeline_queue = asyncio.Queue()
+        self.semaphore = asyncio.Semaphore(config.concurrency)
 
 
     @staticmethod
@@ -41,9 +42,9 @@ class PipelineOrchestrator:
 
     async def _execute_pipeline(self) -> None:
         if self.pipeline_queue.empty():
-            raise ValueError("The Pipeline queue is empty. There is nothing to execute.")
+            return
         
-        async with asyncio.Semaphore(self.concurrency):
+        async with self.semaphore:
             while not self.pipeline_queue.empty():
                 pipeline = await self.pipeline_queue.get()
                 
@@ -62,7 +63,6 @@ class PipelineOrchestrator:
             raise ValueError("The Pipeline list is empty. There is nothing to execute.")
         
         executed_pipelines = set()
-
         while pipelines:
             executable_pipelines = [
                 pipeline
@@ -76,10 +76,11 @@ class PipelineOrchestrator:
             # Produces a central queue of executable pipelines
             await self.pipeline_queue_producer(executable_pipelines)
 
+
             async with asyncio.TaskGroup() as tg:
-                tasks = [tg.create_task(self._execute_pipeline()) for _ in range(len(executable_pipelines))]
-
-
+                tasks = [tg.create_task(self._execute_pipeline()) for _ in range(self.concurrency)]
+                
+            
             executed_pipelines.update(
                 pipeline.name for pipeline in executable_pipelines
             )

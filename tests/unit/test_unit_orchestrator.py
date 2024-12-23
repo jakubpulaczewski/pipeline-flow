@@ -11,8 +11,10 @@ from core.orchestrator import PipelineOrchestrator
 from core.pipeline_strategy import PipelineType, PipelineStrategyFactory, ETLStrategy
 from core.parser import YamlConfig
 
+from tests.resources.mocks import MockStrategy
 
-@pytest.fixture()
+
+@pytest.fixture
 def orchestrator():
     config = YamlConfig(engine='native', concurrency=2)
     return PipelineOrchestrator(config=config)
@@ -82,12 +84,6 @@ async def test_pipeline_queue_producer(orchestrator, etl_pipeline_factory) -> No
     assert orchestrator.pipeline_queue.qsize() == 1
 
 
-@pytest.mark.asyncio
-async def test_empty_pipeline_queue_exception(orchestrator) -> None:
-
-    with pytest.raises(ValueError, match="The Pipeline queue is empty. There is nothing to execute."):
-        await orchestrator._execute_pipeline()
-
 
 @pytest.mark.asyncio
 async def test_execute_pipeline_exception(mocker, orchestrator, etl_pipeline_factory) -> None:
@@ -134,16 +130,6 @@ async def test_etl_pipeline_execution(mocker, orchestrator, etl_pipeline_factory
 
 
 
-async def execute_pipeline_mock(jobs):
-    """Custom side effect factory for mocking _execute_pipeline."""
-    async def side_effect():
-        current_job = jobs.pop(0)  # Get the first job
-        await asyncio.sleep(1)  # Simulate asynchronous work
-        current_job.is_executed = True  # Modify the job
-        return True
-    return side_effect
-
-
 @pytest.mark.asyncio
 async def test_execute_pipelines_success(mocker, orchestrator, etl_pipeline_factory) -> None:
     job1 = etl_pipeline_factory(name="Job1")
@@ -151,11 +137,19 @@ async def test_execute_pipelines_success(mocker, orchestrator, etl_pipeline_fact
     job3 = etl_pipeline_factory(name="Job3", needs=["Job1", "Job2"])
     jobs = [job1, job2, job3]
 
+
+    async def execute_pipeline_mock():
+        if jobs:
+            current_job = jobs.pop(0)  # Get the first job
+            print(current_job.name)
+            await asyncio.sleep(0.1)  # Simulate asynchronous work
+            current_job.is_executed = True  # Modify the job
+            return
+
     executor_pipeline_mock = mocker.patch.object(
         PipelineOrchestrator,
         "_execute_pipeline",
-        new_callable=AsyncMock,
-        side_effect=await execute_pipeline_mock(jobs),
+        side_effect=execute_pipeline_mock
     )
 
     executed = await orchestrator.execute_pipelines(pipelines=jobs)
@@ -164,10 +158,6 @@ async def test_execute_pipelines_success(mocker, orchestrator, etl_pipeline_fact
     assert job1.is_executed == True
     assert job2.is_executed == True
     assert job3.is_executed == True
-
-    assert len(executor_pipeline_mock.mock_calls) == 3
-
-
 
 
 @pytest.mark.asyncio
@@ -185,4 +175,30 @@ async def test_execute_pipelines_no_pipelines(orchestrator) -> None:
 
     with pytest.raises(ValueError, match="The Pipeline list is empty. There is nothing to execute."):
         executed = await orchestrator.execute_pipelines(pipelines=[])
+
+
+
+
+@pytest.mark.asyncio
+async def test_execute_pipelines_semaphore_lock(mocker, etl_pipeline_factory) -> None:
+    # Setup 
+    jobs = [etl_pipeline_factory(name="Job" + str(index)) for index in range(0, 10)]
+
+    concurrency = 2
+    execution_time = 0.2
+
+    config = YamlConfig(concurrency=concurrency)
+    orchestrator = PipelineOrchestrator(config)
+    mock_strategy = MockStrategy(execution_time=execution_time)
+
+
+
+    start = asyncio.get_running_loop().time()
+    with mocker.patch.object(PipelineStrategyFactory, "get_pipeline_strategy", return_value=mock_strategy):
+        executed = await orchestrator.execute_pipelines(pipelines=jobs)
+
+    total_execution_time = asyncio.get_running_loop().time() - start
+    expected_execution_time = (len(jobs) / concurrency) * execution_time
+
+    assert expected_execution_time + 0.1 > total_execution_time >= expected_execution_time
 
