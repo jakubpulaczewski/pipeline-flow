@@ -5,6 +5,8 @@ import pytest
 
 
 # Project Imports
+import tests.resources.mocks as mocks
+
 from plugins.registry import PluginRegistry, PluginWrapper
 
 from core.models.phases import (
@@ -15,13 +17,7 @@ from core.models.phases import (
 )
 from core.models.pipeline import Pipeline
 
-from tests.resources.mocks import (
-    mock_extractor,
-    mock_loader,
-    mock_transformer,
-    mock_load_transformer,
-    mock_merger
-)
+
 @pytest.fixture(autouse=True)
 def setup_logging_level():
     os.environ["LOG_LEVEL"] = "debug"
@@ -31,81 +27,6 @@ def plugin_registry_setup():
     PluginRegistry._registry = {}  # Ensure a clean state before each test
     yield
     PluginRegistry._registry = {}  # Clean up after each test
-
-
-@pytest.fixture
-def extractor_plugin_data():
-    return {
-        "id": "extractor_id",
-        "plugin": "mock_extractor",
-    }
-
-
-@pytest.fixture
-def loader_plugin_data():
-    return {"id": "loader_id", "plugin": "mock_loader"}
-
-@pytest.fixture
-def second_loader_plugin_data():
-    return {"id": "loader_id_2", "plugin": "mock_loader_2"}
-
-
-@pytest.fixture
-def loader_mock(loader_plugin_data):
-    return mock_loader(id=loader_plugin_data['id'])
-
-
-@pytest.fixture
-def second_loader_mock(second_loader_plugin_data):
-    return mock_loader(id=second_loader_plugin_data["id"])
-
-
-@pytest.fixture
-def transformer_plugin_data():
-    return {"id": "transformer_id", "plugin": "mock_transformer"}
-
-
-@pytest.fixture
-def second_transformer_plugin_data():
-    return {"id": "transformer_id_2", "plugin": "mock_transformer_2"}
-
-
-@pytest.fixture
-def transformer_mock(transformer_plugin_data):
-    return mock_transformer(id=transformer_plugin_data['id'])
-
-@pytest.fixture
-def second_transformer_mockr(second_transformer_plugin_data):
-    return mock_transformer(id=second_transformer_plugin_data['id'])
-
-
-@pytest.fixture
-def transform_at_load_plugin_data():
-    return {"id": "mock_transform_loader_id", "plugin": 'mock_transformer_loader'}
-
-@pytest.fixture
-def second_transform_at_load_plugin_data():
-    return {"id": "mock_transform_loader_id_2", "plugin": 'mock_transformer_loader_2'}
-
-
-@pytest.fixture
-def load_transformer_mock(transform_at_load_plugin_data):
-    return mock_load_transformer(id=transform_at_load_plugin_data['id'])
-
-@pytest.fixture
-def second_load_transformer_mock(second_transform_at_load_plugin_data):
-    return mock_load_transformer(id=second_transform_at_load_plugin_data['id'])
-
-## TODO: Re check all o f this after.
-@pytest.fixture
-def merger_plugin_data():
-    return {
-        'plugin': 'mock_merger'
-    }
-
-@pytest.fixture
-def merger_mock(merger_plugin_data):
-    return mock_merger()
 
 
 def pipeline_factory(default_config):
@@ -142,9 +63,9 @@ def etl_pipeline_factory(request):
     default_config = {
         "name": "ETL Pipeline",
         "type": "ETL",
-        "extract": [],
-        "transform": [],
-        "load": [],
+        "extract": [PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
+        "transform": [PluginWrapper(id='mock_transformer', func=mocks.mock_transformer(id='mock_transformer'))],
+        "load": [PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))],
         "needs": None
     }
 
@@ -160,9 +81,9 @@ def elt_pipeline_factory(request):
     default_config = {
         "name": "ELT Pipeline",
         "type": "ELT",
-        "extract": [],
-        "load": [],
-        "transform_at_load": [],
+        "extract": [PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
+        "load": [PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))],
+        "transform_at_load": [PluginWrapper(id='mock_load_transformer', func=mocks.mock_load_transformer(id='mock_load_transformer', query="SELECT 1"))],
         "needs": None
     }
 
@@ -177,10 +98,10 @@ def etlt_pipeline_factory(request):
     default_config = {
         "name": "ETLT Pipeline",
         "type": "ETLT",
-        "extract": [],
-        "transform": [],
-        "load": [],
-        "transform_at_load": [],
+        "extract": [PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
+        "transform": [PluginWrapper(id='mock_transformer', func=mocks.mock_transformer(id='mock_transformer'))],
+        "load": [PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))],
+        "transform_at_load": [PluginWrapper(id='mock_load_transformer', func=mocks.mock_load_transformer(id='mock_load_transformer', query="SELECT 1"))],
         "needs": None
     }
 

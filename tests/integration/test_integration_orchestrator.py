@@ -5,8 +5,11 @@ import pytest
 
 
 # Project Imports
+import tests.resources.mocks as mocks
+
 from core.orchestrator import PipelineOrchestrator
 from core.parser import YamlConfig
+from plugins.registry import PluginWrapper
 
 
 @pytest.fixture()
@@ -22,8 +25,12 @@ async def test_execute_pipelines_with_empty_list(orchestrator):
 
 @pytest.mark.asyncio
 async def test_execute_pipeline(etl_pipeline_factory, orchestrator) -> None:
-    job1 = etl_pipeline_factory(name="Job1")
-
+    job1 = etl_pipeline_factory(
+        name="ETL Pipeline 1",
+        extract=[PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
+        transform=[PluginWrapper(id='mock_transformer', func=mocks.mock_transformer(id='mock_transformer'))],
+        load=[PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))]
+    )
     await orchestrator.pipeline_queue_producer([job1])
 
     await orchestrator._execute_pipeline()

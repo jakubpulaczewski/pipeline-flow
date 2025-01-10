@@ -10,12 +10,7 @@ from plugins.registry import PluginWrapper
 
 
 def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:
-    pipeline = etl_pipeline_factory(
-        name="ETL Pipeline 1",
-        extract=[PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
-        transform=[PluginWrapper(id='mock_transformer', func=mocks.mock_transformer(id='mock_transformer'))],
-        load=[PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))]
-    )
+    pipeline = etl_pipeline_factory(name="ETL Pipeline 1")
 
     assert pipeline.name == "ETL Pipeline 1"
     assert pipeline.type == PipelineType.ETL
@@ -34,12 +29,7 @@ def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:
 
 
 def test_elt_pipeline_init_success(elt_pipeline_factory) -> None:
-    pipeline = elt_pipeline_factory(
-        name="ELT Pipeline",
-        extract=[PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
-        load=[PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))],
-        transform_at_load=[PluginWrapper(id='mock_load_transformer', func=mocks.mock_load_transformer(id='mock_load_transformer', query="SELECT 1"))]
-    )
+    pipeline = elt_pipeline_factory(name="ELT Pipeline")
 
     assert pipeline.name == "ELT Pipeline"
     assert pipeline.type == PipelineType.ELT
@@ -58,13 +48,7 @@ def test_elt_pipeline_init_success(elt_pipeline_factory) -> None:
 
 
 def test_etlt_pipeline_init_success(etlt_pipeline_factory) -> None:
-    pipeline = etlt_pipeline_factory(
-        name="ETLT Pipeline",
-        extract=[PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
-        transform=[PluginWrapper(id='mock_transformer', func=mocks.mock_transformer(id='mock_transformer'))],
-        load=[PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))],
-        transform_at_load=[PluginWrapper(id='mock_load_transformer', func=mocks.mock_load_transformer(id='mock_load_transformer', query="SELECT 1"))]
-    )
+    pipeline = etlt_pipeline_factory(name="ETLT Pipeline")
 
     assert pipeline.name == "ETLT Pipeline"
     assert pipeline.type == PipelineType.ETLT

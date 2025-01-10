@@ -4,6 +4,9 @@ import asyncio
 # Third-party Imports
 import pytest
 
+# Project Imports
+import tests.resources.mocks as mocks
+
 from core.models.phases import (
     PipelinePhase,
     ExtractPhase,
@@ -12,17 +15,18 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.models.pipeline import Pipeline, PipelineType
+from plugins.registry import PluginWrapper
 from core.executor import (
     ETLStrategy, 
     ELTStrategy, 
     ETLTStrategy
 )
-from tests.resources.mocks import (
-    MockAwaitExtractor,
-    MockAwaitLoader,
-    MockAwaitTransformer,
-    MockAwaitLoadTransformer
-)
+# from tests.resources.mocks import (
+#     MockAwaitExtractor,
+#     MockAwaitLoader,
+#     MockAwaitTransformer,
+#     MockAwaitLoadTransformer
+# )
 
 @pytest.mark.asyncio
 async def test_etl_strategy(etl_pipeline_factory) -> None:
@@ -57,16 +61,18 @@ async def test_etl_strategy_with_delay():
         type="ETL",
         phases={
             'extract': ExtractPhase.model_construct(
-                steps=[MockAwaitExtractor(id='await_loader_id', delay=0.2)]
+                steps=[PluginWrapper(id="async_extractor_id", func=mocks.mock_async_extractor(id='async_extractor_id', delay=0.2))],
             ), 
             'transform': TransformPhase.model_construct(
-                steps=[MockAwaitTransformer(id='await_transformer_id', delay=0.1)]
+                steps=[
+                    PluginWrapper(id='async_transformer_id', func=mocks.mock_sync_transformer(id='async_transformer_id', delay=0.1)),
+                ]
             ), 
             'load': LoadPhase.model_construct(
                 steps=[
-                    MockAwaitLoader(id='await_loader_id', delay=0.2),
-                    MockAwaitLoader(id='await_loader_id_2', delay=0.1),
-                    MockAwaitLoader(id='await_loader_id_3', delay=0.4)
+                    PluginWrapper(id='async_loader_id', func=mocks.mock_async_loader(id='async_loader_id', delay=0.2)),
+                    PluginWrapper(id='async_loader_id', func=mocks.mock_async_loader(id='async_loader_id', delay=0.1)),
+                    PluginWrapper(id='async_loader_id', func=mocks.mock_async_loader(id='async_loader_id', delay=0.3))
                 ]
             )
         }
@@ -77,7 +83,7 @@ async def test_etl_strategy_with_delay():
     total = asyncio.get_running_loop().time() - start
 
     assert result == True
-    assert 0.8 > total >= 0.7, "Delay Should be Extract (0.2) + Transform (0.1) + Load (0.4) "
+    assert 0.7 > total >= 0.6, "Delay Should be Extract (0.2) + Transform (0.1) + Load (0.3) "
 
 
 @pytest.mark.asyncio
@@ -87,19 +93,18 @@ async def test_elt_strategy_with_delay():
         type="ELT",
         phases={
             'extract': ExtractPhase.model_construct(
-                steps=[MockAwaitExtractor(id='await_loader_id', delay=0.2)]
+                steps=[PluginWrapper(id="async_extractor_id", func=mocks.mock_async_extractor(id='async_extractor_id', delay=0.2))],
             ), 
             'load': LoadPhase.model_construct(
                 steps=[
-                    MockAwaitLoader(id='await_loader_id', delay=0.2),
-                    MockAwaitLoader(id='await_loader_id_2', delay=0.1),
-                    MockAwaitLoader(id='await_loader_id_3', delay=0.4)
+                    PluginWrapper(id='async_loader_id', func=mocks.mock_async_loader(id='async_loader_id', delay=0.2)),
+                    PluginWrapper(id='async_loader_id', func=mocks.mock_async_loader(id='async_loader_id', delay=0.1)),
                 ]
             ),
             'transform_at_load': TransformLoadPhase.model_construct(
                 steps=[
-                    MockAwaitLoadTransformer(id='await_transform_load_id', delay=0.1),
-                    MockAwaitLoadTransformer(id='await_transform_load_id2', delay=0.2)
+                    PluginWrapper(id='async_transform_loader_id', func=mocks.mock_sync_load_transformer(id='async_transform_loader_id', delay=0.1)),
+                    PluginWrapper(id='async_transform_loader_id_2', func=mocks.mock_sync_load_transformer(id='async_transform_loader_id_2', delay=0.1))
                 ]
             )
         }
@@ -110,7 +115,7 @@ async def test_elt_strategy_with_delay():
     total = asyncio.get_running_loop().time() - start
 
     assert result == True
-    assert 1.0 > total >= 0.9, "Delay Should be Extract (0.2) + Load (0.4) + Transform at load (0.3) "
+    assert 0.7 > total >= 0.6, "Delay Should be Extract (0.2) + Load (0.2) + Transform at load (0.2) "
 
 
 @pytest.mark.asyncio
@@ -120,22 +125,21 @@ async def test_etlt_strategy_with_delay():
         type="ETLT",
         phases={
             'extract': ExtractPhase.model_construct(
-                steps=[MockAwaitExtractor(id='await_loader_id', delay=0.2)]
+                steps=[PluginWrapper(id="async_extractor_id", func=mocks.mock_async_extractor(id='async_extractor_id', delay=0.2))],
             ),
             'transform': TransformPhase.model_construct(
-                steps=[MockAwaitTransformer(id='await_transformer_id', delay=0.1)]
+                steps=[PluginWrapper(id='async_transformer_id', func=mocks.mock_sync_transformer(id='async_transformer_id', delay=0.1))],
             ), 
             'load': LoadPhase.model_construct(
                 steps=[
-                    MockAwaitLoader(id='await_loader_id', delay=0.2),
-                    MockAwaitLoader(id='await_loader_id_2', delay=0.1),
-                    MockAwaitLoader(id='await_loader_id_3', delay=0.4)
+                    PluginWrapper(id='async_loader_id', func=mocks.mock_async_loader(id='async_loader_id', delay=0.2)),
+                    PluginWrapper(id='async_loader_id', func=mocks.mock_async_loader(id='async_loader_id', delay=0.1)),
                 ]
             ),
             'transform_at_load': TransformLoadPhase.model_construct(
                 steps=[
-                    MockAwaitLoadTransformer(id='await_transform_load_id', delay=0.1),
-                    MockAwaitLoadTransformer(id='await_transform_load_id2', delay=0.2)
+                    PluginWrapper(id='async_transform_loader_id', func=mocks.mock_sync_load_transformer(id='async_transform_loader_id', delay=0.1)),
+                    PluginWrapper(id='async_transform_loader_id_2', func=mocks.mock_sync_load_transformer(id='async_transform_loader_id_2', delay=0.1))
                 ]
             )
         }
@@ -146,4 +150,4 @@ async def test_etlt_strategy_with_delay():
     total = asyncio.get_running_loop().time() - start
 
     assert result == True
-    assert 1.1 > total >= 1.0, "Delay Should be Extract (0.2) + Transform (0.1) + Load (0.4) + Transform at load (0.3) "
+    assert 0.8 > total >= 0.7, "Delay Should be Extract (0.2) + Transform (0.1) + Load (0.2) + Transform at load (0.2) "

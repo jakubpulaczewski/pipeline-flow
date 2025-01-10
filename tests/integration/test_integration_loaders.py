@@ -12,7 +12,7 @@ from plugins.registry import PluginRegistry
 
 
 class TestIntegrationPluginLoader:
-    
+
     @pytest.fixture(autouse=True)
     def plugin_loader(self) -> PluginLoader:
         self.loader = PluginLoader()

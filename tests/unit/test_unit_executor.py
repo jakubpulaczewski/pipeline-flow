@@ -195,7 +195,7 @@ class TestUnitPipelineStrategyConcurrency:
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_run_extractor_multiple_with_delay(merger_mock) -> None:
+    async def test_run_extractor_multiple_with_delay() -> None:
         extract = ExtractPhase.model_construct(
             steps=[
                 PluginWrapper(id="async_extractor_id", func=mocks.mock_async_extractor(id='async_extractor_id', delay=0.2)),
