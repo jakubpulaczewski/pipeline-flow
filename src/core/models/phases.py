@@ -33,23 +33,14 @@ class PipelinePhase(Enum):
     TRANSFORM_AT_LOAD_PHASE = "transform_at_load"
 
 
-def resolve_plugin(phase_pipeline: PipelinePhase, plugin_data: dict) -> PluginWrapper:
-    """Resolve and return a single plugin instance."""
-    plugin_name = plugin_data.pop("plugin", None)
-    if not plugin_name:
-        raise ValueError("The attribute 'plugin' is empty.")
-
-    plugin = PluginRegistry.get(phase_pipeline, plugin_name)(**plugin_data)
-    return plugin
-
 
 def serialize_plugins(phase_pipeline: PipelinePhase) -> Callable[[list | dict], list[PluginWrapper]]:
     def validator(value: list) -> list[PluginWrapper] :
         if type(value) is list:
-            return [resolve_plugin(phase_pipeline, plugin_dict) for plugin_dict in value]
+            return [PluginRegistry.instantiate_plugin(phase_pipeline, plugin_dict) for plugin_dict in value]
 
         elif type(value) is dict:
-            return resolve_plugin(phase_pipeline, value)
+            return PluginRegistry.instantiate_plugin(phase_pipeline, value)
         raise TypeError(f"Expected a list or dict, but got {type(value).__name__}")
     return validator
 

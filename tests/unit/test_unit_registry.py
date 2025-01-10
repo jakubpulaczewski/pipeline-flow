@@ -4,8 +4,9 @@ from functools import wraps
 # Third Party
 import pytest
 
-
 # Project
+import tests.resources.mocks as mocks
+
 from core.models.phases import PipelinePhase
 from plugins.registry import PluginRegistry, PluginWrapper, plugin
 from tests.resources.constants import EXTRACT_PHASE
@@ -32,7 +33,8 @@ class TestUnitPluginDecorator:
         plugin_func = plugin(PipelinePhase.EXTRACT_PHASE, "mock_plugin")(mock_plugin)
 
         result = plugin_func(id='mock_plugin_id')
-        assert result == PluginWrapper(id='mock_plugin_id', func=mock_plugin(id='mock_plugin_id'))
+
+        assert result.__name__ == mock_plugin(id='mock_plugin_id').__name__
 
     @staticmethod
     def test_plugin_with_optional_id(mocker) -> None:
@@ -40,17 +42,17 @@ class TestUnitPluginDecorator:
 
         plugin_func = plugin(PipelinePhase.EXTRACT_PHASE, "mock_plugin")(mock_plugin_no_params)
 
-        result = plugin_func()
-        assert result == PluginWrapper(id='mock_plugin_no_params_12345678-1234-5678-1234-567812345678', func=mock_plugin_no_params())
+        assert plugin_func().__name__ == mock_plugin_no_params().__name__
 
     @staticmethod
-    def test_get_plugin_from_plugin_decorator() -> None:
+    def test_get_plugin_using_plugin_decorator() -> None:
         plugin(PipelinePhase.EXTRACT_PHASE, "mock_plugin")(mock_plugin)
 
         plugin_func = PluginRegistry.get(PipelinePhase.EXTRACT_PHASE, "mock_plugin")
         result = plugin_func(id='mock_plugin_id')
 
-        assert result == PluginWrapper(id='mock_plugin_id', func=mock_plugin(id='mock_plugin_id'))
+        assert result.__name__ == mock_plugin(id='mock_plugin_id').__name__
+
 
 class TestUnitPluginRegistry:
 
@@ -109,3 +111,21 @@ class TestUnitPluginRegistry:
     def test_get_nonexistent_plugin() -> None:
         with pytest.raises(ValueError):
             PluginRegistry.get(EXTRACT_PHASE, "fake_plugin")
+
+
+    @staticmethod
+    @pytest.mark.parametrize("id, plugin, phase, func", [
+        ["extractor_id", "mocks.mock_extractor", PipelinePhase.EXTRACT_PHASE, mocks.mock_extractor],
+        ["transformer_id", "mocks.mock_transformer", PipelinePhase.TRANSFORM_PHASE, mocks.mock_transformer],
+        ["loader_id", "mocks.mock_loader", PipelinePhase.LOAD_PHASE, mocks.mock_loader],
+    ])
+    def test_instantiate_plugin(id, plugin, phase, func, mocker) -> None:
+        mocker.patch.object(PluginRegistry, 'get').return_value = func
+
+        plugin_payload = {
+            "id": id,
+            "plugin": plugin,
+        }
+
+        resolved_plugin = PluginRegistry.instantiate_plugin(phase, plugin_payload)
+        assert isinstance(resolved_plugin, PluginWrapper)

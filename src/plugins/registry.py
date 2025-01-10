@@ -23,12 +23,12 @@ PLUGIN_NAME = str
 P = ParamSpec("P")
 R = TypeVar("R")
 
-PluginFunc = Callable[P, R | Awaitable[R]]
+Plugin = Callable[P, R | Awaitable[R]]
 from typing import Any
 @dataclass
 class PluginWrapper:
     id: str
-    func: Any #PluginFunc
+    func: Any #Plugin #TODO: Change it.
 
     async def _execute_async(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[R]:
         return await self.func(*args, *kwargs)
@@ -49,20 +49,14 @@ class PluginWrapper:
 
 
 # TODO: This needs Type fixing.
-def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[PluginFunc], PluginFunc]:
+def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[Plugin], Plugin]:
 
-    def decorator(func: PluginFunc) -> PluginFunc:
+    def decorator(func: Plugin) -> Plugin:
         nonlocal plugin_name
-        if plugin_name is None:
-            plugin_name = func.__name__
+        plugin_name = func.__name__  if plugin_name is None else plugin_name
 
-        @functools.wraps(func)
-        def wrapper(**kwargs: P.kwargs) -> R | Awaitable[R]:
-            id = kwargs.get('id') or f"{func.__name__}_{uuid.uuid4()}"
-            return PluginWrapper(id=id, func=func(**kwargs))
-
-        PluginRegistry.register(plugin_phase, plugin_name, wrapper)
-        return wrapper
+        PluginRegistry.register(plugin_phase, plugin_name, func)
+        return func
     return decorator
 
 
@@ -72,14 +66,14 @@ class PluginRegistry(metaclass=SingletonMeta):
     Registry example: {EXTRACT_PHASE: {'s3': S3Plugin}}
     """
 
-    _registry: dict[PipelinePhase, dict[PLUGIN_NAME, PluginFunc]] = {}
+    _registry: dict[PipelinePhase, dict[PLUGIN_NAME, Plugin]] = {}
 
     @classmethod
     def register(
         cls,
         pipeline_phase: PipelinePhase,
         plugin: str,
-        plugin_callable: PluginFunc,
+        plugin_callable: Plugin,
     ) -> bool:
         """Regisers a plugin for a given pipeline type and plugin."""
         # Initialise the Pipeline phase in the registry.
@@ -119,13 +113,25 @@ class PluginRegistry(metaclass=SingletonMeta):
         return False
 
     @classmethod
-    def get(
-        cls, pipeline_phase: PipelinePhase, plugin: str
-    ) -> PluginFunc:
+    def get(cls, pipeline_phase: PipelinePhase, plugin: str) -> Plugin:
         """Retrieve a plugin for a given pipeline type and plugin."""
-        etl_class = cls._registry.get(pipeline_phase, {}).get(plugin, None)
+        plugin_factory = cls._registry.get(pipeline_phase, {}).get(plugin, None)
 
-        if not etl_class:
+        if not plugin_factory:
             raise ValueError("Plugin class was not found for following plugin `{}`.".format(plugin))
-        logger.debug("Plugin class '%s' has been successfully retrieved.", etl_class)
-        return etl_class
+        
+        logger.debug("Plugin class '%s' has been successfully retrieved.", plugin_factory)
+        return plugin_factory
+
+    
+    @classmethod
+    def instantiate_plugin(cls, phase_pipeline: PipelinePhase, plugin_data: dict) -> PluginWrapper:
+        """Resolve and return a single plugin instance."""
+        plugin_name = plugin_data.pop("plugin", None)
+        if not plugin_name:
+            raise ValueError("The attribute 'plugin' is empty.")
+
+        plugin_factory = cls.get(phase_pipeline, plugin_name)
+    
+        id = plugin_data.get("id") or f"{plugin_factory.__name__}_{uuid.uuid4()}"
+        return PluginWrapper(id=id, func=plugin_factory(**plugin_data))
