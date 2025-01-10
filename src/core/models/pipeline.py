@@ -17,7 +17,7 @@ from pydantic import (
 # Project imports
 from core.models.phases import (
     PhaseInstance,
-    PipelinePhase, 
+    PipelinePhase,
     ExtractPhase,
     TransformPhase,
     LoadPhase,
@@ -89,37 +89,37 @@ class Pipeline(BaseModel):
     @property
     def load_transform(self) -> TransformLoadPhase:
         return self.phases[PipelinePhase.TRANSFORM_AT_LOAD_PHASE]
-    
 
 
-    @field_validator('phases')
-    @classmethod
-    def validate_phase_existence(cls, phases: dict[PipelinePhase, PhaseInstance], info: ValidationInfo):
-        pipeline_type = info.data['type']
 
-        pipeline_phases = MANDATORY_PHASES_BY_PIPELINE_TYPE[pipeline_type]
-        mandatory_phases = {phase for phase, is_mandatory in pipeline_phases.items() if is_mandatory}
-        optional_phases = {phase for phase, is_mandatory in pipeline_phases.items() if not is_mandatory}
-        # Compute missing and extra phases
-        provided_phases = set(phases.keys())
+    # @field_validator('phases')
+    # @classmethod
+    # def validate_phase_existence(cls, phases: dict[PipelinePhase, PhaseInstance], info: ValidationInfo):
+    #     pipeline_type = info.data['type']
 
-        missing_phases = set(mandatory_phases) - set(provided_phases| optional_phases)
-        extra_phases = set(provided_phases) - (mandatory_phases | optional_phases)
+    #     pipeline_phases = MANDATORY_PHASES_BY_PIPELINE_TYPE[pipeline_type]
+    #     mandatory_phases = {phase for phase, is_mandatory in pipeline_phases.items() if is_mandatory}
+    #     optional_phases = {phase for phase, is_mandatory in pipeline_phases.items() if not is_mandatory}
+    #     # Compute missing and extra phases
+    #     provided_phases = set(phases.keys())
+
+    #     missing_phases = set(mandatory_phases) - set(provided_phases| optional_phases)
+    #     extra_phases = set(provided_phases) - (mandatory_phases | optional_phases)
 
 
-        if missing_phases or extra_phases:
-            if missing_phases:
-                logger.error(
-                    f"Validation Error: Missing phases for pipeline type '{pipeline_type}': {missing_phases}"
-                )
-            if extra_phases:
-                logger.warning(
-                    f"Validation Warning: Extra phases provided for pipeline type '{pipeline_type}': {extra_phases}"
-                )
-            raise ValueError(
-                f"Validation Error: The provided phases do not match the required phases for pipeline type '{pipeline_type}'. "
-                f"Missing phases: {missing_phases}. Extra phases: {extra_phases}."
-            )
-            
-        logger.info(f"Phase validation successful for pipeline type '{pipeline_type}'")
-        return phases
+    #     if missing_phases or extra_phases:
+    #         if missing_phases:
+    #             logger.error(
+    #                 f"Validation Error: Missing phases for pipeline type '{pipeline_type}': {missing_phases}"
+    #             )
+    #         if extra_phases:
+    #             logger.warning(
+    #                 f"Validation Warning: Extra phases provided for pipeline type '{pipeline_type}': {extra_phases}"
+    #             )
+    #         raise ValueError(
+    #             f"Validation Error: The provided phases do not match the required phases for pipeline type '{pipeline_type}'. "
+    #             f"Missing phases: {missing_phases}. Extra phases: {extra_phases}."
+    #         )
+
+    #     logger.info(f"Phase validation successful for pipeline type '{pipeline_type}'")
+    #     return phases

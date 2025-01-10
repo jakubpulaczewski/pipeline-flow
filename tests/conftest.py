@@ -5,7 +5,7 @@ import pytest
 
 
 # Project Imports
-from plugins.registry import PluginRegistry
+from plugins.registry import PluginRegistry, PluginWrapper
 
 from core.models.phases import (
     ExtractPhase,
@@ -16,11 +16,11 @@ from core.models.phases import (
 from core.models.pipeline import Pipeline
 
 from tests.resources.mocks import (
-    MockExtractor,
-    MockLoad,
-    MockTransform, 
-    MockLoadTransform,
-    MockMerger
+    mock_extractor,
+    mock_loader,
+    mock_transformer,
+    mock_load_transformer,
+    mock_merger
 )
 @pytest.fixture(autouse=True)
 def setup_logging_level():
@@ -40,22 +40,6 @@ def extractor_plugin_data():
         "plugin": "mock_extractor",
     }
 
-@pytest.fixture
-def extractor_mock(extractor_plugin_data):
-    return MockExtractor(id=extractor_plugin_data['id'])
-
-
-@pytest.fixture
-def second_extractor_plugin_data():
-    return {
-        "id": "extractor_id_2", 
-        "plugin": "mock_extractor_2"
-    }
-
-@pytest.fixture
-def second_extractor_mock(second_extractor_plugin_data):
-    return MockExtractor(id=second_extractor_plugin_data['id'])
-
 
 @pytest.fixture
 def loader_plugin_data():
@@ -67,13 +51,13 @@ def second_loader_plugin_data():
 
 
 @pytest.fixture
-def mock_loader(loader_plugin_data):
-    return MockLoad(id=loader_plugin_data['id'])
+def loader_mock(loader_plugin_data):
+    return mock_loader(id=loader_plugin_data['id'])
 
 
 @pytest.fixture
-def second_mock_loader(second_loader_plugin_data):
-    return MockLoad(id=second_loader_plugin_data["id"])
+def second_loader_mock(second_loader_plugin_data):
+    return mock_loader(id=second_loader_plugin_data["id"])
 
 
 @pytest.fixture
@@ -87,31 +71,32 @@ def second_transformer_plugin_data():
 
 
 @pytest.fixture
-def mock_transformer(transformer_plugin_data):
-    return MockTransform(id=transformer_plugin_data['id'])
+def transformer_mock(transformer_plugin_data):
+    return mock_transformer(id=transformer_plugin_data['id'])
 
 @pytest.fixture
-def second_mock_transformer(second_transformer_plugin_data):
-    return MockTransform(id=second_transformer_plugin_data['id'])
+def second_transformer_mockr(second_transformer_plugin_data):
+    return mock_transformer(id=second_transformer_plugin_data['id'])
 
 
 @pytest.fixture
 def transform_at_load_plugin_data():
-    return {"id": "mock_transform_load_id", "plugin": 'mock_transformer_loader'}
+    return {"id": "mock_transform_loader_id", "plugin": 'mock_transformer_loader'}
 
 @pytest.fixture
 def second_transform_at_load_plugin_data():
-    return {"id": "mock_transform_load_id_2", "plugin": 'mock_transformer_loader_2'}
+    return {"id": "mock_transform_loader_id_2", "plugin": 'mock_transformer_loader_2'}
 
 
 @pytest.fixture
-def mock_load_transformer(transform_at_load_plugin_data):
-    return MockLoadTransform(id=transform_at_load_plugin_data['id'])
+def load_transformer_mock(transform_at_load_plugin_data):
+    return mock_load_transformer(id=transform_at_load_plugin_data['id'])
 
 @pytest.fixture
-def second_mock_load_transformer(second_transform_at_load_plugin_data):
-    return MockLoadTransform(id=second_transform_at_load_plugin_data['id'])
+def second_load_transformer_mock(second_transform_at_load_plugin_data):
+    return mock_load_transformer(id=second_transform_at_load_plugin_data['id'])
 
+## TODO: Re check all o f this after.
 @pytest.fixture
 def merger_plugin_data():
     return {
@@ -120,7 +105,7 @@ def merger_plugin_data():
 
 @pytest.fixture
 def merger_mock(merger_plugin_data):
-    return MockMerger()
+    return mock_merger()
 
 
 def pipeline_factory(default_config):
@@ -151,14 +136,15 @@ def pipeline_factory(default_config):
     return create_pipeline
 
 
+
 @pytest.fixture
-def etl_pipeline_factory(request, extractor_mock, mock_transformer, mock_loader):
+def etl_pipeline_factory(request):
     default_config = {
         "name": "ETL Pipeline",
         "type": "ETL",
-        "extract": [extractor_mock],
-        "transform": [mock_transformer],
-        "load": [mock_loader],
+        "extract": [],
+        "transform": [],
+        "load": [],
         "needs": None
     }
 
@@ -170,15 +156,13 @@ def etl_pipeline_factory(request, extractor_mock, mock_transformer, mock_loader)
 
 
 @pytest.fixture
-def elt_pipeline_factory(
-    request, extractor_mock,  mock_loader, mock_load_transformer
-):
+def elt_pipeline_factory(request):
     default_config = {
         "name": "ELT Pipeline",
         "type": "ELT",
-        "extract": [extractor_mock],
-        "load": [mock_loader],
-        "transform_at_load": [mock_load_transformer],
+        "extract": [],
+        "load": [],
+        "transform_at_load": [],
         "needs": None
     }
 
@@ -189,17 +173,15 @@ def elt_pipeline_factory(
     return pipeline
 
 @pytest.fixture
-def etlt_pipeline_factory(
-    request, extractor_mock,  mock_transformer, mock_loader, mock_load_transformer
-):
+def etlt_pipeline_factory(request):
     default_config = {
         "name": "ETLT Pipeline",
         "type": "ETLT",
-        "extract": [extractor_mock],
-        "transform": [mock_transformer],
-        "load": [mock_loader],
-        "transform_at_load": [mock_load_transformer],
-        "needs": None   
+        "extract": [],
+        "transform": [],
+        "load": [],
+        "transform_at_load": [],
+        "needs": None
     }
 
     if hasattr(request, "param"):
@@ -209,27 +191,27 @@ def etlt_pipeline_factory(
     return pipeline
 
 
-@pytest.fixture
-def flexible_pipeline_factory():
-    def _flexible_pipeline_factory(
-        name: str,
-        pipeline_type: str = "ETL",
-        extract: list = None,
-        transform: list = None,
-        load: list = None,
-        transform_at_load: list = None,
-        needs: list[str] = None,
-    ):  
-        default_config = {
-            "name": name,
-            "type": pipeline_type,
-            "extract": extract or [],
-            "transform": transform or [],
-            "load": load or [],
-            "transform_at_load": transform_at_load or [],
-            "needs": needs,
-        }
-        
-        return pipeline_factory(default_config)
+# @pytest.fixture
+# def flexible_pipeline_factory():
+#     def _flexible_pipeline_factory(
+#         name: str,
+#         pipeline_type: str = "ETL",
+#         extract: list = None,
+#         transform: list = None,
+#         load: list = None,
+#         transform_at_load: list = None,
+#         needs: list[str] = None,
+#     ):
+#         default_config = {
+#             "name": name,
+#             "type": pipeline_type,
+#             "extract": extract or [],
+#             "transform": transform or [],
+#             "load": load or [],
+#             "transform_at_load": transform_at_load or [],
+#             "needs": needs,
+#         }
 
-    return _flexible_pipeline_factory
+#         return pipeline_factory(default_config)
+
+#     return _flexible_pipeline_factory

@@ -1,1 +1,1 @@
-from .s3_pandas import PandasS3ExtractPlugin
+# from .s3_pandas import PandasS3ExtractPlugin

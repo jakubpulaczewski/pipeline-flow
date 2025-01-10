@@ -30,7 +30,7 @@ def time_it(func: F) -> F:
              total_time = time.time() - start
              logger.info(f"Time taken to execute {func.__name__} is {total_time:.4f} seconds")
         return result
-    
+
     @wraps(func)
     async def async_inner(*args: Any, **kwargs: Any) -> T:
         """Inner wrapper function for asynchronous functions."""
@@ -44,8 +44,7 @@ def time_it(func: F) -> F:
              total_time = asyncio.get_running_loop().time() - start
              logger.info(f"Time taken to execute {func.__name__} is {total_time:.4f} seconds")
         return result
-        
+
     if asyncio.iscoroutinefunction(func):
         return async_inner
-    else:
-        return sync_inner 
+    return sync_inner

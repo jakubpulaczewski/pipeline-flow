@@ -1,72 +1,87 @@
 # Standard Imports
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from types import FunctionType
+import asyncio
+import functools
+import uuid
+
+from typing import TYPE_CHECKING, Awaitable,  Callable, ParamSpec, TypeVar, Self, Protocol
 import logging
 
 # Third Party Imports
+from pydantic.dataclasses import dataclass
 
 # Project Imports
 import plugins # Imports core plugins defined in __init__.py
 
 from common.utils import SingletonMeta
 if TYPE_CHECKING:
-    from core.models.phases import PluginCallable, PipelinePhase
+    from core.models.phases import  PipelinePhase
 
 logger = logging.getLogger(__name__)
 
 PLUGIN_NAME = str
+P = ParamSpec("P")
+R = TypeVar("R")
 
-# Decorator for plugin registration
-def plugin(plugin_phase: PipelinePhase, plugin_name: str):
-    def decorator(plugin_class):
-        PluginRegistry.register(plugin_phase, plugin_name, plugin_class)
-        return plugin_class
+PluginFunc = Callable[P, R | Awaitable[R]]
+from typing import Any
+@dataclass
+class PluginWrapper:
+    id: str
+    func: Any #PluginFunc
+
+    async def _execute_async(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[R]:
+        return await self.func(*args, *kwargs)
+
+    def _execute_sync(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        return self.func(*args, **kwargs)
+
+    def execute(self: Self, *args: P.args, **kwargs: P.kwargs) -> R | Awaitable[R]:
+        if asyncio.iscoroutinefunction(self.func):
+            return self.func(*args, **kwargs)
+        return self.func(*args, **kwargs)
+
+    def __eq__(self, other):
+        if not isinstance(other, PluginWrapper):
+            return False
+        return self.id == other.id and self.func.__name__ == other.func.__name__
+
+
+
+# TODO: This needs Type fixing.
+def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[PluginFunc], PluginFunc]:
+
+    def decorator(func: PluginFunc) -> PluginFunc:
+        nonlocal plugin_name
+        if plugin_name is None:
+            plugin_name = func.__name__
+
+        @functools.wraps(func)
+        def wrapper(**kwargs: P.kwargs) -> R | Awaitable[R]:
+            id = kwargs.get('id') or f"{func.__name__}_{uuid.uuid4()}"
+            return PluginWrapper(id=id, func=func(**kwargs))
+
+        PluginRegistry.register(plugin_phase, plugin_name, wrapper)
+        return wrapper
     return decorator
 
 
-            
 class PluginRegistry(metaclass=SingletonMeta):
     """A Plugin Factory that dynamically registers, removes and fetches plugins.
 
     Registry example: {EXTRACT_PHASE: {'s3': S3Plugin}}
     """
 
-    _registry: dict[PipelinePhase, dict[PLUGIN_NAME, PluginCallable]] = {}
-
-    @staticmethod
-    def _validate_plugin_interface(
-        pipeline_phase: PipelinePhase, plugin_callable: PluginCallable
-    ):
-        from core.models.phases import PLUGIN_PHASE_INTERFACE_MAP
-        
-        expected_inteface = PLUGIN_PHASE_INTERFACE_MAP.get(pipeline_phase)
-
-        if not expected_inteface:
-            raise ValueError(f"No interface defined for pipeline phase '{pipeline_phase.name}'.")
-
-        #  Generalized validation: Check callable or subclass
-        is_function = lambda obj: isinstance(obj, FunctionType)
-
-        if is_function(plugin_callable):
-             return 
-        
-        if not issubclass(plugin_callable, expected_inteface):
-            raise TypeError(
-                f"Plugin class '{plugin_callable.__name__}' must be a subclass of '{expected_inteface.__name__}' "
-            )
+    _registry: dict[PipelinePhase, dict[PLUGIN_NAME, PluginFunc]] = {}
 
     @classmethod
     def register(
         cls,
         pipeline_phase: PipelinePhase,
         plugin: str,
-        plugin_callable: PluginCallable,
+        plugin_callable: PluginFunc,
     ) -> bool:
-        """Regisers a plugin for a given Pipeline type and plugin."""
-        # Validates the plugin implements the correct interface for the given phrase.
-        #cls._validate_plugin_interface(pipeline_phase, plugin_callable)
-
+        """Regisers a plugin for a given pipeline type and plugin."""
         # Initialise the Pipeline phase in the registry.
         if pipeline_phase not in cls._registry:
             cls._registry[pipeline_phase] = {}
@@ -89,7 +104,7 @@ class PluginRegistry(metaclass=SingletonMeta):
 
     @classmethod
     def remove(cls, pipeline_phase: PipelinePhase, plugin: str) -> bool:
-        """Remove a plugin for a given Pipeline type and plugin."""
+        """Remove a plugin for a given pipeline type and plugin."""
         if pipeline_phase in cls._registry and plugin in cls._registry[pipeline_phase]:
             del cls._registry[pipeline_phase][plugin]
             logger.debug(
@@ -106,8 +121,8 @@ class PluginRegistry(metaclass=SingletonMeta):
     @classmethod
     def get(
         cls, pipeline_phase: PipelinePhase, plugin: str
-    ) -> PluginCallable:
-        """Retrieve a plugin for a given ETL type and plugin."""
+    ) -> PluginFunc:
+        """Retrieve a plugin for a given pipeline type and plugin."""
         etl_class = cls._registry.get(pipeline_phase, {}).get(plugin, None)
 
         if not etl_class:

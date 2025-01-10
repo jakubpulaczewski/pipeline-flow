@@ -4,7 +4,7 @@ classDiagram
     class PluginRegistry {
     }
 
- 
+
     class PipelinePhase {
         <<enumeration>>
         EXTRACT_PHASE
@@ -65,7 +65,7 @@ classDiagram
     BasePhase <|-- TransformPhase
     BasePhase <|-- LoadPhase
     BasePhase <|-- TransformLoadPhase
-    
+
     Pipeline --> PipelinePhase
     Pipeline --> PipelineType
     Pipeline --> ExtractPhase
@@ -94,24 +94,3 @@ o--	Aggregation
 ..>	Dependency
 ..|>	Realization
 ..	Link (Dashed)
-
-    class IExtractor {
-        <<interface>>
-        +extract_data()
-    }
-
-    class ILoader {
-        <<interface>>
-        +load_data(data)
-    }
-
-
-    class ITransform {
-        <<interface>>
-        +transform_data(data)
-    }
-
-    class ILoadTransform {
-        <<interface>>
-        +transform_data()
-    }

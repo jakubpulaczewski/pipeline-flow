@@ -3,33 +3,23 @@ import tempfile
 import os
 import yaml
 
-from unittest.mock import  patch, MagicMock
-from pathlib import Path
+from unittest.mock import MagicMock
 
 # Third-party Imports
 import pytest
 
-from pydantic import ValidationError
-
 # Project Imports
+import tests.resources.mocks as mocks
+
+
 from core.parser import (
     YamlParser,
     PipelineParser,
     PluginParser
 )
-from core.models.pipeline import Pipeline
-from core.models.phases import ExtractPhase, TransformPhase, TransformLoadPhase, LoadPhase
-from plugins.registry import PluginRegistry
-from tests.resources.constants import ETL, EXTRACT_PHASE, TRANSFORM_PHASE, LOAD_PHASE
-from tests.resources.mocks import (
-    MockExtractor, 
-    MockLoad, 
-    MockTransform, 
-    MockLoadTransform, 
-    MockMerger
-)
-
-
+from core.models.pipeline import Pipeline, PipelineType
+from plugins.registry import PluginWrapper
+from core.models.phases import ExtractPhase, TransformPhase, LoadPhase
 
 
 @pytest.fixture(scope='session')
@@ -63,7 +53,7 @@ def temporary_yaml_file(yaml_pipeline):
 
     with open(temp_file.name, "w") as f:
         yaml.dump(yaml_content, f)
-    
+
     yield temp_file.name
 
     os.remove(temp_file.name)
@@ -86,7 +76,7 @@ class TestUnitYamlParser:
         - item1
         - item2:
         """
-        
+
         with pytest.raises(yaml.YAMLError):
             YamlParser(yaml_text=yaml_content)
 
@@ -156,7 +146,7 @@ class TestUnitYamlParser:
                 }
             }
         }
-        
+
 
         assert (
             serialized_yaml == expected_dict
@@ -188,15 +178,15 @@ class TestUnitPluginParser:
         plugin_parser = PluginParser(plugins_payload={})
 
         result = plugin_parser.get_all_files(paths)
-    
+
         assert result == {'file1.py', 'file3.py'}
-    
+
     def test_get_all_files_with_only_duplicates(self, mock_isdir):
         paths = ["file1.py", "file3.py", "file3.py", "file3.py"]
         plugin_parser = PluginParser(plugins_payload={})
 
         result = plugin_parser.get_all_files(paths)
-    
+
         assert result == {'file1.py', 'file3.py'}
 
 
@@ -214,30 +204,30 @@ class TestUnitPluginParser:
         result = plugin_parser.get_all_files(paths)
         expected = {"dir1/file1.py", "dir1/file3.py", "file4.py"}
         assert result == expected
-    
-    
-    def test_fetch_custom_plugin_files_with_no_dirs_or_files(self, mocker):        
+
+
+    def test_fetch_custom_plugin_files_with_no_dirs_or_files(self, mocker):
         plugin_parser = PluginParser(plugins_payload={})
 
         mocker.patch.object(plugin_parser, "get_all_files", side_effect=[
             set(),
-            set() 
+            set()
         ])
 
         custom_plugins = plugin_parser.fetch_custom_plugin_files()
 
         assert custom_plugins == set()
-        
-    
-    def test_fetch_custom_plugin_files_with_dirs_and_files(self, mocker):     
+
+
+    def test_fetch_custom_plugin_files_with_dirs_and_files(self, mocker):
         plugin_parser = PluginParser(
             plugins_payload={
                 "custom": {
                     "dirs": ["dir1"],
-                    "files": ["file1.py", "file2.py"]     
-                }  
+                    "files": ["file1.py", "file2.py"]
+                }
             }
-        )  
+        )
         files_mock = mocker.patch.object(plugin_parser, "get_all_files", side_effect=[
             {"dir1/fileA.py", "dir2/fileB.py"},  # Mocked output for directories
             {"file1.py", "file2.py"}             # Mocked output for files
@@ -249,17 +239,17 @@ class TestUnitPluginParser:
         files_mock.assert_any_call(["file1.py", "file2.py"])
 
         assert custom_plugins == {'file2.py', 'dir2/fileB.py', 'file1.py', 'dir1/fileA.py'}
-        
+
 
 
     def test_fetch_custom_plugin_files_with_only_files(self, mocker):
         plugin_parser = PluginParser(
             plugins_payload={
                 "custom": {
-                    "files": ["file1.py", "file2.py"]     
-                }  
+                    "files": ["file1.py", "file2.py"]
+                }
             }
-        )  
+        )
 
         files_mock = mocker.patch.object(plugin_parser, "get_all_files", side_effect=[
             set(),  # Mocked output for directories
@@ -271,16 +261,16 @@ class TestUnitPluginParser:
 
         assert custom_plugins == {'file2.py', 'file1.py'}
 
-    
+
     def test_fetch_custom_plugin_files_with_overlapping_files(self, mocker):
         plugin_parser = PluginParser(
             plugins_payload={
                 "custom": {
                     "dirs": ["dir1", "dir2"],
-                    "files": ["dir1/fileA.py", "dir2/fileB.py"]     
-                }  
+                    "files": ["dir1/fileA.py", "dir2/fileB.py"]
+                }
             }
-        )  
+        )
 
         files_mock = mocker.patch.object(plugin_parser, "get_all_files", side_effect=[
             {"dir1/fileA.py", "dir2/fileB.py"},
@@ -308,17 +298,19 @@ class TestUnitPluginParser:
                     "plugin2",
                     "plugin3"
 
-                ] 
+                ]
             }
-        ) 
+        )
 
         result = plugin_parser.fetch_community_plugin_modules()
 
         assert result == {"community.plugins.plugin1", "community.plugins.plugin2", "community.plugins.plugin3"}
 
 
+
+
 class TestUnitPipelineParser:
-    
+
     @pytest.fixture(autouse=True)
     def pipeline_parser(self) -> PipelineParser:
         self.pipeline_parser = PipelineParser()
@@ -328,21 +320,20 @@ class TestUnitPipelineParser:
         with pytest.raises(ValueError, match="Pipeline attributes are empty"):
             self.pipeline_parser.create_pipeline(pipeline_name="pipeline_2", pipeline_data={})
 
-    def test_create_pipeline_with_only_mandatory_phases(
-        self,
-        mocker,
-        extractor_plugin_data,
-        second_extractor_plugin_data,
-        loader_plugin_data,
-        second_loader_plugin_data
-    ):
+    def test_create_pipeline_with_only_mandatory_phases(self, mocker):
         pipeline_data = {
             "type": "ETL",
             "phases": {
                 "extract": {
                     "steps": [
-                        extractor_plugin_data, 
-                        second_extractor_plugin_data
+                        {
+                            "id": "extractor_id",
+                            "plugin": "mock_extractor",
+                        },
+                        {
+                            "id": "extractor_id_2",
+                            "plugin": "mock_extractor_2"
+                        }
                     ]
                 },
                 "transform": {
@@ -350,8 +341,8 @@ class TestUnitPipelineParser:
                 },
                 "load": {
                     "steps": [
-                        loader_plugin_data, 
-                        second_loader_plugin_data
+                        {"id": "loader_id", "plugin": "mock_loader"},
+                        {"id": "loader_id_2", "plugin": "mock_loader_2"}
                     ]
                 }
             }
@@ -362,58 +353,61 @@ class TestUnitPipelineParser:
             "create_phase",
             side_effect=[
                 ExtractPhase.model_construct(steps=[
-                    MockExtractor(id='extractor_id'),
-                    MockExtractor(id='extractor_id_2')
+                    PluginWrapper(id='extractor_id', func=mocks.mock_extractor('extractor_id')),
+                    PluginWrapper(id='extractor_id_2', func=mocks.mock_extractor('extractor_id_2'))
                 ]),
                 TransformPhase.model_construct(steps=[]),
                 LoadPhase.model_construct(steps=[
-                    MockLoad(id='loader_id'),
-                    MockLoad(id='loader_id_2')
+                    PluginWrapper(id='loader_id', func=mocks.mock_loader('loader_id')),
+                    PluginWrapper(id='loader_id_2', func=mocks.mock_loader('loader_id_2'))
                 ]),
             ],
         )
 
         pipeline = self.pipeline_parser.create_pipeline("full_pipeline", pipeline_data)
+
         assert isinstance(pipeline, Pipeline)
         assert pipeline.name == "full_pipeline"
+        assert pipeline.type == PipelineType.ETL
+        assert pipeline.needs is None
 
         assert len(pipeline.extract.steps) == 2
-        assert isinstance(pipeline.extract.steps[0], MockExtractor)
-        assert isinstance(pipeline.extract.steps[1], MockExtractor)
+        assert pipeline.extract.steps[0].id == 'extractor_id'
+        assert pipeline.extract.steps[1].id == 'extractor_id_2'
 
         assert len(pipeline.transform.steps) == 0
 
         assert len(pipeline.load.steps) == 2
-        assert isinstance(pipeline.load.steps[0], MockLoad)
-        assert isinstance(pipeline.load.steps[1], MockLoad)
+        assert pipeline.load.steps[0].id == 'loader_id'
+        assert pipeline.load.steps[1].id == 'loader_id_2'
 
 
-    def test_create_pipeline_with_multiple_sources_destinations(
-        self,
-        mocker,
-        extractor_plugin_data,
-        second_extractor_plugin_data,
-        transformer_plugin_data,
-        second_transformer_plugin_data,
-        loader_plugin_data,
-        second_loader_plugin_data
-        ):
+    def test_create_pipeline_with_multiple_sources_destinations(self, mocker):
         pipeline_data = {
             "type": "ETL",
             "phases": {
                 "extract": {
                     "steps": [
-                        extractor_plugin_data, second_extractor_plugin_data
+                        {
+                            "id": "extractor_id",
+                            "plugin": "mock_extractor",
+                        },
+                        {
+                            "id": "extractor_id_2",
+                            "plugin": "mock_extractor_2"
+                        }
                     ]
                 },
                 "transform": {
                     "steps": [
-                        transformer_plugin_data, second_transformer_plugin_data
+                        {"id": "transformer_id", "plugin": "mock_transformer"},
+                        {"id": "transformer_id_2", "plugin": "mock_transformer_2"}
                     ]
                 },
                 "load": {
                     "steps": [
-                        loader_plugin_data, second_loader_plugin_data
+                        {"id": "loader_id", "plugin": "mock_loader"},
+                        {"id": "loader_id_2", "plugin": "mock_loader_2"}
                     ]
                 }
             }
@@ -424,16 +418,16 @@ class TestUnitPipelineParser:
             "create_phase",
             side_effect=[
                 ExtractPhase.model_construct(steps=[
-                    MockExtractor(id='extractor_id'),
-                    MockExtractor(id='extractor_id_2')
+                    PluginWrapper(id='extractor_id', func=mocks.mock_extractor('extractor_id')),
+                    PluginWrapper(id='extractor_id_2', func=mocks.mock_extractor('extractor_id_2'))
                 ]),
                 TransformPhase.model_construct(steps=[
-                    MockTransform(id='transformer_id'),
-                    MockTransform(id='transformer_id_2')
+                    PluginWrapper(id='transformer_id', func=mocks.mock_transformer('transformer_id')),
+                    PluginWrapper(id='transformer_id_2', func=mocks.mock_transformer('transformer_id_2'))
                 ]),
                 LoadPhase.model_construct(steps=[
-                    MockLoad(id='loader_id'),
-                    MockLoad(id='loader_id_2')
+                    PluginWrapper(id='loader_id', func=mocks.mock_loader('loader_id')),
+                    PluginWrapper(id='loader_id_2', func=mocks.mock_loader('loader_id_2'))
                 ]),
             ],
         )
@@ -443,14 +437,13 @@ class TestUnitPipelineParser:
         assert pipeline.name == "full_pipeline"
 
         assert len(pipeline.extract.steps) == 2
-        assert isinstance(pipeline.extract.steps[0], MockExtractor)
-        assert isinstance(pipeline.extract.steps[1], MockExtractor)
+        assert pipeline.extract.steps[0].id == 'extractor_id'
+        assert pipeline.extract.steps[1].id == 'extractor_id_2'
 
         assert len(pipeline.transform.steps) == 2
-        assert isinstance(pipeline.transform.steps[0], MockTransform)
-        assert isinstance(pipeline.transform.steps[1], MockTransform)
+        assert pipeline.transform.steps[0].id == 'transformer_id'
+        assert pipeline.transform.steps[1].id == 'transformer_id_2'
 
         assert len(pipeline.load.steps) == 2
-        assert isinstance(pipeline.load.steps[0], MockLoad)
-        assert isinstance(pipeline.load.steps[1], MockLoad)
-
+        assert pipeline.load.steps[0].id == 'loader_id'
+        assert pipeline.load.steps[1].id == 'loader_id_2'

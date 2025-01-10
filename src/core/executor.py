@@ -12,6 +12,7 @@ from typing import Callable, TYPE_CHECKING
 # Project Imports
 from common.type_def import ExtractedData, TransformedData, TransformLoadedData
 from common.decorator import time_it
+from plugins.registry import PluginWrapper
 
 if TYPE_CHECKING:
     from core.models.phases import (
@@ -37,45 +38,46 @@ logger = logging.getLogger(__name__)
 class PipelineExecutor:
 
     @staticmethod
-    async def _execute_processing_steps(phase: PipelinePhase, processing_steps: list[Callable]):
+    async def _execute_processing_steps(phase: PipelinePhase, processing_steps: list[PluginWrapper]):
         async def run_task(task):
-            if asyncio.iscoroutinefunction(task):
-                return await task()
-            else:
-                return await asyncio.get_running_loop().run_in_executor(None, task)
-        try:
-            async with asyncio.TaskGroup() as task_group:
-                tasks = [task_group.create_task(run_task(step)) for step in processing_steps]
-                        
-            results = [task.result() for task in tasks]
-            return results
-        
-        except Exception as e:
-            error_message = f"Error during {phase} processing execution: {e}"
-            logger.error(error_message)
-            raise
+            try:
+                if asyncio.iscoroutinefunction(task.func):
+                    return await task.execute()
+                else:
+                    return await asyncio.get_running_loop().run_in_executor(None, task.execute)
+            except Exception as e:
+                error_message = f"Error during {phase} processing execution: {e}"
+                logger.error(error_message)
+                raise
+
+        async with asyncio.TaskGroup() as task_group:
+            tasks = [task_group.create_task(run_task(step)) for step in processing_steps]
+
+        results = [task.result() for task in tasks]
+        return results
+
+
 
     @time_it
     async def run_extractor(self, extracts: ExtractPhase) -> ExtractedData:
         results = {}
- 
-        # Run Pre-Requisite here using extracts.pre
+
         if extracts.pre:
             await self._execute_processing_steps(PipelinePhase.EXTRACT_PHASE, extracts.pre)
 
         async with asyncio.TaskGroup() as extract_tg:
             try:
-                tasks = {step.id: extract_tg.create_task(step.extract_data()) for step in extracts.steps}
+                tasks = {step.id: extract_tg.create_task(step.execute()) for step in extracts.steps}
             except Exception as e:
                 error_message = f"Error during `extraction`: {e}"
                 logger.error(error_message)
                 raise ExtractException(error_message) from e
-            
+
         if len(extracts.steps) == 1:
             return tasks[extracts.steps[0].id].result()
-        
+
         results = {id: task.result() for id, task in tasks.items()}
-        return extracts.merge.merge_data(results)
+        return extracts.merge.execute(extracted_data=results)
 
 
     @time_it
@@ -83,7 +85,7 @@ class PipelineExecutor:
         try:
             for tf in transformations.steps:
                 logger.info(f"Applying transformation: {tf.id}")
-                transformed_data = tf.transform_data(data)
+                transformed_data = tf.execute(data)
 
                 # Continue passing the transformed data to the next step
                 data = transformed_data
@@ -100,15 +102,15 @@ class PipelineExecutor:
     async def run_loader(self, data: ExtractedData | TransformedData, destinations: LoadPhase) -> list[dict]:
         if destinations.pre:
             await self._execute_processing_steps(PipelinePhase.LOAD_PHASE, destinations.pre)
-            
+
         async with asyncio.TaskGroup() as load_tg:
             try:
-                tasks = {step.id: load_tg.create_task(step.load_data(data)) for step in destinations.steps}
+                tasks = {step.id: load_tg.create_task(step.execute(data)) for step in destinations.steps}
             except Exception as e:
                 error_message = f"Error during `load`): {e}"
                 logger.error(error_message)
                 raise LoadException(error_message) from e
-                
+
         if destinations.post:
             await self._execute_processing_steps(PipelinePhase.LOAD_PHASE, destinations.post)
 
@@ -121,7 +123,7 @@ class PipelineExecutor:
         results = []
         for tf in transformations.steps:
             try:
-                tf.transform_data()
+                tf.execute()
                 results.append({'id': tf.id, 'success': True})
             except Exception as e:
                 error_message = f"Error during `transform_at_load` (ID: {tf.id}): {e}"
@@ -135,7 +137,7 @@ class PipelineStrategy(metaclass=ABCMeta):
 
     def __init__(self, executor: PipelineExecutor = None) -> None:
         self.executor = executor or PipelineExecutor()
-        
+
     @abstractmethod
     def execute(self, pipeline: Pipeline) -> bool:
         raise NotImplementedError("This has to be implemented by the subclasses.")
@@ -148,10 +150,10 @@ class ETLStrategy(PipelineStrategy):
 
     async def execute(self, pipeline: Pipeline) -> bool:
         extracted_data = await self.executor.run_extractor(pipeline.extract)
-        
+
         # Transform (CPU-bound work, so offload to executor)
         transformed_data = await asyncio.get_running_loop().run_in_executor(None, self.executor.run_transformer, extracted_data, pipeline.transform)
-        
+
         loaded = await self.executor.run_loader(transformed_data, pipeline.load)
 
         return True
@@ -177,7 +179,7 @@ class ETLTStrategy(PipelineStrategy):
 
     async def execute(self, pipeline: Pipeline) -> bool:
         extracted_data = await self.executor.run_extractor(pipeline.extract)
-        
+
         transformed_data = await asyncio.get_running_loop().run_in_executor(None, self.executor.run_transformer, extracted_data, pipeline.transform)
 
         loaded = await self.executor.run_loader(transformed_data, pipeline.load)
