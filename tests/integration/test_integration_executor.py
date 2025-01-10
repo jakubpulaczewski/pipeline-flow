@@ -8,25 +8,19 @@ import pytest
 import tests.resources.mocks as mocks
 
 from core.models.phases import (
-    PipelinePhase,
     ExtractPhase,
     LoadPhase,
     TransformLoadPhase,
     TransformPhase,
 )
-from core.models.pipeline import Pipeline, PipelineType
+from core.models.pipeline import Pipeline
 from plugins.registry import PluginWrapper
 from core.executor import (
     ETLStrategy, 
     ELTStrategy, 
     ETLTStrategy
 )
-# from tests.resources.mocks import (
-#     MockAwaitExtractor,
-#     MockAwaitLoader,
-#     MockAwaitTransformer,
-#     MockAwaitLoadTransformer
-# )
+
 
 @pytest.mark.asyncio
 async def test_etl_strategy(etl_pipeline_factory) -> None:
