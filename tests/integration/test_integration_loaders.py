@@ -8,7 +8,7 @@ import pytest
 from core.loaders import PluginLoader
 from core.models.phases import PipelinePhase
 
-from plugins.registry import PluginRegistry
+from core.plugins import PluginRegistry
 
 
 class TestIntegrationPluginLoader:

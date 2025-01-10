@@ -12,7 +12,7 @@ from typing import Callable, TYPE_CHECKING
 # Project Imports
 from common.type_def import ExtractedData, TransformedData, TransformLoadedData
 from common.decorator import time_it
-from plugins.registry import PluginWrapper
+from core.plugins import PluginWrapper
 
 if TYPE_CHECKING:
     from core.models.phases import (

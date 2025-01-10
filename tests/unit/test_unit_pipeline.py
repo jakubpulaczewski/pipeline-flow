@@ -6,7 +6,7 @@
 import tests.resources.mocks as mocks
 
 from core.models.pipeline import PipelineType
-from plugins.registry import PluginWrapper
+from core.plugins import PluginWrapper
 
 
 def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:

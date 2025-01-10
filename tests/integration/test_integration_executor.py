@@ -14,7 +14,7 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.models.pipeline import Pipeline
-from plugins.registry import PluginWrapper
+from core.plugins import PluginWrapper
 from core.executor import (
     ETLStrategy, 
     ELTStrategy, 

@@ -24,11 +24,23 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 Plugin = Callable[P, R | Awaitable[R]]
-from typing import Any
+
+
+
+def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[Plugin], Plugin]:
+    def decorator(func: Plugin) -> Plugin:
+        nonlocal plugin_name
+        plugin_name = func.__name__  if plugin_name is None else plugin_name
+
+        PluginRegistry.register(plugin_phase, plugin_name, func)
+        return func
+    return decorator
+
+
 @dataclass
 class PluginWrapper:
     id: str
-    func: Any #Plugin #TODO: Change it.
+    func: Plugin 
 
     async def _execute_async(self, *args: P.args, **kwargs: P.kwargs) -> Awaitable[R]:
         return await self.func(*args, *kwargs)
@@ -45,19 +57,6 @@ class PluginWrapper:
         if not isinstance(other, PluginWrapper):
             return False
         return self.id == other.id and self.func.__name__ == other.func.__name__
-
-
-
-# TODO: This needs Type fixing.
-def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[Plugin], Plugin]:
-
-    def decorator(func: Plugin) -> Plugin:
-        nonlocal plugin_name
-        plugin_name = func.__name__  if plugin_name is None else plugin_name
-
-        PluginRegistry.register(plugin_phase, plugin_name, func)
-        return func
-    return decorator
 
 
 class PluginRegistry(metaclass=SingletonMeta):

@@ -9,7 +9,7 @@ import tests.resources.mocks as mocks
 
 from core.orchestrator import PipelineOrchestrator
 from core.parser import YamlConfig
-from plugins.registry import PluginWrapper
+from core.plugins import PluginWrapper
 
 
 @pytest.fixture()

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 # Project Imports
 from core.models.phases import PipelinePhase, iMerger
-from plugins.registry import plugin
+from core.plugins import plugin
 
 if TYPE_CHECKING:
     from common.type_def import ExtractedData

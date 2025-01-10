@@ -18,7 +18,7 @@ from pydantic import (
 
 # Project Imports
 
-from plugins.registry import PluginRegistry, PluginWrapper
+from core.plugins import PluginRegistry, PluginWrapper
 
 # A callable type representing all interfaces of the phases.
 

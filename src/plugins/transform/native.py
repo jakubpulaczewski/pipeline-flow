@@ -1,6 +1,6 @@
 from common.type_def import ExtractedData
 from core.models.phases import PipelinePhase
-from plugins.registry import plugin
+from core.plugins import plugin
 
 
 @plugin(PipelinePhase.TRANSFORM_PHASE, "clean_missing_values")

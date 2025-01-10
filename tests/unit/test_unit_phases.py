@@ -8,7 +8,7 @@ from pydantic import ValidationError
 # Project Imports
 import tests.resources.mocks as mocks
 
-from plugins.registry import PluginRegistry, PluginWrapper
+from core.plugins import PluginRegistry, PluginWrapper
 
 
 from core.models.phases import ExtractPhase, TransformPhase, TransformLoadPhase, LoadPhase, PipelinePhase

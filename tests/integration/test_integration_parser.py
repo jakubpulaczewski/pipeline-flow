@@ -15,7 +15,7 @@ from core.parser import (
 )
 
 from core.models.pipeline import Pipeline
-from plugins.registry import PluginRegistry, PluginWrapper
+from core.plugins import PluginRegistry, PluginWrapper
 
 from tests.resources.constants import (
 	EXTRACT_PHASE, 

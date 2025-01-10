@@ -18,7 +18,7 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.executor import PipelineExecutor
-from plugins.registry import PluginWrapper
+from core.plugins import PluginWrapper
 
 
 def async_pre(output: str, delay: float = 0.2):
@@ -284,5 +284,3 @@ class TestUnitPipelineStrategyConcurrency:
 
         assert 0.4 > total >= 0.3, 'Delay Should be 0.3 seconds for sychronous transformations.'
 
-
-# # TODO; DEtermine where to put time_it decorator.

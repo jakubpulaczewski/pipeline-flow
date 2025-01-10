@@ -8,7 +8,7 @@ import pytest
 import tests.resources.mocks as mocks
 
 from core.models.phases import PipelinePhase
-from plugins.registry import PluginRegistry, PluginWrapper, plugin
+from core.plugins import PluginRegistry, PluginWrapper, plugin
 from tests.resources.constants import EXTRACT_PHASE
 
 

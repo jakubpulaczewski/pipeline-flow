@@ -18,7 +18,7 @@ from core.parser import (
     PluginParser
 )
 from core.models.pipeline import Pipeline, PipelineType
-from plugins.registry import PluginWrapper
+from core.plugins import PluginWrapper
 from core.models.phases import ExtractPhase, TransformPhase, LoadPhase
 
 

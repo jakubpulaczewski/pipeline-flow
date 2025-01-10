@@ -1,5 +1,5 @@
 from core.models.phases import PipelinePhase, ILoader
-from plugins.registry import  plugin
+from core.plugins import  plugin
 
 
 

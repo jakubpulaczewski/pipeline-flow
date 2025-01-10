@@ -4,7 +4,7 @@ from functools import wraps
 
 
 # Project Imports
-from plugins.registry import plugin
+from core.plugins import plugin
 from core.models.phases import PipelinePhase
 
 
