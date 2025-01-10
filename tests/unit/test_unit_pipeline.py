@@ -3,24 +3,18 @@
 # Third-party Imports
 
 # Project Imports
+import tests.resources.mocks as mocks
+
 from core.models.pipeline import PipelineType
 from plugins.registry import PluginWrapper
-
-from tests.resources.mocks import (
-    mock_extractor,
-    mock_loader,
-    mock_transformer,
-    mock_load_transformer
-)
-
 
 
 def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:
     pipeline = etl_pipeline_factory(
         name="ETL Pipeline 1",
-        extract=[PluginWrapper(id='mock_extractor', func=mock_extractor(id='mock_extractor'))],
-        transform=[PluginWrapper(id='mock_transformer', func=mock_transformer(id='mock_transformer'))],
-        load=[PluginWrapper(id='mock_loader', func=mock_loader(id='mock_loader'))]
+        extract=[PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
+        transform=[PluginWrapper(id='mock_transformer', func=mocks.mock_transformer(id='mock_transformer'))],
+        load=[PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))]
     )
 
     assert pipeline.name == "ETL Pipeline 1"
@@ -42,9 +36,9 @@ def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:
 def test_elt_pipeline_init_success(elt_pipeline_factory) -> None:
     pipeline = elt_pipeline_factory(
         name="ELT Pipeline",
-        extract=[PluginWrapper(id='mock_extractor', func=mock_extractor(id='mock_extractor'))],
-        load=[PluginWrapper(id='mock_loader', func=mock_loader(id='mock_loader'))],
-        transform_at_load=[PluginWrapper(id='mock_load_transformer', func=mock_load_transformer(id='mock_load_transformer', query="SELECT 1"))]
+        extract=[PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
+        load=[PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))],
+        transform_at_load=[PluginWrapper(id='mock_load_transformer', func=mocks.mock_load_transformer(id='mock_load_transformer', query="SELECT 1"))]
     )
 
     assert pipeline.name == "ELT Pipeline"
@@ -66,10 +60,10 @@ def test_elt_pipeline_init_success(elt_pipeline_factory) -> None:
 def test_etlt_pipeline_init_success(etlt_pipeline_factory) -> None:
     pipeline = etlt_pipeline_factory(
         name="ETLT Pipeline",
-        extract=[PluginWrapper(id='mock_extractor', func=mock_extractor(id='mock_extractor'))],
-        transform=[PluginWrapper(id='mock_transformer', func=mock_transformer(id='mock_transformer'))],
-        load=[PluginWrapper(id='mock_loader', func=mock_loader(id='mock_loader'))],
-        transform_at_load=[PluginWrapper(id='mock_load_transformer', func=mock_load_transformer(id='mock_load_transformer', query="SELECT 1"))]
+        extract=[PluginWrapper(id='mock_extractor', func=mocks.mock_extractor(id='mock_extractor'))],
+        transform=[PluginWrapper(id='mock_transformer', func=mocks.mock_transformer(id='mock_transformer'))],
+        load=[PluginWrapper(id='mock_loader', func=mocks.mock_loader(id='mock_loader'))],
+        transform_at_load=[PluginWrapper(id='mock_load_transformer', func=mocks.mock_load_transformer(id='mock_load_transformer', query="SELECT 1"))]
     )
 
     assert pipeline.name == "ETLT Pipeline"
