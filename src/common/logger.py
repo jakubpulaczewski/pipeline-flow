@@ -20,7 +20,9 @@ def setup_logger() -> None:
     config_file = config_files.get(log_level)
 
     if not config_file:
-        raise ValueError(f"Invalid logging level: {log_level}. Expected 'info' or 'debug'.")
+        raise ValueError(
+            f"Invalid logging level: {log_level}. Expected 'info' or 'debug'."
+        )
 
     if not os.path.isfile(config_file):
         raise FileNotFoundError(f"Logging configuration file not found: {config_file}")

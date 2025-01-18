@@ -1,10 +1,9 @@
 # Standard Imports
 import asyncio
-import time
 import logging
-
+import time
 from functools import wraps
-from typing import Callable, TypeVar, Any
+from typing import Callable, TypeVar, ParamSpec, Awaitable
 
 # Third-party Imports
 
@@ -13,13 +12,34 @@ from typing import Callable, TypeVar, Any
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
-F = TypeVar('F', bound=Callable[..., Any])
 
-def time_it(func: F) -> F:
+R = TypeVar("R")
+P = ParamSpec("P")
+
+
+
+def async_time_it(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
     @wraps(func)
-    def sync_inner(*args: Any, **kwargs: Any) -> T:
-        """Inner wrapper function for synchronouos functions."""
+    async def inner(*args: P.args, **kwargs: P.kwargs) -> R:
+        """Wrapper for asynchronous functions."""
+        start = asyncio.get_running_loop().time()
+        try:
+            result = await func(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error occurred while executing {func.__name__}: {e}")
+            raise
+        finally:
+            total_time = asyncio.get_running_loop().time() - start
+            logger.info(
+                f"Time taken to execute {func.__name__} is {total_time:.4f} seconds"
+            )
+        return result  
+    return inner
+
+def sync_time_it(func: Callable[P, R]) -> Callable[P, R]: 
+    @wraps(func)
+    def inner(*args: P.args, **kwargs: P.kwargs) -> R:
+        """Wrapper for synchronous functions."""
         start = time.time()
         try:
             result = func(*args, **kwargs)
@@ -27,24 +47,9 @@ def time_it(func: F) -> F:
             logger.error(f"Error occurred while executing {func.__name__}: {e}")
             raise
         finally:
-             total_time = time.time() - start
-             logger.info(f"Time taken to execute {func.__name__} is {total_time:.4f} seconds")
+            total_time = time.time() - start
+            logger.info(
+                f"Time taken to execute {func.__name__} is {total_time:.4f} seconds"
+            )
         return result
-
-    @wraps(func)
-    async def async_inner(*args: Any, **kwargs: Any) -> T:
-        """Inner wrapper function for asynchronous functions."""
-        start = asyncio.get_running_loop().time()
-        try:
-            result = await func(*args, **kwargs)
-        except Exception as e:
-           logger.error(f"Error occurred while executing {func.__name__}: {e}")
-           raise
-        finally:
-             total_time = asyncio.get_running_loop().time() - start
-             logger.info(f"Time taken to execute {func.__name__} is {total_time:.4f} seconds")
-        return result
-
-    if asyncio.iscoroutinefunction(func):
-        return async_inner
-    return sync_inner
+    return inner
