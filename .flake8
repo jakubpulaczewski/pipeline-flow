@@ -1,8 +1,0 @@
-[flake8]
-ignore = D100,D101,D102,D103,D104,D107,E203,Q000,W503,WPS305,WPS306,WPS348
-max-line-length = 120
-application-import-names = src,test
-import-order-style = google
-docstring-convention = google
-per-file-ignores =
-    tests/*:E0401

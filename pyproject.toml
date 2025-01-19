@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "workflow"
+name = "pipeline-orchestrator"
 version = "0.0.0"
 description = "Framework for building ETL projects dynamically."
 authors = ["Jakub Pulaczewski"]
@@ -9,20 +9,18 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.13"
 asyncio = "^3.4.3"
 PyYAML = "^6.0.1"
 pydantic = "^2.4.2"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
 pytest-cases = "^3.8.0"
-Faker = "^19.13.0"
 pytest-asyncio = "^0.23.0"
 pytest-mock = "^3.12.0"
-flake8 = "^7.0.0"
-pylint = "^3.1.0"
-mypy = "^1.8.0"
+pyright = "^1.1.392.post0"
+ruff = "^0.9.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
