@@ -1,7 +1,4 @@
 # Standard Imports
-import logging
-import os
-
 from common.logger import setup_logger
 from core.loaders import PluginLoader
 from core.orchestrator import PipelineOrchestrator
@@ -12,7 +9,7 @@ from core.parser import PipelineParser, YamlParser
 # Third-party imports
 
 
-def start(yaml_text: str = None, file_path: str = None):
+def start(yaml_text: str | None = None, file_path: str | None = None) -> bool:
     # Set up the logger configuration
     setup_logger()
 
@@ -31,3 +28,4 @@ def start(yaml_text: str = None, file_path: str = None):
 
     orchestrator = PipelineOrchestrator(yaml_config)
     orchestrator.execute_pipelines(pipelines)
+    return True

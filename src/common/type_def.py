@@ -1,7 +1,7 @@
 # Standard Imports
 from __future__ import annotations
 
-from typing import  Any, Type, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar
 
 # Third-party imports
 
@@ -11,8 +11,14 @@ from typing import  Any, Type, TypeVar
 ExtractedData = TypeVar("ExtractedData", bound=Any)
 TransformedData = TypeVar("TransformedData", bound=Any)
 LoadedData = TypeVar("LoadedData", bound=Any)
-TransformLoadedData = TypeVar("LoadedData", bound=Any)
+TransformLoadedData = TypeVar("TransformLoadedData", bound=Any)
 
-type Data = ExtractedData |  TransformedData | LoadedData
+type Data = ExtractedData | TransformedData | LoadedData | TransformLoadedData
+type PluginName = str
 
 
+PluginOutput = TypeVar("PluginOutput")  # Represents the return type of the plugin function
+
+type Plugin[**PluginArgs] = (
+    Callable[PluginArgs, Callable[..., PluginOutput]] | Callable[PluginArgs, Callable[..., Awaitable[PluginOutput]]]
+)

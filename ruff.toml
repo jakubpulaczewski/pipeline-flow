@@ -39,7 +39,7 @@ target-version = "py313"
 select = [
     "ALL", # include all the rules, including new ones
 ]
-ignore = []
+ignore = ["COM812"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
@@ -76,5 +76,22 @@ docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
 [lint.per-file-ignores]
-"tests/*" = ["D100", "D101", "D103", "D104"]
-"src/*" = ["D100", "D101", "D103", "D104"]
+"tests/*" = [
+    "D100", "D101", "D102", "D103", "D104", "D105", "D107",
+    "D401",
+    "EM101",
+    "FIX002", 
+    "TRY003",
+    "TD002", "TD003",
+    "UP035"
+]
+
+"src/*" = [
+    "D100", "D101", "D102", "D103", "D104", "D105", "D107",
+    "D401",
+    "EM101", 
+    "FIX002", 
+    "TRY003",
+    "TD002", "TD003",
+    "UP035"
+]

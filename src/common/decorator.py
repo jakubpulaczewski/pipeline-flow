@@ -1,10 +1,14 @@
 # Standard Imports
+from __future__ import annotations
+
 import asyncio
 import logging
 import time
 from functools import wraps
-from typing import Callable, TypeVar, ParamSpec, Awaitable
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from typing import Awaitable, Callable
 # Third-party Imports
 
 # Project Imports
@@ -13,43 +17,39 @@ from typing import Callable, TypeVar, ParamSpec, Awaitable
 logger = logging.getLogger(__name__)
 
 
-R = TypeVar("R")
-P = ParamSpec("P")
-
-
-
-def async_time_it(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
+def async_time_it[**P, R](func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
     @wraps(func)
     async def inner(*args: P.args, **kwargs: P.kwargs) -> R:
         """Wrapper for asynchronous functions."""
         start = asyncio.get_running_loop().time()
         try:
             result = await func(*args, **kwargs)
-        except Exception as e:
-            logger.error(f"Error occurred while executing {func.__name__}: {e}")
+        except Exception:
+            logger.exception("Error occurred while executing %s: %s")
             raise
         finally:
             total_time = asyncio.get_running_loop().time() - start
-            logger.info(
-                f"Time taken to execute {func.__name__} is {total_time:.4f} seconds"
-            )
-        return result  
+            msg = f"Time taken to execute {func.__name__} is {total_time:.4f} seconds"
+            logger.info(msg)
+        return result
+
     return inner
 
-def sync_time_it(func: Callable[P, R]) -> Callable[P, R]: 
+
+def sync_time_it[**P, R](func: Callable[P, R]) -> Callable[P, R]:
     @wraps(func)
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
         """Wrapper for synchronous functions."""
         start = time.time()
         try:
             result = func(*args, **kwargs)
-        except Exception as e:
-            logger.error(f"Error occurred while executing {func.__name__}: {e}")
+        except Exception:
+            logger.exception("Error occurred while executing %s: %s")
             raise
         finally:
             total_time = time.time() - start
-            logger.info(
-                f"Time taken to execute {func.__name__} is {total_time:.4f} seconds"
-            )
+            msg = f"Time taken to execute {func.__name__} is {total_time:.4f} seconds"
+            logger.info(msg)
         return result
+
     return inner

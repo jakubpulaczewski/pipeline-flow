@@ -2,6 +2,7 @@
 import logging
 import logging.config
 import os
+from pathlib import Path
 
 # Third-party imports
 
@@ -20,12 +21,12 @@ def setup_logger() -> None:
     config_file = config_files.get(log_level)
 
     if not config_file:
-        raise ValueError(
-            f"Invalid logging level: {log_level}. Expected 'info' or 'debug'."
-        )
+        msg = "Invalid logging level: %s. Expected 'info' or 'debug'.", log_level
+        raise ValueError(msg)
 
-    if not os.path.isfile(config_file):
-        raise FileNotFoundError(f"Logging configuration file not found: {config_file}")
+    if not Path(config_file).is_file():
+        msg = "Logging configuration file not found: %s", config_file
+        raise FileNotFoundError(msg)
 
     # Load logging configuration from the selected config file
     logging.config.fileConfig(config_file, disable_existing_loggers=False)

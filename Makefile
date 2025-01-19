@@ -18,8 +18,12 @@ clean: ## Remove build outputs, test outputs and cached files.
 	@echo "Clean succeeded"
 
 
- 
+format: ## Reformat source code
+	@ruff format ${src_dir} ${tests_dir} -v
+	
+
 precommit: ## Running Precommit checks.
+	format
 	build
 	test
 	@poetry export --dev --format requirements.txt | poetry run safety check --stdin

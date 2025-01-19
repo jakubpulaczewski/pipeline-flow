@@ -1,49 +1,52 @@
 # Standard Imports
 from __future__ import annotations
 
+from typing import Self
+
 # Third Party Imports
 
 # Project Imports
 
 
-class ExtractException(Exception):
-    """A custom exception is raised when a problem occurs when trying to extract data from a source"""
+class ExtractError(Exception):
+    """A custom exception is raised when a problem occurs when trying to extract data from a source."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self: Self, message: str) -> None:
         super().__init__(message)
         self.message = message
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         return f"{super().__str__()}"
 
 
-class TransformException(Exception):
-    """A custom exception is raised when a problem occurs when trying to execute transformation on data"""
+class TransformError(Exception):
+    """A custom exception is raised when a problem occurs when trying to execute transformation on data."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self: Self, message: str) -> None:
         super().__init__(message)
         self.message = message
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         return f"{super().__str__()}"
 
 
-class LoadException(Exception):
-    """A custom exception is raised when a problem occurs when trying to load data into a destination"""
+class LoadError(Exception):
+    """A custom exception is raised when a problem occurs when trying to load data into a destination."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self: Self, message: str) -> None:
         super().__init__(message)
         self.message = message
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         return f"{super().__str__()}"
 
-class TransformLoadException(Exception):
-    """A custom exception is raised when a problem occurs when trying to execute transformation on data"""
 
-    def __init__(self, message: str) -> None:
+class TransformLoadError(Exception):
+    """A custom exception is raised when a problem occurs when trying to execute transformation on data."""
+
+    def __init__(self: Self, message: str) -> None:
         super().__init__(message)
         self.message = message
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         return f"{super().__str__()}"
