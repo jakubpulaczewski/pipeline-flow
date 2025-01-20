@@ -6,11 +6,10 @@
 			"version": "3.13"
 		},
 		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
-		"ghcr.io/devcontainers-contrib/features/isort:2": {},
-		"ghcr.io/devcontainers-contrib/features/poetry:2": {},
-		"ghcr.io/devcontainers-contrib/features/black:2": {
-			"version": "latest"
-		},
+		"ghcr.io/devcontainers-extra/features/ruff:1": {
+            "version": "latest"
+        },
+		"ghcr.io/devcontainers-extra/features/poetry:2": {},
 		// "ghcr.io/devcontainers-contrib/features/spark-sdkman:2": {
 		// 	"version": "3.5.0", // Matrix https://community.cloudera.com/t5/Community-Articles/Spark-Python-Supportability-Matrix/ta-p/379144
 		// 	"jdkVersion": "11"

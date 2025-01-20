@@ -1,29 +1,28 @@
 # Standard Imports
 from types import FunctionType
+from typing import Self
+
 # Third Party Imports
 import pytest
-
 
 # Project Imports
 from core.loaders import PluginLoader
 from core.models.phases import PipelinePhase
-
 from core.plugins import PluginRegistry
 
 
 class TestIntegrationPluginLoader:
-
     @pytest.fixture(autouse=True)
-    def plugin_loader(self) -> PluginLoader:
+    def plugin_loader(self: Self) -> None:
         self.loader = PluginLoader()
 
-    def test_load_custom_multiple_plugins(self):
+    def test_load_custom_multiple_plugins(self: Self) -> None:
         # Ensure the registry is empty before loading the plugin
         assert PluginRegistry._registry == {}
 
         # Load the custom plugin
         plugins = {
-             '/workspaces/workflow/tests/resources/custom_plugins.py',
+            "/workspaces/workflow/tests/resources/custom_plugins.py",
         }
         self.loader.load_custom_plugins(plugins)
 
@@ -33,12 +32,11 @@ class TestIntegrationPluginLoader:
 
         assert len(PluginRegistry._registry.keys()) == 2
 
-        assert extractor_plugin.__name__ == 'custom_extractor'
-        assert type(extractor_plugin) == FunctionType
+        assert extractor_plugin.__name__ == "custom_extractor"
+        assert type(extractor_plugin) is FunctionType
 
-        assert loader_plugin.__name__ == 'custom_loader'
-        assert type(loader_plugin) == FunctionType
-
+        assert loader_plugin.__name__ == "custom_loader"
+        assert type(loader_plugin) is FunctionType
 
     # def test_load_plugins_success():
     #     #TODO: Create a test for this.

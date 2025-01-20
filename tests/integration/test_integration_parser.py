@@ -1,53 +1,49 @@
 # Standard Imports
-from pathlib import Path
 import shutil
+from pathlib import Path
+from typing import Generator, Self
 
 # Third-party imports
 import pytest
 
-import tests.resources.mocks as mocks
+from common.type_def import Plugin
+from core.models.phases import PipelinePhase
 
 # Project Imports
-from core.parser import (
-	YamlParser,
-	PluginParser,
-	PipelineParser
-)
-
 from core.models.pipeline import Pipeline
+from core.parser import PipelineParser, PluginParser, YamlParser
 from core.plugins import PluginRegistry, PluginWrapper
-
+from tests.resources import mocks
 from tests.resources.constants import (
-	EXTRACT_PHASE, 
-	TRANSFORM_PHASE,
-	LOAD_PHASE,
-	LOAD_TRANSFORM_PHASE
+    EXTRACT_PHASE,
+    LOAD_PHASE,
+    LOAD_TRANSFORM_PHASE,
+    TRANSFORM_PHASE,
 )
-# from tests.resources.mocks import MockExtractor, MockTransform, MockLoad, MockLoadTransform
 
-def setup_plugins(plugin_dict):
+
+def setup_plugins(plugin_dict: dict[PipelinePhase, list[tuple[str, Plugin]]]) -> None:
     for phase, plugins in plugin_dict.items():
         for plugin_name, plugin_callable in plugins:
             PluginRegistry.register(phase, plugin_name, plugin_callable)
 
 
 @pytest.fixture
-def create_temp_plugin_folder():
+def create_temp_plugin_folder() -> Generator[str]:
     parent_path = Path(__file__).parent.parent
 
-    plugins_dir =  parent_path / "resources" / "plugins"
+    plugins_dir = parent_path / "resources" / "plugins"
     plugins_dir.mkdir(parents=True, exist_ok=True)
     assert plugins_dir.is_dir()
 
-    yield plugins_dir 
+    yield plugins_dir
 
-     # Cleanup
+    # Cleanup
     if plugins_dir.exists():
-         shutil.rmtree(plugins_dir, ignore_errors=True)
-         
+        shutil.rmtree(plugins_dir, ignore_errors=True)
+
 
 class TestIntegrationPluginParser:
-    
     @staticmethod
     def test_fetch_custom_plugin_files_with_only_files() -> None:
         yaml_str = """
@@ -63,8 +59,8 @@ class TestIntegrationPluginParser:
         result = plugin_parser.fetch_custom_plugin_files()
 
         expected = {
-             'tests/resources/plugins/custom_extractor.py',
-             'tests/resources/plugins/custom_loader.py'
+            "tests/resources/plugins/custom_extractor.py",
+            "tests/resources/plugins/custom_loader.py",
         }
 
         assert result == expected
@@ -86,10 +82,10 @@ class TestIntegrationPluginParser:
         assert result == set()
 
     @staticmethod
-    def test_fetch_custom_plugin_files_with_dirs_and_files(create_temp_plugin_folder) -> None:
-        # Create plugin 
+    def test_fetch_custom_plugin_files_with_dirs_and_files(create_temp_plugin_folder: Generator[str]) -> None:
+        # Create plugin
         file_path = create_temp_plugin_folder / "plugin123.py"
-        file_path.write_text("")   
+        file_path.write_text("")
         assert file_path.is_file()
 
         yaml_str = """
@@ -106,14 +102,13 @@ class TestIntegrationPluginParser:
         result = plugin_parser.fetch_custom_plugin_files()
 
         expected = {
-             'tests/resources/plugins/plugin123.py',
-             'tests/resources/plugins/custom_plugins.py'
+            "tests/resources/plugins/plugin123.py",
+            "tests/resources/plugins/custom_plugins.py",
         }
 
         assert result == expected
 
-
-    def test_get_custom_plugin_files_empty(self) -> None:
+    def test_get_custom_plugin_files_empty(self: Self) -> None:
         plugin_parser = PluginParser(plugins_payload={})
         result = plugin_parser.fetch_custom_plugin_files()
 
@@ -121,15 +116,11 @@ class TestIntegrationPluginParser:
 
 
 class TestIntegrationPipelineParser:
-
     @pytest.fixture(autouse=True)
-    def pipeline_parser(self) -> PipelineParser:
+    def pipeline_parser(self: Self) -> None:
         self.pipeline_parser = PipelineParser()
 
-    
-
-
-    def test_parse_pipeline_without_registered_plugins(self):
+    def test_parse_pipeline_without_registered_plugins(self: Self) -> None:
         yaml_str = """
         pipelines:
           pipeline1:
@@ -148,13 +139,15 @@ class TestIntegrationPipelineParser:
                   - id: mock_load1
                     plugin: mock_s3
         """
+        pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
 
-        with pytest.raises(ValueError, match="Plugin class was not found for following plugin `mock_s3`."):
-            pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+        with pytest.raises(
+            ValueError,
+            match="Plugin class was not found for following plugin `mock_s3`.",
+        ):
             self.pipeline_parser.parse_pipelines(pipelines_data=pipelines_data)
 
-
-    def test_parse_etl_pipeline_with_missing_extract_phase(self):
+    def test_parse_etl_pipeline_with_missing_extract_phase(self: Self) -> None:
         # Register Plugins
         plugins = {
             TRANSFORM_PHASE: [("transform_plugin", mocks.mock_transformer)],
@@ -176,21 +169,24 @@ class TestIntegrationPipelineParser:
                   - id: mock_load1
                     plugin: load_plugin
         """
+        pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+
         with pytest.raises(
             ValueError,
-            match="Validation Error: The provided phases do not match the required phases for pipeline type 'PipelineType.ETL'. Missing phases: {<PipelinePhase.EXTRACT_PHASE: 'extract'>}.",
+            match=(
+                "Validation Error: The provided phases do not match the required phases for pipeline type "
+                "'PipelineType.ETL'. Missing phases: {<PipelinePhase.EXTRACT_PHASE: 'extract'>}."
+            ),
         ):
-            pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
             self.pipeline_parser.parse_pipelines(pipelines_data)
 
-
-    def test_parse_etl_pipeline_with_extra_phases(self):
+    def test_parse_etl_pipeline_with_extra_phases(self: Self) -> None:
         # Register Plugins
         plugins = {
             EXTRACT_PHASE: [("extractor_plugin", mocks.mock_extractor)],
             TRANSFORM_PHASE: [("transform_plugin", mocks.mock_transformer)],
             LOAD_PHASE: [("load_plugin", mocks.mock_loader)],
-            LOAD_TRANSFORM_PHASE: [("transform_at_load_plugin", mocks.mock_load_transformer)]
+            LOAD_TRANSFORM_PHASE: [("transform_at_load_plugin", mocks.mock_load_transformer)],
         }
         setup_plugins(plugins)
 
@@ -217,23 +213,22 @@ class TestIntegrationPipelineParser:
                     plugin: transform_at_load_plugin
                     query: SELECT 13
         """
+        pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
+
         with pytest.raises(
             ValueError,
             match="Extra phases: {<PipelinePhase.TRANSFORM_AT_LOAD_PHASE: 'transform_at_load'>}",
         ):
-            pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
             self.pipeline_parser.parse_pipelines(pipelines_data)
-           
-           
-        
-    def test_parse_etl_pipeline_with_only_mandatory_phases(self) -> None:
+
+    def test_parse_etl_pipeline_with_only_mandatory_phases(self: Self) -> None:
         # Register Plugins
         plugins = {
             EXTRACT_PHASE: [("extractor_plugin", mocks.mock_extractor)],
             LOAD_PHASE: [("load_plugin", mocks.mock_loader)],
         }
         setup_plugins(plugins)
-            
+
         yaml_str = """
         pipelines:
           pipeline1:
@@ -258,22 +253,20 @@ class TestIntegrationPipelineParser:
         assert pipeline.name == "pipeline1"
 
         assert len(pipeline.extract.steps) == 1
-        assert pipeline.extract.steps[0] == PluginWrapper(id='mock_extract1', func=mocks.mock_extractor(id='mock_extract1'))
+        assert pipeline.extract.steps[0] == PluginWrapper(
+            id="mock_extract1", func=mocks.mock_extractor(id="mock_extract1")
+        )
 
         assert len(pipeline.load.steps) == 1
-        assert pipeline.load.steps[0] == PluginWrapper(id='mock_load1', func=mocks.mock_loader(id='mock_load1'))
+        assert pipeline.load.steps[0] == PluginWrapper(id="mock_load1", func=mocks.mock_loader(id="mock_load1"))
 
-
-
-    def test_parse_etl_multiple_pipelines(self) -> None:
+    def test_parse_etl_multiple_pipelines(self: Self) -> None:
         # Register Required Plugins
         plugins = {
             EXTRACT_PHASE: [
                 ("extract_plugin1", mocks.mock_extractor),
             ],
-            TRANSFORM_PHASE: [
-                ("aggregate_sum_etl", mocks.mock_transformer)
-            ],
+            TRANSFORM_PHASE: [("aggregate_sum_etl", mocks.mock_transformer)],
             LOAD_PHASE: [
                 ("load_plugin1", mocks.mock_loader),
                 ("load_plugin2", mocks.mock_loader),
@@ -320,35 +313,38 @@ class TestIntegrationPipelineParser:
 
         # Pipeline 1
         assert len(pipelines[0].extract.steps) == 1
-        assert pipelines[0].extract.steps[0] == PluginWrapper(id='mock_extract1', func=mocks.mock_extractor(id='mock_extract1'))
+        assert pipelines[0].extract.steps[0] == PluginWrapper(
+            id="mock_extract1", func=mocks.mock_extractor(id="mock_extract1")
+        )
 
         assert len(pipelines[0].transform.steps) == 1
-        assert pipelines[0].transform.steps[0] == PluginWrapper(id='mock_tranformation1', func=mocks.mock_transformer(id='mock_tranformation1'))
+        assert pipelines[0].transform.steps[0] == PluginWrapper(
+            id="mock_tranformation1",
+            func=mocks.mock_transformer(id="mock_tranformation1"),
+        )
 
         assert len(pipelines[0].load.steps) == 1
-        assert pipelines[0].load.steps[0] == PluginWrapper(id='mock_load1', func=mocks.mock_loader(id='mock_load1'))
+        assert pipelines[0].load.steps[0] == PluginWrapper(id="mock_load1", func=mocks.mock_loader(id="mock_load1"))
 
         # Pipeline 2
         assert len(pipelines[1].extract.steps) == 1
-        assert pipelines[1].extract.steps[0] == PluginWrapper(id='mock_extract2', func=mocks.mock_extractor(id='mock_extract2'))
+        assert pipelines[1].extract.steps[0] == PluginWrapper(
+            id="mock_extract2", func=mocks.mock_extractor(id="mock_extract2")
+        )
 
         assert len(pipelines[1].load.steps) == 1
-        assert pipelines[1].load.steps[0] == PluginWrapper(id='mock_load2', func=mocks.mock_loader(id='mock_load2'))
+        assert pipelines[1].load.steps[0] == PluginWrapper(id="mock_load2", func=mocks.mock_loader(id="mock_load2"))
 
-
-    def test_parse_elt_pipeline(self) -> None:
+    def test_parse_elt_pipeline(self: Self) -> None:
         # Register Required Plugins
         plugins = {
             EXTRACT_PHASE: [
                 ("extract_plugin1", mocks.mock_extractor),
             ],
             LOAD_PHASE: [
-                ("load_plugin1",  mocks.mock_loader),
-            ],        
-            LOAD_TRANSFORM_PHASE: [
-                ("upsert_transformation", mocks.mock_load_transformer)
-            ]
-
+                ("load_plugin1", mocks.mock_loader),
+            ],
+            LOAD_TRANSFORM_PHASE: [("upsert_transformation", mocks.mock_load_transformer)],
         }
         setup_plugins(plugins)
 
@@ -358,7 +354,7 @@ class TestIntegrationPipelineParser:
             type: ELT
             phases:
               extract:
-                steps: 
+                steps:
                   - id: mock_extract1
                     plugin: extract_plugin1
               load:
@@ -379,34 +375,31 @@ class TestIntegrationPipelineParser:
         assert isinstance(pipelines[0], Pipeline)
         assert pipelines[0].name == "pipeline1"
 
-
         assert len(pipelines[0].extract.steps) == 1
-        assert pipelines[0].extract.steps[0] == PluginWrapper(id='mock_extract1', func=mocks.mock_extractor(id='mock_extract1'))
+        assert pipelines[0].extract.steps[0] == PluginWrapper(
+            id="mock_extract1", func=mocks.mock_extractor(id="mock_extract1")
+        )
 
         assert len(pipelines[0].load.steps) == 1
-        assert pipelines[0].load.steps[0] == PluginWrapper(id='mock_load1', func=mocks.mock_loader(id='mock_load1'))
-
+        assert pipelines[0].load.steps[0] == PluginWrapper(id="mock_load1", func=mocks.mock_loader(id="mock_load1"))
 
         assert len(pipelines[0].load_transform.steps) == 1
-        assert pipelines[0].load_transform.steps[0] == PluginWrapper(id='mock_load_transformer1', func=mocks.mock_load_transformer(id='mock_load_transformer1', query='Select 2'))
+        assert pipelines[0].load_transform.steps[0] == PluginWrapper(
+            id="mock_load_transformer1",
+            func=mocks.mock_load_transformer(id="mock_load_transformer1", query="Select 2"),
+        )
 
-
-
-    def test_parse_etlt_pipeline(self) -> None:
+    def test_parse_etlt_pipeline(self: Self) -> None:
         # Setup Required Plugins
         plugins = {
             EXTRACT_PHASE: [
                 ("extract_plugin1", mocks.mock_extractor),
             ],
-            TRANSFORM_PHASE: [
-                ("transform_plugin", mocks.mock_transformer)
-            ],
+            TRANSFORM_PHASE: [("transform_plugin", mocks.mock_transformer)],
             LOAD_PHASE: [
                 ("load_plugin1", mocks.mock_loader),
             ],
-            LOAD_TRANSFORM_PHASE: [
-                ("upsert_transformation", mocks.mock_load_transformer)
-            ]
+            LOAD_TRANSFORM_PHASE: [("upsert_transformation", mocks.mock_load_transformer)],
         }
 
         setup_plugins(plugins)
@@ -417,7 +410,7 @@ class TestIntegrationPipelineParser:
             type: ETLT
             phases:
               extract:
-                steps: 
+                steps:
                   - id: mock_extract1
                     plugin: extract_plugin1
               transform:
@@ -442,17 +435,22 @@ class TestIntegrationPipelineParser:
         assert isinstance(pipelines[0], Pipeline)
         assert pipelines[0].name == "pipeline_ETLT"
 
-
         assert len(pipelines[0].extract.steps) == 1
-        assert pipelines[0].extract.steps[0] == PluginWrapper(id='mock_extract1', func=mocks.mock_extractor(id='mock_extract1'))
+        assert pipelines[0].extract.steps[0] == PluginWrapper(
+            id="mock_extract1", func=mocks.mock_extractor(id="mock_extract1")
+        )
 
         assert len(pipelines[0].transform.steps) == 1
-        assert pipelines[0].transform.steps[0] == PluginWrapper(id='mock_tranformation1', func=mocks.mock_transformer(id='mock_tranformation1'))
+        assert pipelines[0].transform.steps[0] == PluginWrapper(
+            id="mock_tranformation1",
+            func=mocks.mock_transformer(id="mock_tranformation1"),
+        )
 
         assert len(pipelines[0].load.steps) == 1
-        assert pipelines[0].load.steps[0] == PluginWrapper(id='mock_load1', func=mocks.mock_loader(id='mock_load1'))
-
+        assert pipelines[0].load.steps[0] == PluginWrapper(id="mock_load1", func=mocks.mock_loader(id="mock_load1"))
 
         assert len(pipelines[0].load_transform.steps) == 1
-        assert pipelines[0].load_transform.steps[0] == PluginWrapper(id='mock_load_transformer1', func=mocks.mock_load_transformer(id='mock_load_transformer1', query='Select 1'))
-
+        assert pipelines[0].load_transform.steps[0] == PluginWrapper(
+            id="mock_load_transformer1",
+            func=mocks.mock_load_transformer(id="mock_load_transformer1", query="Select 1"),
+        )

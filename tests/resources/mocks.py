@@ -1,76 +1,83 @@
 # Standard Imports
 import asyncio
 import time
-
 from functools import wraps
 
 # Third-party Imports
-import pytest
-
-from common.type_def import ExtractedData, TransformedData
-
 # Project Imports
+from common.type_def import Plugin
 
 
 # TODO: Verify the claim of using ExtractedData and so on....
-def mock_merger():
+def mock_merger() -> Plugin:
     @wraps(mock_merger)
-    def inner(extracted_data: dict[str, ExtractedData]):
+    def inner(extracted_data: str) -> str:
         return "merged_data"
+
     return inner
 
 
-def mock_extractor(id: str):
+def mock_extractor(id: str) -> Plugin:
     @wraps(mock_extractor)
-    async def inner() -> ExtractedData:
+    async def inner() -> str:
         return "extracted_data"
+
     return inner
 
-def mock_async_extractor(id: str, delay: float=0.2):
+
+def mock_async_extractor(id: str, delay: float = 0) -> Plugin:
     @wraps(mock_async_extractor)
-    async def inner() -> ExtractedData:
+    async def inner() -> str:
         await asyncio.sleep(delay)
         return "async_extracted_data"
+
     return inner
 
-def mock_transformer(id: str):
+
+def mock_transformer(id: str) -> Plugin:
     @wraps(mock_transformer)
-    def inner(data: ExtractedData) -> TransformedData:
+    def inner(data: str) -> str:
         return "transformed_etl_data"
+
     return inner
 
-def mock_sync_transformer(id:str, delay: float) -> TransformedData:
+
+def mock_sync_transformer(id: str, delay: float) -> Plugin:
     @wraps(mock_sync_transformer)
-    def inner(data: ExtractedData):
+    def inner(data: str) -> str:
         time.sleep(delay)
         return "TF" + data
+
     return inner
 
 
-def mock_loader(id: str):
+def mock_loader(id: str) -> Plugin:
     @wraps(mock_loader)
-    async def inner(data: ExtractedData | TransformedData) -> None:
-        return None
+    async def inner(data: str) -> None:
+        return
+
     return inner
 
-def mock_async_loader(id: str, delay: float):
+
+def mock_async_loader(id: str, delay: float) -> Plugin:
     @wraps(mock_async_loader)
-    async def inner(data: ExtractedData | TransformedData) -> None:
+    async def inner(data: str) -> None:
         await asyncio.sleep(delay)
-        return None
+
     return inner
 
 
-def mock_load_transformer(id: str, query: str) -> None:
+def mock_load_transformer(id: str, query: str) -> Plugin:
     @wraps(mock_load_transformer)
     def inner() -> None:
-        return None
+        return
 
     return inner
 
-def mock_sync_load_transformer(id: str, delay: float=0):
+
+def mock_sync_load_transformer(id: str, delay: float) -> Plugin:
     @wraps(mock_sync_load_transformer)
     def inner() -> None:
         time.sleep(delay)
-        return None
+
     return inner

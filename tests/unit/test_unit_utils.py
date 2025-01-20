@@ -1,4 +1,6 @@
 # Standard Imports
+from __future__ import annotations
+
 import threading
 
 # Third-party imports
@@ -7,17 +9,20 @@ import pytest
 # # Project Imports
 from common.utils import SingletonMeta
 
+
 @pytest.fixture
 def skeleton_class() -> type:
     class A(metaclass=SingletonMeta):
         val: str
+
     return A
 
-def test_thread_safe_singleton_same_instance(skeleton_class):
+
+def test_thread_safe_singleton_same_instance(skeleton_class: type) -> None:
     instances = []
 
     # Function to create and store the singleton instance
-    def create_instance():
+    def create_instance() -> None:
         instance = skeleton_class()
         instances.append(instance)
 

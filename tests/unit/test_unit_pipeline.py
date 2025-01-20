@@ -1,15 +1,13 @@
 # Standard Imports
+from typing import Callable
 
 # Third-party Imports
-
 # Project Imports
-import tests.resources.mocks as mocks
-
-from core.models.pipeline import PipelineType
+from core.models.pipeline import Pipeline, PipelineType
 from core.plugins import PluginWrapper
 
 
-def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:
+def test_etl_pipeline_init_success(etl_pipeline_factory: Callable[..., Pipeline]) -> None:
     pipeline = etl_pipeline_factory(name="ETL Pipeline 1")
 
     assert pipeline.name == "ETL Pipeline 1"
@@ -20,7 +18,6 @@ def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:
     assert len(pipeline.transform.steps) == 1
     assert len(pipeline.load.steps) == 1
 
-
     assert isinstance(pipeline.extract.steps[0], PluginWrapper)
     assert isinstance(pipeline.transform.steps[0], PluginWrapper)
     assert isinstance(pipeline.load.steps[0], PluginWrapper)
@@ -28,7 +25,7 @@ def test_etl_pipeline_init_success(etl_pipeline_factory) -> None:
     assert not pipeline.is_executed
 
 
-def test_elt_pipeline_init_success(elt_pipeline_factory) -> None:
+def test_elt_pipeline_init_success(elt_pipeline_factory: Callable[..., Pipeline]) -> None:
     pipeline = elt_pipeline_factory(name="ELT Pipeline")
 
     assert pipeline.name == "ELT Pipeline"
@@ -39,7 +36,6 @@ def test_elt_pipeline_init_success(elt_pipeline_factory) -> None:
     assert len(pipeline.load.steps) == 1
     assert len(pipeline.load_transform.steps) == 1
 
-
     assert isinstance(pipeline.extract.steps[0], PluginWrapper)
     assert isinstance(pipeline.load.steps[0], PluginWrapper)
     assert isinstance(pipeline.load_transform.steps[0], PluginWrapper)
@@ -47,7 +43,7 @@ def test_elt_pipeline_init_success(elt_pipeline_factory) -> None:
     assert not pipeline.is_executed
 
 
-def test_etlt_pipeline_init_success(etlt_pipeline_factory) -> None:
+def test_etlt_pipeline_init_success(etlt_pipeline_factory: Callable[..., Pipeline]) -> None:
     pipeline = etlt_pipeline_factory(name="ETLT Pipeline")
 
     assert pipeline.name == "ETLT Pipeline"
@@ -58,7 +54,6 @@ def test_etlt_pipeline_init_success(etlt_pipeline_factory) -> None:
     assert len(pipeline.transform.steps) == 1
     assert len(pipeline.load.steps) == 1
     assert len(pipeline.load_transform.steps) == 1
-
 
     assert isinstance(pipeline.extract.steps[0], PluginWrapper)
     assert isinstance(pipeline.transform.steps[0], PluginWrapper)

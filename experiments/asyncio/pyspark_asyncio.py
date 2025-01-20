@@ -17,11 +17,10 @@ async def df1():
                 T.StructField("id", T.IntegerType(), True),
                 T.StructField("label", T.StringType(), True),
             ]
-        ),  
+        ),
     )
 
     return df
-    
 
 
 async def df2():
@@ -35,18 +34,15 @@ async def df2():
                 T.StructField("id", T.IntegerType(), True),
                 T.StructField("camel", T.StringType(), True),
             ]
-        ),  
+        ),
     )
 
     return df
-    
+
 
 async def main():
-    
-    results = await asyncio.gather(
-        df1(),
-        df2()
-    )
+    results = await asyncio.gather(df1(), df2())
     print(results)
+
 
 asyncio.run(main())
