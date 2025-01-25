@@ -1,20 +1,19 @@
-# Standard Imports
 from __future__ import annotations
 
 import logging
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Self, TextIO
+from typing import TYPE_CHECKING, Any, Self, TextIO
 
-# Third-party imports
 import yaml
+
+if TYPE_CHECKING:
+    from common.type_def import PluginRegistryJSON
 
 from common.utils import SingletonMeta
 from core.models.phases import PHASE_CLASS_MAP, PhaseInstance, PipelinePhase
 from core.models.pipeline import Pipeline
-
-# Project Imports
 
 type JSON_DATA = dict
 logger = logging.getLogger(__name__)
@@ -94,12 +93,16 @@ class YamlParser:
         """Return the 'pipelines' section from the parsed YAML."""
         return self.parsed_yaml.get(YamlAttribute.PIPELINES.value, {})
 
-    def get_plugins_dict(self: Self) -> str | None:
-        return self.parsed_yaml.get(YamlAttribute.PLUGINS.value, {})
+    def get_plugins_dict(self: Self) -> PluginRegistryJSON | None:
+        plugins = self.parsed_yaml.get(YamlAttribute.PLUGINS.value, None)
+        if not plugins:
+            logging.info("No plugins configuration provided.")
+            return None
+        return plugins
 
 
 class PluginParser:
-    def __init__(self: Self, plugins_payload: dict) -> None:
+    def __init__(self: Self, plugins_payload: PluginRegistryJSON) -> None:
         self.plugins_payload = plugins_payload
 
     @staticmethod
@@ -123,8 +126,8 @@ class PluginParser:
             return set()
 
         # Gather files from dirs and individual files
-        files_from_dir = self.get_all_files(custom_payload.get("dirs", []))
-        files = self.get_all_files(custom_payload.get("files", []))
+        files_from_dir = self.get_all_files(custom_payload.get("dirs", set()))
+        files = self.get_all_files(custom_payload.get("files", set()))
 
         # Combine both sets of files
         return files_from_dir.union(files)

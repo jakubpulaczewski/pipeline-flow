@@ -1,4 +1,14 @@
 {
+    "[python]": {
+        "editor.formatOnSaveMode": "file",
+        "editor.formatOnType": false,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        },
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "ruff.nativeServer": "on",
     "python.testing.pytestArgs": [
         "tests"
     ],

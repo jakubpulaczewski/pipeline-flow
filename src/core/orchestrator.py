@@ -23,7 +23,7 @@ class PipelineOrchestrator:
         self.semaphore = asyncio.Semaphore(config.concurrency)
 
     @staticmethod
-    def _can_execute(pipeline: Pipeline, executed_pipelines: set[Pipeline]) -> bool:
+    def _can_execute(pipeline: Pipeline, executed_pipelines: set[str]) -> bool:
         """A function that checks if a given pipeline is executable or has an external dependency."""
         if pipeline.needs is None:
             return True

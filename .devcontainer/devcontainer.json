@@ -9,7 +9,7 @@
 		"ghcr.io/devcontainers-extra/features/ruff:1": {
             "version": "latest"
         },
-		"ghcr.io/devcontainers-extra/features/poetry:2": {},
+		"ghcr.io/devcontainers-extra/features/poetry:2": {}
 		// "ghcr.io/devcontainers-contrib/features/spark-sdkman:2": {
 		// 	"version": "3.5.0", // Matrix https://community.cloudera.com/t5/Community-Articles/Spark-Python-Supportability-Matrix/ta-p/379144
 		// 	"jdkVersion": "11"
@@ -43,9 +43,13 @@
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
                 "ms-python.python",
-                "ms-python.vscode-pylance",
                 "eamodio.gitlens",
-                "njpwerner.autodocstring"
+                "njpwerner.autodocstring",
+                "charliermarsh.ruff",
+                "ms-pyright.pyright",
+                "tabnine.tabnine-vscode",
+                "genieai.chatgpt-vscode",
+                "github.copilot-chat"
                 // "bierner.markdown-mermaid"
             ]
 		}

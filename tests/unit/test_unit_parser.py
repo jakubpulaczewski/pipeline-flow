@@ -148,13 +148,13 @@ class TestUnitPluginParser:
 
     @pytest.mark.usefixtures("mock_isdir")
     def test_get_all_files_with_empty_input(self: Self) -> None:
-        plugin_parser = PluginParser(plugins_payload={})
+        plugin_parser = PluginParser(plugins_payload={})  # type: ignore[reportArgumentType]
         assert plugin_parser.get_all_files([]) == set()
 
     @pytest.mark.usefixtures("mock_isdir")
     def test_get_all_files_with_no_valid_files(self: Self) -> None:
         paths = ["file1.txt", "file2.log"]
-        plugin_parser = PluginParser(plugins_payload={})
+        plugin_parser = PluginParser(plugins_payload={})  # type: ignore[reportArgumentType]
 
         result = plugin_parser.get_all_files(paths)
 
@@ -163,7 +163,7 @@ class TestUnitPluginParser:
     @pytest.mark.usefixtures("mock_isdir")
     def test_get_all_files_with_only_files(self: Self) -> None:
         paths = ["file1.py", "file2.txt", "file3.py"]
-        plugin_parser = PluginParser(plugins_payload={})
+        plugin_parser = PluginParser(plugins_payload={})  # type: ignore[reportArgumentType]
 
         result = plugin_parser.get_all_files(paths)
 
@@ -172,7 +172,7 @@ class TestUnitPluginParser:
     @pytest.mark.usefixtures("mock_isdir")
     def test_get_all_files_with_only_duplicates(self: Self) -> None:
         paths = ["file1.py", "file3.py", "file3.py", "file3.py"]
-        plugin_parser = PluginParser(plugins_payload={})
+        plugin_parser = PluginParser(plugins_payload={})  # type: ignore[reportArgumentType]
 
         result = plugin_parser.get_all_files(paths)
 
@@ -187,14 +187,14 @@ class TestUnitPluginParser:
         mock_listdir.return_value = ["file1.py", "file2.txt", "file3.py"]
 
         paths = ["dir1", "file4.py", "file5.txt"]
-        plugin_parser = PluginParser(plugins_payload={})
+        plugin_parser = PluginParser(plugins_payload={})  # type: ignore[reportArgumentType]
 
         result = plugin_parser.get_all_files(paths)
         expected = {"dir1/file1.py", "dir1/file3.py", "file4.py"}
         assert result == expected
 
     def test_fetch_custom_plugin_files_with_no_dirs_or_files(self: Self, mocker: MockerFixture) -> None:
-        plugin_parser = PluginParser(plugins_payload={})
+        plugin_parser = PluginParser(plugins_payload={})  # type: ignore[reportArgumentType]
 
         mocker.patch.object(plugin_parser, "get_all_files", side_effect=[set(), set()])
 
@@ -203,7 +203,7 @@ class TestUnitPluginParser:
         assert custom_plugins == set()
 
     def test_fetch_custom_plugin_files_with_dirs_and_files(self: Self, mocker: MockerFixture) -> None:
-        plugin_parser = PluginParser(plugins_payload={"custom": {"dirs": ["dir1"], "files": ["file1.py", "file2.py"]}})
+        plugin_parser = PluginParser(plugins_payload={"custom": {"dirs": ["dir1"], "files": ["file1.py", "file2.py"]}})  # type: ignore[reportArgumentType]
         files_mock = mocker.patch.object(
             plugin_parser,
             "get_all_files",
@@ -226,7 +226,7 @@ class TestUnitPluginParser:
         }
 
     def test_fetch_custom_plugin_files_with_only_files(self: Self, mocker: MockerFixture) -> None:
-        plugin_parser = PluginParser(plugins_payload={"custom": {"files": ["file1.py", "file2.py"]}})
+        plugin_parser = PluginParser(plugins_payload={"custom": {"files": ["file1.py", "file2.py"]}})  # type: ignore[reportArgumentType]
 
         files_mock = mocker.patch.object(
             plugin_parser,
@@ -244,7 +244,7 @@ class TestUnitPluginParser:
 
     def test_fetch_custom_plugin_files_with_overlapping_files(self: Self, mocker: MockerFixture) -> None:
         plugin_parser = PluginParser(
-            plugins_payload={
+            plugins_payload={  # type: ignore[reportArgumentType]
                 "custom": {
                     "dirs": ["dir1", "dir2"],
                     "files": ["dir1/fileA.py", "dir2/fileB.py"],
@@ -269,12 +269,12 @@ class TestUnitPluginParser:
         assert custom_plugins == {"dir1/fileA.py", "dir2/fileB.py"}
 
     def test_fetch_community_plugin_modules_empty(self: Self) -> None:
-        plugin_parser = PluginParser(plugins_payload={})
+        plugin_parser = PluginParser(plugins_payload={})  # type: ignore[reportArgumentType]
 
         assert plugin_parser.fetch_community_plugin_modules() == set()
 
     def test_fetch_community_plugin_modules_success(self: Self) -> None:
-        plugin_parser = PluginParser(plugins_payload={"community": ["plugin1", "plugin2", "plugin3"]})
+        plugin_parser = PluginParser(plugins_payload={"community": ["plugin1", "plugin2", "plugin3"]})  # type: ignore[reportArgumentType]
 
         result = plugin_parser.fetch_community_plugin_modules()
 
@@ -288,11 +288,11 @@ class TestUnitPluginParser:
 class TestUnitPipelineParser:
     @pytest.fixture(autouse=True)
     def pipeline_parser(self) -> None:
-        self.pipeline_parser = PipelineParser()
+        self.pipeline_parser = PipelineParser()  # type: ignore[reportAttributeAccessIssue] - Follows Docs from Pytest https://docs.pytest.org/en/latest/how-to/unittest.html#using-autouse-fixtures-and-accessing-other-fixtures
 
     def test_create_pipeline_with_no_pipeline_attributes(self: Self) -> None:
         with pytest.raises(ValueError, match="Pipeline attributes are empty"):
-            self.pipeline_parser.create_pipeline(pipeline_name="pipeline_2", pipeline_data={})
+            self.pipeline_parser.create_pipeline(pipeline_name="pipeline_2", pipeline_data={})  # type: ignore[reportFunctionMemberAccess]
 
     def test_create_pipeline_with_only_mandatory_phases(self: Self, mocker: MockerFixture) -> None:
         pipeline_data = {
@@ -340,7 +340,7 @@ class TestUnitPipelineParser:
             ],
         )
 
-        pipeline = self.pipeline_parser.create_pipeline("full_pipeline", pipeline_data)
+        pipeline = self.pipeline_parser.create_pipeline("full_pipeline", pipeline_data)  # type: ignore[reportFunctionMemberAccess]
 
         assert isinstance(pipeline, Pipeline)
         assert pipeline.name == "full_pipeline"
@@ -419,7 +419,7 @@ class TestUnitPipelineParser:
             ],
         )
 
-        pipeline = self.pipeline_parser.create_pipeline("full_pipeline", pipeline_data)
+        pipeline = self.pipeline_parser.create_pipeline("full_pipeline", pipeline_data)  # type: ignore[reportFunctionMemberAccess]
         assert isinstance(pipeline, Pipeline)
         assert pipeline.name == "full_pipeline"
 

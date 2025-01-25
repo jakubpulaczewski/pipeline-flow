@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 from enum import Enum, unique
-from typing import Annotated, Callable, Self
+from typing import TYPE_CHECKING, Annotated, Self
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Third-party Imports
 from pydantic import (
@@ -33,17 +36,16 @@ class PipelinePhase(Enum):
     TRANSFORM_AT_LOAD_PHASE = "transform_at_load"
 
 
-def serialize_plugins(
-    phase_pipeline: PipelinePhase,
-) -> Callable[[list | dict], list[PluginWrapper]]:
-    def validator(value: list) -> list[PluginWrapper]:
-        if type(value) is list:
-            return [PluginRegistry.instantiate_plugin(phase_pipeline, plugin_dict) for plugin_dict in value]
+def serialize_plugin(phase_pipeline: PipelinePhase) -> Callable[[dict], PluginWrapper]:
+    def validator(value: dict) -> PluginWrapper:
+        return PluginRegistry.instantiate_plugin(phase_pipeline, value)
 
-        if type(value) is dict:
-            return PluginRegistry.instantiate_plugin(phase_pipeline, value)
-        error_msg = f"Expected a list or dict, but got {type(value).__name__}"
-        raise TypeError(error_msg)
+    return validator
+
+
+def serialize_plugins(phase_pipeline: PipelinePhase) -> Callable[[list], list[PluginWrapper]]:
+    def validator(value: list) -> list[PluginWrapper]:
+        return [PluginRegistry.instantiate_plugin(phase_pipeline, plugin_dict) for plugin_dict in value]
 
     return validator
 
@@ -74,7 +76,7 @@ class ExtractPhase(BaseModel):
 
     merge: Annotated[
         PluginWrapper | None,
-        BeforeValidator(serialize_plugins(PipelinePhase.EXTRACT_PHASE)),
+        BeforeValidator(serialize_plugin(PipelinePhase.EXTRACT_PHASE)),
     ] = None
 
     @model_validator(mode="after")

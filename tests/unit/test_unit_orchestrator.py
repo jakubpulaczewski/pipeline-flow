@@ -1,6 +1,6 @@
 # Standard Imports
 import asyncio
-from typing import Callable
+from collections.abc import Callable
 
 # Third Party Imports
 import pytest
@@ -64,7 +64,8 @@ def test_can_execute_one_job_dependency_failure(
     executed_jobs = {}
 
     result = orchestrator._can_execute(  # pylint: disable=protected-access
-        job1, executed_jobs
+        job1,
+        executed_jobs,  # type: ignore[reportArgumentType]
     )
     assert result is False
 

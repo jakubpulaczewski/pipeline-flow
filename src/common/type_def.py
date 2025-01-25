@@ -1,24 +1,56 @@
-# Standard Imports
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Annotated, Any, TypedDict
 
-# Third-party imports
+from pydantic.dataclasses import dataclass
 
-# Project Imports
+type ExtractedData = Any
+type TransformedData = Any
 
-# Data returns types from each ETL phase
-ExtractedData = TypeVar("ExtractedData", bound=Any)
-TransformedData = TypeVar("TransformedData", bound=Any)
-LoadedData = TypeVar("LoadedData", bound=Any)
-TransformLoadedData = TypeVar("TransformLoadedData", bound=Any)
-
-type Data = ExtractedData | TransformedData | LoadedData | TransformLoadedData
+type ETLData = ExtractedData | TransformedData
 type PluginName = str
 
+type SyncPlugin = Callable[..., ETLData]
+type AsyncPlugin = Callable[..., Awaitable[ETLData]]
+type WrappedPlugin[**PluginArgs] = Callable[PluginArgs, SyncPlugin] | Callable[PluginArgs, AsyncPlugin]
 
-PluginOutput = TypeVar("PluginOutput")  # Represents the return type of the plugin function
 
-type Plugin[**PluginArgs] = (
-    Callable[PluginArgs, Callable[..., PluginOutput]] | Callable[PluginArgs, Callable[..., Awaitable[PluginOutput]]]
-)
+class CustomPluginRegistryJSON(TypedDict):
+    dirs: Annotated[list[str], "List of directories to dynamically import for custom plugins"]
+    files: Annotated[list[str], "List of files to dynamically import for custom plugins"]
+
+
+class PluginRegistryJSON(TypedDict):
+    custom: CustomPluginRegistryJSON
+    community: Annotated[list[str], "List of community plugins to import"]
+
+
+@dataclass
+class ExtractStageResult:
+    id: str
+    success: bool
+    data: ExtractedData
+    error: str | None = None
+
+
+@dataclass
+class TransformStageResult:
+    id: str
+    success: bool
+    data: TransformedData
+    error: str | None = None
+
+
+@dataclass
+class LoadStageResult:
+    id: str
+    success: bool
+    error: str | None = None
+
+
+@dataclass
+class TransformLoadStageResult:
+    id: str
+    success: bool
+    error: str | None = None

@@ -1,5 +1,5 @@
-# Standard Imports
-from typing import Callable
+# Standard ImportsCallable
+from collections.abc import Callable
 
 # Third-party Imports
 # Project Imports

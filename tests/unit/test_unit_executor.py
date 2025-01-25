@@ -6,7 +6,7 @@ from functools import wraps
 # Third-party Imports
 import pytest
 
-from common.type_def import Plugin
+from common.type_def import AsyncPlugin, SyncPlugin
 from core.executor import (
     run_extractor,
     run_loader,
@@ -26,7 +26,7 @@ from core.plugins import PluginWrapper
 from tests.resources import mocks
 
 
-def async_pre(output: str, delay: float = 0.2) -> Plugin:
+def async_pre(output: str, delay: float = 0.2) -> AsyncPlugin:
     async def inner() -> str:
         await asyncio.sleep(delay)
         return output
@@ -34,7 +34,7 @@ def async_pre(output: str, delay: float = 0.2) -> Plugin:
     return inner
 
 
-def sync_pre(output: str, delay: float = 0.2) -> Plugin:
+def sync_pre(output: str, delay: float = 0.2) -> SyncPlugin:
     def inner() -> str:
         time.sleep(delay)
         return output
@@ -42,7 +42,7 @@ def sync_pre(output: str, delay: float = 0.2) -> Plugin:
     return inner
 
 
-def upper_transformer(id: str) -> Plugin:  # noqa: A002,ARG001
+def upper_transformer(id: str) -> SyncPlugin:  # noqa: A002,ARG001
     @wraps(upper_transformer)
     def inner(data: str) -> str:
         return data.upper()

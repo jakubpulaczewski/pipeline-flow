@@ -1,6 +1,7 @@
 # Standard Imports
 import os
-from typing import Any, Callable, Generator
+from collections.abc import Callable
+from typing import Any, Generator
 
 # Third-party Imports
 import pytest
@@ -57,9 +58,9 @@ def pipeline_factory(default_config: dict[str, Any]) -> Callable[..., Pipeline]:
         return Pipeline(
             name=config["name"],
             description=config.get("description", ""),
-            type=config["type"],
+            type=config["type"],  # type: ignore[reportArgumentType]
             needs=config["needs"],
-            phases=phases,
+            phases=phases,  # type: ignore[reportArgumentType]
         )
 
     return create_pipeline

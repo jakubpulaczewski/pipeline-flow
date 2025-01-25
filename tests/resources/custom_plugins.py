@@ -1,7 +1,7 @@
 # Standard Imports
 from functools import wraps
 
-from common.type_def import Plugin
+from common.type_def import AsyncPlugin
 from core.models.phases import PipelinePhase
 
 # Third Party Imports
@@ -10,7 +10,7 @@ from core.plugins import plugin
 
 
 @plugin(PipelinePhase.EXTRACT_PHASE, "custom_extract")
-def custom_extractor() -> Plugin:
+def custom_extractor() -> AsyncPlugin:
     @wraps(custom_extractor)
     async def inner() -> str:
         return "CUSTOM EXTRACTED DATA"
@@ -19,7 +19,7 @@ def custom_extractor() -> Plugin:
 
 
 @plugin(PipelinePhase.LOAD_PHASE, "custom_load")
-def custom_loader() -> Plugin:
+def custom_loader() -> AsyncPlugin:
     @wraps(custom_loader)
     async def inner(data: str) -> None:  # noqa: ARG001
         return

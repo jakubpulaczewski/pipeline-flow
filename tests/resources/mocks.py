@@ -5,11 +5,11 @@ from functools import wraps
 
 # Third-party Imports
 # Project Imports
-from common.type_def import Plugin
+from common.type_def import AsyncPlugin, SyncPlugin
 
 
 # TODO: Verify the claim of using ExtractedData and so on....
-def mock_merger() -> Plugin:
+def mock_merger() -> SyncPlugin:
     @wraps(mock_merger)
     def inner(extracted_data: str) -> str:
         return "merged_data"
@@ -17,7 +17,7 @@ def mock_merger() -> Plugin:
     return inner
 
 
-def mock_extractor(id: str) -> Plugin:
+def mock_extractor(id: str) -> AsyncPlugin:
     @wraps(mock_extractor)
     async def inner() -> str:
         return "extracted_data"
@@ -25,7 +25,7 @@ def mock_extractor(id: str) -> Plugin:
     return inner
 
 
-def mock_async_extractor(id: str, delay: float = 0) -> Plugin:
+def mock_async_extractor(id: str, delay: float = 0) -> AsyncPlugin:
     @wraps(mock_async_extractor)
     async def inner() -> str:
         await asyncio.sleep(delay)
@@ -34,7 +34,7 @@ def mock_async_extractor(id: str, delay: float = 0) -> Plugin:
     return inner
 
 
-def mock_transformer(id: str) -> Plugin:
+def mock_transformer(id: str) -> SyncPlugin:
     @wraps(mock_transformer)
     def inner(data: str) -> str:
         return "transformed_etl_data"
@@ -42,7 +42,7 @@ def mock_transformer(id: str) -> Plugin:
     return inner
 
 
-def mock_sync_transformer(id: str, delay: float) -> Plugin:
+def mock_sync_transformer(id: str, delay: float) -> SyncPlugin:
     @wraps(mock_sync_transformer)
     def inner(data: str) -> str:
         time.sleep(delay)
@@ -51,7 +51,7 @@ def mock_sync_transformer(id: str, delay: float) -> Plugin:
     return inner
 
 
-def mock_loader(id: str) -> Plugin:
+def mock_loader(id: str) -> AsyncPlugin:
     @wraps(mock_loader)
     async def inner(data: str) -> None:
         return
@@ -59,7 +59,7 @@ def mock_loader(id: str) -> Plugin:
     return inner
 
 
-def mock_async_loader(id: str, delay: float) -> Plugin:
+def mock_async_loader(id: str, delay: float) -> AsyncPlugin:
     @wraps(mock_async_loader)
     async def inner(data: str) -> None:
         await asyncio.sleep(delay)
@@ -67,7 +67,7 @@ def mock_async_loader(id: str, delay: float) -> Plugin:
     return inner
 
 
-def mock_load_transformer(id: str, query: str) -> Plugin:
+def mock_load_transformer(id: str, query: str) -> SyncPlugin:
     @wraps(mock_load_transformer)
     def inner() -> None:
         return
@@ -75,7 +75,7 @@ def mock_load_transformer(id: str, query: str) -> Plugin:
     return inner
 
 
-def mock_sync_load_transformer(id: str, delay: float) -> Plugin:
+def mock_sync_load_transformer(id: str, delay: float) -> SyncPlugin:
     @wraps(mock_sync_load_transformer)
     def inner() -> None:
         time.sleep(delay)

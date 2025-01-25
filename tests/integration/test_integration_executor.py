@@ -1,6 +1,6 @@
 # Standard Imports
 import asyncio
-from typing import Callable
+from collections.abc import Callable
 
 # Third-party Imports
 import pytest
@@ -49,8 +49,8 @@ async def test_etlt_strategy(etlt_pipeline_factory: Callable[..., Pipeline]) -> 
 async def test_etl_strategy_with_delay() -> None:
     pipeline = Pipeline(
         name="Job1",
-        type="ETL",
-        phases={
+        type="ETL",  # type: ignore[reportArgumentType]
+        phases={  # type: ignore[reportArgumentType]
             "extract": ExtractPhase.model_construct(
                 steps=[
                     PluginWrapper(
@@ -98,8 +98,8 @@ async def test_etl_strategy_with_delay() -> None:
 async def test_elt_strategy_with_delay() -> None:
     pipeline = Pipeline(
         name="Job1",
-        type="ELT",
-        phases={
+        type="ELT",  # type: ignore[reportArgumentType]
+        phases={  # type: ignore[reportArgumentType]
             "extract": ExtractPhase.model_construct(
                 steps=[
                     PluginWrapper(
@@ -147,8 +147,8 @@ async def test_elt_strategy_with_delay() -> None:
 async def test_etlt_strategy_with_delay() -> None:
     pipeline = Pipeline(
         name="Job1",
-        type="ETLT",
-        phases={
+        type="ETLT",  # type: ignore[reportArgumentType]
+        phases={  # type: ignore[reportArgumentType]
             "extract": ExtractPhase.model_construct(
                 steps=[
                     PluginWrapper(

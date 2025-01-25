@@ -1,15 +1,11 @@
-# Standard Imports
 import shutil
 from pathlib import Path
 from typing import Generator, Self
 
-# Third-party imports
 import pytest
 
-from common.type_def import Plugin
+from common.type_def import SyncPlugin
 from core.models.phases import PipelinePhase
-
-# Project Imports
 from core.models.pipeline import Pipeline
 from core.parser import PipelineParser, PluginParser, YamlParser
 from core.plugins import PluginRegistry, PluginWrapper
@@ -22,14 +18,14 @@ from tests.resources.constants import (
 )
 
 
-def setup_plugins(plugin_dict: dict[PipelinePhase, list[tuple[str, Plugin]]]) -> None:
+def setup_plugins(plugin_dict: dict[PipelinePhase, list[tuple[str, SyncPlugin]]]) -> None:
     for phase, plugins in plugin_dict.items():
         for plugin_name, plugin_callable in plugins:
             PluginRegistry.register(phase, plugin_name, plugin_callable)
 
 
 @pytest.fixture
-def create_temp_plugin_folder() -> Generator[str]:
+def create_temp_plugin_folder() -> Generator[Path]:
     parent_path = Path(__file__).parent.parent
 
     plugins_dir = parent_path / "resources" / "plugins"
@@ -54,7 +50,7 @@ class TestIntegrationPluginParser:
               - tests/resources/plugins/custom_loader.py
         """
         plugins_payload = YamlParser(yaml_text=yaml_str).get_plugins_dict()
-        plugin_parser = PluginParser(plugins_payload)
+        plugin_parser = PluginParser(plugins_payload)  # type: ignore[reportArgumentType]
 
         result = plugin_parser.fetch_custom_plugin_files()
 
@@ -75,16 +71,18 @@ class TestIntegrationPluginParser:
               - tests/resources/plugins_not_found
         """
         plugins_payload = YamlParser(yaml_text=yaml_str).get_plugins_dict()
-        plugin_parser = PluginParser(plugins_payload)
+        plugin_parser = PluginParser(plugins_payload)  # type: ignore[reportArgumentType]
+
+        assert plugin_parser is not None
 
         result = plugin_parser.fetch_custom_plugin_files()
 
         assert result == set()
 
     @staticmethod
-    def test_fetch_custom_plugin_files_with_dirs_and_files(create_temp_plugin_folder: Generator[str]) -> None:
+    def test_fetch_custom_plugin_files_with_dirs_and_files(create_temp_plugin_folder: Generator[Path]) -> None:
         # Create plugin
-        file_path = create_temp_plugin_folder / "plugin123.py"
+        file_path = create_temp_plugin_folder / "plugin123.py"  # type: ignore[reportOperatorIssue]
         file_path.write_text("")
         assert file_path.is_file()
 
@@ -97,7 +95,7 @@ class TestIntegrationPluginParser:
               - tests/resources/plugins/custom_plugins.py
         """
         plugins_payload = YamlParser(yaml_text=yaml_str).get_plugins_dict()
-        plugin_parser = PluginParser(plugins_payload)
+        plugin_parser = PluginParser(plugins_payload)  # type: ignore[reportArgumentType]
 
         result = plugin_parser.fetch_custom_plugin_files()
 
@@ -109,7 +107,7 @@ class TestIntegrationPluginParser:
         assert result == expected
 
     def test_get_custom_plugin_files_empty(self: Self) -> None:
-        plugin_parser = PluginParser(plugins_payload={})
+        plugin_parser = PluginParser(plugins_payload={})  # type: ignore[reportArgumentType]
         result = plugin_parser.fetch_custom_plugin_files()
 
         assert result == set()
@@ -118,7 +116,7 @@ class TestIntegrationPluginParser:
 class TestIntegrationPipelineParser:
     @pytest.fixture(autouse=True)
     def pipeline_parser(self: Self) -> None:
-        self.pipeline_parser = PipelineParser()
+        self.pipeline_parser = PipelineParser()  # type: ignore[reportAttributeAccessIssue] - Follows Docs from Pytest https://docs.pytest.org/en/latest/how-to/unittest.html#using-autouse-fixtures-and-accessing-other-fixtures
 
     def test_parse_pipeline_without_registered_plugins(self: Self) -> None:
         yaml_str = """
@@ -145,7 +143,7 @@ class TestIntegrationPipelineParser:
             ValueError,
             match="Plugin class was not found for following plugin `mock_s3`.",
         ):
-            self.pipeline_parser.parse_pipelines(pipelines_data=pipelines_data)
+            self.pipeline_parser.parse_pipelines(pipelines_data=pipelines_data)  # type: ignore[reportFunctionMemberAccess]
 
     def test_parse_etl_pipeline_with_missing_extract_phase(self: Self) -> None:
         # Register Plugins
@@ -178,7 +176,7 @@ class TestIntegrationPipelineParser:
                 "'PipelineType.ETL'. Missing phases: {<PipelinePhase.EXTRACT_PHASE: 'extract'>}."
             ),
         ):
-            self.pipeline_parser.parse_pipelines(pipelines_data)
+            self.pipeline_parser.parse_pipelines(pipelines_data)  # type: ignore[reportFunctionMemberAccess]
 
     def test_parse_etl_pipeline_with_extra_phases(self: Self) -> None:
         # Register Plugins
@@ -219,7 +217,7 @@ class TestIntegrationPipelineParser:
             ValueError,
             match="Extra phases: {<PipelinePhase.TRANSFORM_AT_LOAD_PHASE: 'transform_at_load'>}",
         ):
-            self.pipeline_parser.parse_pipelines(pipelines_data)
+            self.pipeline_parser.parse_pipelines(pipelines_data)  # type: ignore[reportFunctionMemberAccess]
 
     def test_parse_etl_pipeline_with_only_mandatory_phases(self: Self) -> None:
         # Register Plugins
@@ -244,7 +242,7 @@ class TestIntegrationPipelineParser:
                     plugin: load_plugin
         """
         pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
-        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)
+        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)  # type: ignore[reportFunctionMemberAccess]
 
         pipeline = pipelines[0]
 
@@ -305,7 +303,7 @@ class TestIntegrationPipelineParser:
         """
 
         pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
-        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)
+        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)  # type: ignore[reportFunctionMemberAccess]
 
         assert len(pipelines) == 2
         assert isinstance(pipelines[0], Pipeline)
@@ -369,7 +367,7 @@ class TestIntegrationPipelineParser:
         """
 
         pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
-        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)
+        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)  # type: ignore[reportFunctionMemberAccess]
 
         assert len(pipelines) == 1
         assert isinstance(pipelines[0], Pipeline)
@@ -429,7 +427,7 @@ class TestIntegrationPipelineParser:
         """
 
         pipelines_data = YamlParser(yaml_text=yaml_str).get_pipelines_dict()
-        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)
+        pipelines = self.pipeline_parser.parse_pipelines(pipelines_data)  # type: ignore[reportFunctionMemberAccess]
 
         assert len(pipelines) == 1
         assert isinstance(pipelines[0], Pipeline)

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 from common.decorator import async_time_it, sync_time_it
 
 if TYPE_CHECKING:
-    from common.type_def import ExtractedData, PluginOutput, TransformedData
+    from common.type_def import ETLData, ExtractedData, TransformedData
     from core.plugins import PluginWrapper
 
 
@@ -34,7 +34,7 @@ from core.models.pipeline import Pipeline, PipelineType
 logger = logging.getLogger(__name__)
 
 
-def plugin_sync_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> PluginOutput:  # noqa: ANN401
+def plugin_sync_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
     try:
         return plugin.func(*pipeline_args, **pipeline_kwargs)
     except Exception:
@@ -43,7 +43,7 @@ def plugin_sync_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_
         raise
 
 
-async def plugin_async_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> PluginOutput:  # noqa: ANN401
+async def plugin_async_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
     try:
         return await plugin.func(*pipeline_args, **pipeline_kwargs)
     except Exception:
@@ -52,7 +52,11 @@ async def plugin_async_executor(plugin: PluginWrapper, *pipeline_args: Any, **pi
         raise
 
 
-async def task_executor(plugins: list[PluginWrapper], *pipeline_args: Any, **pipeline_kwargs: Any) -> dict:  # noqa: ANN401
+async def task_executor(
+    plugins: list[PluginWrapper],
+    *pipeline_args: Any,  # noqa: ANN401
+    **pipeline_kwargs: Any,  # noqa: ANN401
+) -> dict[str, ETLData]:
     async with asyncio.TaskGroup() as group:
         tasks = {
             plugin.id: group.create_task(plugin_async_executor(plugin, *pipeline_args, **pipeline_kwargs))
@@ -77,7 +81,7 @@ async def run_extractor(extracts: ExtractPhase) -> ExtractedData:
             return results[extracts.steps[0].id]
 
         # Merge data if multiple steps exist.
-        return plugin_sync_executor(extracts.merge, extracted_data=results)
+        return plugin_sync_executor(extracts.merge, extracted_data=results)  # type: ignore[reportArgumentType] - merge will always be populated when more than 2 extracts are provided
 
     except Exception as e:
         error_message = f"Error during `extraction`: {e}"
@@ -91,19 +95,18 @@ def run_transformer(data: ExtractedData, transformations: TransformPhase) -> Tra
         for plugin in transformations.steps:
             logger.info("Applying transformation: %s", plugin.id)
             transformed_data = plugin_sync_executor(plugin, data)
+            data = transformed_data  # Pass the transformed data to the next step
 
-            # Continue passing the transformed data to the next step
-            data = transformed_data
     except Exception as e:
-        error_message = f"Error during `transform` (ID: {plugin.id}): {e}"
+        error_message = "Error during `transform`"
         logger.exception(error_message)
         raise TransformError(error_message) from e
 
-    return transformed_data
+    return transformed_data  # type: ignore[reportPossiblyUnboundVariable]
 
 
 @async_time_it
-async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPhase) -> list[dict]:
+async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPhase) -> list:
     if destinations.pre:
         await task_executor(destinations.pre)
 
@@ -121,7 +124,7 @@ async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPh
 
 
 @sync_time_it
-def run_transformer_after_load(transformations: TransformLoadPhase) -> list[dict]:
+def run_transformer_after_load(transformations: TransformLoadPhase) -> list[dict[str, bool]]:
     results = []
 
     try:
@@ -130,15 +133,15 @@ def run_transformer_after_load(transformations: TransformLoadPhase) -> list[dict
             results.append({"id": plugin.id, "success": True})
 
     except Exception as e:
-        error_message = f"Error during `transform_at_load` (ID: {plugin.id}): {e}"
-        logger.exception(error_message)
+        error_message = "Error during `transform_at_load`"
+        logger.exception("Error during `transform_at_load`")
         raise TransformLoadError(error_message) from e
     return results
 
 
 class PipelineStrategy(metaclass=ABCMeta):
     @abstractmethod
-    def execute(self, pipeline: Pipeline) -> bool:
+    async def execute(self, pipeline: Pipeline) -> bool:
         raise NotImplementedError("This has to be implemented by the subclasses.")
 
 

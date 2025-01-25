@@ -1,5 +1,5 @@
 # Standard Imports
-from typing import Callable
+from collections.abc import Callable
 
 # Third Party Imports
 import pytest

@@ -5,7 +5,7 @@ from functools import wraps
 import pytest
 from pytest_mock import MockerFixture
 
-from common.type_def import Plugin
+from common.type_def import AsyncPlugin, SyncPlugin
 from core.models.phases import PipelinePhase
 from core.plugins import PluginRegistry, PluginWrapper, plugin
 
@@ -14,7 +14,7 @@ from tests.resources import mocks
 from tests.resources.constants import EXTRACT_PHASE
 
 
-def mock_plugin(id: str) -> Plugin:  # noqa: A002,ARG001
+def mock_plugin(id: str) -> AsyncPlugin:  # noqa: A002,ARG001
     @wraps(mock_plugin)
     async def inner() -> str:
         return "EXTRACT OF DATA"
@@ -22,7 +22,7 @@ def mock_plugin(id: str) -> Plugin:  # noqa: A002,ARG001
     return inner
 
 
-def mock_plugin_no_params() -> Plugin:
+def mock_plugin_no_params() -> AsyncPlugin:
     @wraps(mock_plugin_no_params)
     async def inner() -> str:
         return "DATA"
@@ -138,7 +138,7 @@ class TestUnitPluginRegistry:
         ],
     )
     def test_instantiate_plugin(
-        plugin_id: str, plugin_name: str, phase: PipelinePhase, func: Plugin, mocker: MockerFixture
+        plugin_id: str, plugin_name: str, phase: PipelinePhase, func: SyncPlugin | AsyncPlugin, mocker: MockerFixture
     ) -> None:
         mocker.patch.object(PluginRegistry, "get").return_value = func
 

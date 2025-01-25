@@ -10,18 +10,16 @@ help:
 
 build: ## Lint and compile code - #TODO: Need change to use ruff and pyright for checking.
 	ruff check ${src_dir} ${tests_dir}
-	poetry run mypy ${src_dir} ${tests_dir}
+	poetry run pyright ${src_dir} ${tests_dir}
 	@echo "Build succeeded"
 
 clean: ## Remove build outputs, test outputs and cached files.
-	@rm -rf .mypy_cache .pytest_cache .coverage
+	@rm -rf .pytest_cache .coverage
 	@echo "Clean succeeded"
-
 
 format: ## Reformat source code
 	@ruff format ${src_dir} ${tests_dir} -v
 	
-
 precommit: ## Running Precommit checks.
 	format
 	build

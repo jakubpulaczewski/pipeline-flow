@@ -1,29 +1,26 @@
-# Standard Imports
 from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Awaitable, Callable  # noqa: TC003 False Positive
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, ClassVar, Generic, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
-# Third Party Imports
 from pydantic.dataclasses import dataclass
 
-from common.type_def import PluginOutput
-
-# Project Imports
+from common.type_def import ETLData  # noqa: TC001 False Positive
 from common.utils import SingletonMeta
 
 if TYPE_CHECKING:
-    from common.type_def import Plugin, PluginName
+    from common.type_def import PluginName, WrappedPlugin
     from core.models.phases import PipelinePhase
 
 logger = logging.getLogger(__name__)
 
 
-def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[Plugin], Plugin]:
+def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[WrappedPlugin], WrappedPlugin]:
     @wraps(plugin)
-    def decorator(func: Plugin) -> Plugin:
+    def decorator(func: WrappedPlugin) -> WrappedPlugin:
         nonlocal plugin_name
         plugin_name = func.__name__ if plugin_name is None else plugin_name
 
@@ -34,9 +31,9 @@ def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Calla
 
 
 @dataclass
-class PluginWrapper(Generic[PluginOutput]):
+class PluginWrapper:
     id: str
-    func: Callable[..., PluginOutput] | Callable[..., Awaitable[PluginOutput]]
+    func: Callable[..., ETLData] | Callable[..., Awaitable[ETLData]]
 
     def __eq__(self: Self, other: object) -> bool:
         if not isinstance(other, PluginWrapper):
@@ -50,14 +47,14 @@ class PluginRegistry(metaclass=SingletonMeta):
     Registry example: {EXTRACT_PHASE: {'s3': S3Plugin}}
     """
 
-    _registry: ClassVar[dict[PipelinePhase, dict[PluginName, Plugin]]] = {}
+    _registry: ClassVar[dict[PipelinePhase, dict[PluginName, WrappedPlugin]]] = {}
 
     @classmethod
     def register(
         cls,
         pipeline_phase: PipelinePhase,
         plugin_name: PluginName,
-        plugin_callable: Plugin,
+        plugin_callable: WrappedPlugin,
     ) -> bool:
         """Regisers a plugin for a given pipeline type and plugin."""
         # Initialise the Pipeline phase in the registry.
@@ -95,7 +92,7 @@ class PluginRegistry(metaclass=SingletonMeta):
         return False
 
     @classmethod
-    def get(cls, pipeline_phase: PipelinePhase, plugin_name: PluginName) -> Plugin:
+    def get(cls, pipeline_phase: PipelinePhase, plugin_name: PluginName) -> WrappedPlugin:
         """Retrieve a plugin for a given pipeline type and plugin."""
         plugin_factory = cls._registry.get(pipeline_phase, {}).get(plugin_name, None)
 

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pipeline-orchestrator"
 version = "0.0.0"
-description = "Framework for building ETL projects dynamically."
+description = "A framework for building ETL, ELT and ETLT projects dynamically using plugins.."
 authors = ["Jakub Pulaczewski"]
 license = "MIT"
 packages = [

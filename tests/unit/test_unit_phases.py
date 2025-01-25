@@ -1,4 +1,5 @@
 # Standard Imports
+from collections.abc import Callable
 
 # Third-party Imports
 import pytest
@@ -6,7 +7,7 @@ from pydantic import ValidationError
 from pytest_mock import MockerFixture, MockType
 
 # Project Imports
-from common.type_def import Plugin, PluginName
+from common.type_def import AsyncPlugin, PluginName, SyncPlugin
 from core.executor import plugin_async_executor, plugin_sync_executor
 from core.models.phases import ExtractPhase, LoadPhase, PhaseInstance, PipelinePhase, TransformLoadPhase, TransformPhase
 from core.plugins import PluginRegistry, PluginWrapper
@@ -20,7 +21,10 @@ def plugin_mock(mocker: MockerFixture) -> MockType:
 
 @pytest.fixture
 def plugin_registry_mock(plugin_mock: MockType) -> MockType:
-    def plugin_fetcher(phase_pipeline: PipelinePhase, plugin_name: PluginName) -> Plugin:  # noqa: ARG001
+    def plugin_fetcher(
+        phase_pipeline: PipelinePhase,  # noqa: ARG001
+        plugin_name: PluginName,
+    ) -> None | Callable[..., AsyncPlugin] | Callable[..., SyncPlugin]:
         if "mock_extractor" in plugin_name:  # noqa: RET503
             return mocks.mock_extractor
         elif "mock_merger" in plugin_name:  # noqa: RET505
@@ -62,14 +66,14 @@ async def test_run_load_data() -> None:
 @pytest.mark.parametrize("phase_class", [(ExtractPhase), (LoadPhase), (TransformLoadPhase)])
 def test_create_phase_without_mandary_phase(phase_class: PhaseInstance) -> None:
     with pytest.raises(ValidationError, match="List should have at least 1 item after validation"):
-        phase_class(steps=[])
+        phase_class(steps=[])  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
 
 
 def test_create_phase_extract(plugin_mock: MockType) -> None:
     plugin_mock.return_value = mocks.mock_extractor
 
     extract = ExtractPhase(
-        steps=[
+        steps=[  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
             {
                 "id": "extractor_id",
                 "plugin": "mock_extractor",
@@ -89,14 +93,14 @@ def test_create_phase_extract_with_merge_success(mocker: MockerFixture, plugin_r
     mocker.patch("uuid.uuid4", return_value="12345678")
 
     extract = ExtractPhase(
-        steps=[
+        steps=[  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
             {
                 "id": "extractor_id",
                 "plugin": "mock_extractor",
             },
             {"id": "extractor_id_2", "plugin": "mock_extractor_2"},
         ],
-        merge={"plugin": "mock_merger"},
+        merge={"plugin": "mock_merger"},  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
     )
 
     # Behaviour check of the mock
@@ -117,13 +121,13 @@ def test_create_phase_extract_with_merge_failure() -> None:
         match="Validation Error! Merge can only be used if there is more than one extract step.",
     ):
         ExtractPhase(
-            steps=[
+            steps=[  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
                 {
                     "id": "extractor_id",
                     "plugin": "mock_extractor",
                 }
             ],
-            merge={"plugin": "mock_merger"},
+            merge={"plugin": "mock_merger"},  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
         )
 
 
@@ -134,7 +138,7 @@ def test_create_phase_with_same_id_failure() -> None:
         match="The `ID` is not unique. There already exists an 'ID' with this name",
     ):
         ExtractPhase(
-            steps=[
+            steps=[  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
                 {
                     "id": "extractor_id",
                     "plugin": "mock_extractor",
@@ -153,7 +157,7 @@ def test_create_phase_transform_without_steps_success() -> None:
 def test_create_phase_function_transform(plugin_mock: MockType) -> None:
     plugin_mock.return_value = mocks.mock_transformer
 
-    transform = TransformPhase(steps=[{"id": "transformer_id", "plugin": "mock_transformer"}])
+    transform = TransformPhase(steps=[{"id": "transformer_id", "plugin": "mock_transformer"}])  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
 
     plugin_mock.assert_called_once()
     plugin_mock.assert_called_once_with(PipelinePhase.TRANSFORM_PHASE, "mock_transformer")
@@ -165,7 +169,7 @@ def test_create_phase_function_transform(plugin_mock: MockType) -> None:
 def test_create_phase_load(plugin_mock: MockType) -> None:
     plugin_mock.return_value = mocks.mock_loader
 
-    loader = LoadPhase(steps=[{"id": "loader_id", "plugin": "mock_loader"}])
+    loader = LoadPhase(steps=[{"id": "loader_id", "plugin": "mock_loader"}])  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
 
     plugin_mock.assert_called_once()
     plugin_mock.assert_called_once_with(PipelinePhase.LOAD_PHASE, "mock_loader")
@@ -179,7 +183,7 @@ def test_create_phase_transform_at_load(plugin_mock: MockType) -> None:
     plugin_mock.return_value = mocks.mock_load_transformer
 
     tf_load = TransformLoadPhase(
-        steps=[
+        steps=[  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
             {
                 "id": "mock_transform_loader_id",
                 "query": "SELECT 1",

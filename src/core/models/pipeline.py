@@ -1,12 +1,9 @@
-# Standard Imports
 import logging
 from enum import Enum, unique
-from typing import Annotated
+from typing import Annotated, cast
 
-# Third-party Imports
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 
-# Project imports
 from core.models.phases import (
     ExtractPhase,
     LoadPhase,
@@ -60,31 +57,31 @@ class Pipeline(BaseModel):
     needs: str | list[str] | None = None
 
     # Private
-    __is_executed: bool = False
+    _is_executed: bool = False
 
     @property
     def is_executed(self) -> bool:
-        return self.__is_executed
+        return self._is_executed
 
     @is_executed.setter
     def is_executed(self, value: bool) -> None:
-        self.__is_executed = value
+        self._is_executed = value
 
     @property
     def extract(self) -> ExtractPhase:
-        return self.phases[PipelinePhase.EXTRACT_PHASE]
+        return cast(ExtractPhase, self.phases[PipelinePhase.EXTRACT_PHASE])
 
     @property
     def transform(self) -> TransformPhase:
-        return self.phases[PipelinePhase.TRANSFORM_PHASE]
+        return cast(TransformPhase, self.phases[PipelinePhase.TRANSFORM_PHASE])
 
     @property
     def load(self) -> LoadPhase:
-        return self.phases[PipelinePhase.LOAD_PHASE]
+        return cast(LoadPhase, self.phases[PipelinePhase.LOAD_PHASE])
 
     @property
     def load_transform(self) -> TransformLoadPhase:
-        return self.phases[PipelinePhase.TRANSFORM_AT_LOAD_PHASE]
+        return cast(TransformLoadPhase, self.phases[PipelinePhase.TRANSFORM_AT_LOAD_PHASE])
 
     @field_validator("phases")
     @classmethod
