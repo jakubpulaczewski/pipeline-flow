@@ -9,7 +9,15 @@ from pytest_mock import MockerFixture, MockType
 # Project Imports
 from common.type_def import AsyncPlugin, PluginName, SyncPlugin
 from core.executor import plugin_async_executor, plugin_sync_executor
-from core.models.phases import ExtractPhase, LoadPhase, PhaseInstance, PipelinePhase, TransformLoadPhase, TransformPhase
+from core.models.phases import (
+    ExtractPhase,
+    LoadPhase,
+    PhaseInstance,
+    PipelinePhase,
+    TransformLoadPhase,
+    TransformPhase,
+    unique_id_validator,
+)
 from core.plugins import PluginRegistry, PluginWrapper
 from tests.resources import mocks
 
@@ -33,6 +41,35 @@ def plugin_registry_mock(plugin_mock: MockType) -> MockType:
     plugin_mock.side_effect = plugin_fetcher
 
     return plugin_mock
+
+
+def test_unique_id_validator_with_single_id() -> None:
+    steps = [
+        PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id")),
+    ]
+
+    assert unique_id_validator(steps=steps) == steps
+
+
+def test_unique_id_validator_with_different_ids() -> None:
+    # Should pass with multiple different IDs
+    steps = [
+        PluginWrapper(id="extractor_id_1", func=mocks.mock_extractor(id="extractor_id_1")),
+        PluginWrapper(id="extractor_id_2", func=mocks.mock_extractor(id="extractor_id_2")),
+    ]
+
+    assert unique_id_validator(steps=steps) == steps
+
+
+def test_unique_id_validator_with_multiple_duplicate_ids() -> None:
+    with pytest.raises(ValueError, match="The `ID` is not unique. There already exists an 'ID' with this name."):
+        unique_id_validator(
+            steps=[
+                PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id")),
+                PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id")),
+                PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id")),
+            ]
+        )
 
 
 @pytest.mark.asyncio

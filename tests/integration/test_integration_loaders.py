@@ -1,9 +1,8 @@
-# Standard Imports
 from types import FunctionType
 from typing import Self
 
-# Third Party Imports
-# Project Imports
+import pytest
+
 from core.loaders import load_custom_plugins
 from core.models.phases import PipelinePhase
 from core.plugins import PluginRegistry
@@ -32,6 +31,24 @@ class TestIntegrationPluginLoader:
         assert loader_plugin.__name__ == "custom_loader"
         assert type(loader_plugin) is FunctionType
 
-    # def test_load_plugins_success():
-    #     #TODO: Create a test for this.
-    #     ...
+    def test_load_plugins_success(self: Self) -> None:
+        # Load the plugins
+        plugins = {"/workspaces/workflow/tests/resources/custom_plugins.py"}
+        load_custom_plugins(plugins)
+
+        # Verify plugins were loaded
+        assert len(PluginRegistry._registry) > 0
+        assert PipelinePhase.EXTRACT_PHASE in PluginRegistry._registry
+        assert PipelinePhase.LOAD_PHASE in PluginRegistry._registry
+
+    def test_load_plugins_empty_set(self: Self) -> None:
+        # Test loading with empty plugin set
+        plugins = set()
+        load_custom_plugins(plugins)
+        assert PluginRegistry._registry == {}
+
+    def test_load_plugins_invalid_path(self: Self) -> None:
+        # Test loading with invalid path
+        plugins = {"/invalid/path/plugin.py"}
+        with pytest.raises(FileNotFoundError):
+            load_custom_plugins(plugins)

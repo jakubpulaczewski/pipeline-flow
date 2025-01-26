@@ -4,7 +4,7 @@ from core.loaders import load_plugins
 from core.orchestrator import PipelineOrchestrator
 
 # # Project Imports
-from core.parser import PipelineParser, YamlParser
+from core.parsers import YamlParser, parse_pipelines
 
 # Third-party imports
 
@@ -22,8 +22,7 @@ async def start(yaml_text: str | None = None, file_path: str | None = None) -> b
     load_plugins(yaml_config.engine, plugins_payload)
 
     # Parse pipelines and execute them using the orchestrator
-    pipeline_parser = PipelineParser()
-    pipelines = pipeline_parser.parse_pipelines(yaml_parser.get_pipelines_dict())
+    pipelines = parse_pipelines(yaml_parser.get_pipelines_dict())
 
     orchestrator = PipelineOrchestrator(yaml_config)
     await orchestrator.execute_pipelines(pipelines)

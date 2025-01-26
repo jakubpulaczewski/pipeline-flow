@@ -15,8 +15,6 @@ if TYPE_CHECKING:
     from common.type_def import PluginName, WrappedPlugin
     from core.models.phases import PipelinePhase
 
-logger = logging.getLogger(__name__)
-
 
 def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[WrappedPlugin], WrappedPlugin]:
     @wraps(plugin)
@@ -63,14 +61,14 @@ class PluginRegistry(metaclass=SingletonMeta):
 
         # Check if the plugin has been registered.
         if plugin_name in cls._registry[pipeline_phase]:
-            logger.warning(
+            logging.warning(
                 "Plugin for `%s` phase already exists in PluginRegistry class.",
                 pipeline_phase,
             )
             return False
 
         cls._registry[pipeline_phase][plugin_name] = plugin_callable
-        logger.debug(
+        logging.debug(
             "Plugin `%s` for phase `%s` registered successfully.",
             plugin,
             pipeline_phase,
@@ -82,11 +80,11 @@ class PluginRegistry(metaclass=SingletonMeta):
         """Remove a plugin for a given pipeline type and plugin."""
         if pipeline_phase in cls._registry and plugin_name in cls._registry[pipeline_phase]:
             del cls._registry[pipeline_phase][plugin_name]
-            logger.debug("Plugin '%s' for phase '%s' has been removed.", plugin_name, pipeline_phase)
+            logging.debug("Plugin '%s' for phase '%s' has been removed.", plugin_name, pipeline_phase)
 
             # Remove the ETL type dict if empty after removing the plugin.
             if not cls._registry[pipeline_phase]:
-                logger.debug("Stage '%s' has been removed.", pipeline_phase)
+                logging.debug("Stage '%s' has been removed.", pipeline_phase)
                 del cls._registry[pipeline_phase]
             return True
         return False
@@ -100,7 +98,7 @@ class PluginRegistry(metaclass=SingletonMeta):
             msg = f"Plugin class was not found for following plugin `{plugin_name}`."
             raise ValueError(msg)
 
-        logger.debug("Plugin class '%s' has been successfully retrieved.", plugin_factory)
+        logging.debug("Plugin class '%s' has been successfully retrieved.", plugin_factory)
         return plugin_factory
 
     @classmethod

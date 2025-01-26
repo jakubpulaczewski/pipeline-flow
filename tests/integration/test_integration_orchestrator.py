@@ -8,7 +8,7 @@ from core.models.pipeline import Pipeline
 
 # Project Imports
 from core.orchestrator import PipelineOrchestrator
-from core.parser import YamlConfig
+from core.parsers.yaml_parser import YamlConfig
 from core.plugins import PluginWrapper
 from tests.resources import mocks
 

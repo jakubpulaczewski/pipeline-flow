@@ -6,12 +6,9 @@ from core.executor import PIPELINE_STRATEGY_MAP
 
 # Project Imports
 from core.models.pipeline import Pipeline
-from core.parser import YamlConfig
+from core.parsers.yaml_parser import YamlConfig
 
 # Third Party Imports
-
-
-logger = logging.getLogger(__name__)
 
 
 class PipelineOrchestrator:
@@ -35,9 +32,9 @@ class PipelineOrchestrator:
 
     async def pipeline_queue_producer(self, pipelines: list[Pipeline]) -> None:
         for pipeline in pipelines:
-            logger.debug("Adding %s to central pipeline queue", pipeline.name)
+            logging.debug("Adding %s to central pipeline queue", pipeline.name)
             await self.pipeline_queue.put(pipeline)
-            logger.debug("Added %s to central pipeline queue", pipeline.name)
+            logging.debug("Added %s to central pipeline queue", pipeline.name)
 
     async def _execute_pipeline(self) -> None:
         if self.pipeline_queue.empty():
@@ -47,10 +44,10 @@ class PipelineOrchestrator:
             while not self.pipeline_queue.empty():
                 pipeline = await self.pipeline_queue.get()
 
-                logger.info("Executing: %s ", pipeline.name)
+                logging.info("Executing: %s ", pipeline.name)
                 strategy = PIPELINE_STRATEGY_MAP[pipeline.type]
                 pipeline.is_executed = await strategy().execute(pipeline)
-                logger.info("Completed: %s", pipeline.name)
+                logging.info("Completed: %s", pipeline.name)
 
                 self.pipeline_queue.task_done()
 

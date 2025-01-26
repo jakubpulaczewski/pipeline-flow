@@ -1,6 +1,8 @@
 # Standard Imports
 from __future__ import annotations
 
+import logging
+import re
 from enum import Enum, unique
 from typing import TYPE_CHECKING, Annotated, Self
 
@@ -50,13 +52,22 @@ def serialize_plugins(phase_pipeline: PipelinePhase) -> Callable[[list], list[Pl
     return validator
 
 
-# TODO: Maybe it needs a specifci tests?? in test_unit_pipelines.py
 def unique_id_validator(steps: list[PluginWrapper]) -> list[PluginWrapper]:
-    done = []
+    if not steps:
+        logging.debug("No plugins to validate for unique ID.")
+        return steps
+
+    ids = {}
+    id_pattern = re.compile(r"^[a-zA-Z0-9_]+$")
+
     for step in steps:
-        if step.id in done:
+        if not id_pattern.match(step.id):
+            raise ValueError("The `ID` must only contain alphanumeric characters and underscores.")
+
+        if step.id in ids:
             raise ValueError("The `ID` is not unique. There already exists an 'ID' with this name.")
-        done.append(step.id)
+
+        ids[step.id] = 1
 
     return steps
 

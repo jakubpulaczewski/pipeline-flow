@@ -11,14 +11,10 @@ classDiagram
     class YamlCoordinator {
     }
 
-    class PipelineParser {
-    }
-
     class PluginParser {
     }
 
     PluginLoader o-- YamlCoordinator
-    YamlCoordinator *-- PipelineParser 
     YamlCoordinator *-- PluginParser 
 ```
 

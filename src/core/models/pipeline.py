@@ -13,8 +13,6 @@ from core.models.phases import (
     TransformPhase,
 )
 
-logger = logging.getLogger(__name__)
-
 
 @unique
 class PipelineType(Enum):
@@ -101,11 +99,11 @@ class Pipeline(BaseModel):
 
         if missing_phases or extra_phases:
             if missing_phases:
-                logger.exception(
+                logging.exception(
                     "Validation Error: Missing phases for pipeline type '%s': %s", pipeline_type, missing_phases
                 )
             if extra_phases:
-                logger.warning(
+                logging.warning(
                     "Validation Warning: Extra phases provided for pipeline type '%s': %s", pipeline_type, extra_phases
                 )
 
@@ -116,5 +114,5 @@ class Pipeline(BaseModel):
             raise ValueError(error_msg)
 
         msg = f"Phase validation successful for pipeline type '{pipeline_type}'"
-        logger.info(msg)
+        logging.info(msg)
         return phases

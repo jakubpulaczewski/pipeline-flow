@@ -12,7 +12,7 @@ from core.executor import ETLStrategy
 from core.models.exceptions import ExtractError
 from core.models.pipeline import Pipeline
 from core.orchestrator import PipelineOrchestrator
-from core.parser import YamlConfig
+from core.parsers.yaml_parser import YamlConfig
 
 
 @pytest.fixture
