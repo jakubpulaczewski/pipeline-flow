@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import importlib.util
 import logging
 import os
 import sys
-from importlib.util import module_from_spec, spec_from_file_location
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -50,20 +50,21 @@ def _load_plugin_from_file(plugin_file: str) -> None:
 
     try:
         logging.debug("Loading module %s", fq_module_name)
-        spec = spec_from_file_location(fq_module_name, plugin_file)
+        spec = importlib.util.spec_from_file_location(fq_module_name, plugin_file)
 
         if not spec:
             raise ImportError(  # noqa: TRY301
                 "The Spec based on following file location is empty: %s and %s plugin.", fq_module_name, plugin_file
             )
 
-        plugin_module = module_from_spec(spec)
+        plugin_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(plugin_module)  # type: ignore[reportOptionalMemberAccess]
         logging.info("Loaded plugin from %s as %s", plugin_file, fq_module_name)
 
     except ImportError:
         msg = f"Error importing plugin from `{fq_module_name}` module,"
-        logging.exception(msg)
+        logging.error(msg)
+        raise
 
 
 def load_core_engine_transformations(engine: str) -> None:

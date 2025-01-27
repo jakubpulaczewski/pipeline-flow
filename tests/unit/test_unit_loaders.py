@@ -16,11 +16,9 @@ class TestUnitPluginLoader:
     def test_load_plugin_from_file_new_module(self: Self, mocker: MockerFixture) -> None:
         mock_spec = mocker.patch("importlib.util.spec_from_file_location")
         mock_module = mocker.patch("importlib.util.module_from_spec")
-        mock_spec.return_value.loader.exec_module = MagicMock()
+        mock_spec.return_value.loader.return_value_exec_module = MagicMock()
 
-        plugin = "new_folder/subfolder/file.py"
-
-        loaders._load_plugin_from_file(plugin)
+        loaders._load_plugin_from_file("new_folder/subfolder/file.py")
 
         mock_spec.assert_called_once_with("new_folder.subfolder.file", "new_folder/subfolder/file.py")
         mock_module.assert_called_once()
