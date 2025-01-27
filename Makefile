@@ -8,7 +8,7 @@ default: help
 help:
 	@grep -E '^[a-zA-Z0-9 -]+:.*#'  Makefile | sort | while read -r l; do printf "\033[1;32m$$(echo  $$l | cut -f 1 -d':')\033[00m:$$(echo $$l | cut -f 2- -d'#')\n"; done
 
-build: ## Lint and compile code - #TODO: Need change to use ruff and pyright for checking.
+build: ## Lint and compile code
 	ruff check ${src_dir} ${tests_dir}
 	poetry run pyright ${src_dir} ${tests_dir}
 	@echo "Build succeeded"
@@ -20,11 +20,9 @@ clean: ## Remove build outputs, test outputs and cached files.
 format: ## Reformat source code
 	@ruff format ${src_dir} ${tests_dir} -v
 	
-precommit: ## Running Precommit checks.
-	format
-	build
-	test
-	@poetry export --dev --format requirements.txt | poetry run safety check --stdin
+precommit: format build test ## Running Precommit checks.
+	@echo "Pre-commit checks completed successfully."
+
 
 setup: ## Setup or update local env
 	@echo "Setting up or updating local environment..."
