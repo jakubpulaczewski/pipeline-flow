@@ -23,7 +23,7 @@ def async_time_it[**P, R](func: Callable[P, Awaitable[R]]) -> Callable[P, Awaita
         try:
             result = await func(*args, **kwargs)
         except Exception:
-            logging.exception("Error occurred while executing %s: %s")
+            logging.error("Error occurred while executing %s: %s")
             raise
         finally:
             total_time = asyncio.get_running_loop().time() - start
@@ -42,7 +42,7 @@ def sync_time_it[**P, R](func: Callable[P, R]) -> Callable[P, R]:
         try:
             result = func(*args, **kwargs)
         except Exception:
-            logging.exception("Error occurred while executing %s: %s")
+            logging.error("Error occurred while executing %s: %s")
             raise
         finally:
             total_time = time.time() - start

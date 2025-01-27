@@ -99,7 +99,7 @@ class Pipeline(BaseModel):
 
         if missing_phases or extra_phases:
             if missing_phases:
-                logging.exception(
+                logging.error(
                     "Validation Error: Missing phases for pipeline type '%s': %s", pipeline_type, missing_phases
                 )
             if extra_phases:

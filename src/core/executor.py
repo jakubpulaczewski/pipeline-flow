@@ -37,7 +37,7 @@ def plugin_sync_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_
         return plugin.func(*pipeline_args, **pipeline_kwargs)
     except Exception:
         error_msg = f"Error has occured during plugin `{plugin.id}` execution"
-        logging.exception(error_msg)
+        logging.error(error_msg)
         raise
 
 
@@ -46,7 +46,7 @@ async def plugin_async_executor(plugin: PluginWrapper, *pipeline_args: Any, **pi
         return await plugin.func(*pipeline_args, **pipeline_kwargs)
     except Exception:
         error_msg = f"Error has occured during plugin `{plugin.id}` execution"
-        logging.exception(error_msg)
+        logging.error(error_msg)
         raise
 
 
@@ -83,7 +83,7 @@ async def run_extractor(extracts: ExtractPhase) -> ExtractedData:
 
     except Exception as e:
         error_message = f"Error during `extraction`: {e}"
-        logging.exception(error_message)
+        logging.error(error_message)
         raise ExtractError(error_message) from e
 
 
@@ -97,7 +97,7 @@ def run_transformer(data: ExtractedData, transformations: TransformPhase) -> Tra
 
     except Exception as e:
         error_message = "Error during `transform`"
-        logging.exception(error_message)
+        logging.error(error_message)
         raise TransformError(error_message) from e
 
     return transformed_data  # type: ignore[reportPossiblyUnboundVariable]
@@ -115,7 +115,7 @@ async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPh
             await task_executor(destinations.post)
     except Exception as e:
         error_message = f"Error during `load`): {e}"
-        logging.exception(error_message)
+        logging.error(error_message)
         raise LoadError(error_message) from e
 
     return [{"id": plugin_id, "success": True} for plugin_id, _ in results.items()]
@@ -132,7 +132,7 @@ def run_transformer_after_load(transformations: TransformLoadPhase) -> list[dict
 
     except Exception as e:
         error_message = "Error during `transform_at_load`"
-        logging.exception("Error during `transform_at_load`")
+        logging.error("Error during `transform_at_load`")
         raise TransformLoadError(error_message) from e
     return results
 

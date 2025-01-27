@@ -94,7 +94,7 @@ docstring-code-line-length = "dynamic"
     "D401",
     "EM101", 
     "FIX002", 
-    "TRY003",
+    "TRY003", "TRY400",
     "TD002", "TD003",
     "UP035"
 ]
