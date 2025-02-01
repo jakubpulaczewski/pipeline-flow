@@ -48,7 +48,8 @@
                 "charliermarsh.ruff",
                 "ms-pyright.pyright",
                 "tabnine.tabnine-vscode",
-                "github.copilot-chat"
+                "github.copilot-chat",
+                "tht13.rst-vscode"
             ]
 		}
 
