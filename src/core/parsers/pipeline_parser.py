@@ -2,8 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.models.phases import PHASE_CLASS_MAP, PhaseInstance, PipelinePhase
+from core.models.phases import ExtractPhase, LoadPhase, Phase, PipelinePhase, TransformLoadPhase, TransformPhase
 from core.models.pipeline import Pipeline
+
+PHASE_CLASS_MAP = {
+    PipelinePhase.EXTRACT_PHASE: ExtractPhase,
+    PipelinePhase.TRANSFORM_PHASE: TransformPhase,
+    PipelinePhase.LOAD_PHASE: LoadPhase,
+    PipelinePhase.TRANSFORM_AT_LOAD_PHASE: TransformLoadPhase,
+}
 
 
 def parse_pipelines(pipelines_data: dict[str, dict[str, Any]]) -> list[Pipeline]:
@@ -13,23 +20,23 @@ def parse_pipelines(pipelines_data: dict[str, dict[str, Any]]) -> list[Pipeline]
     return [_create_pipeline(pipeline_name, pipeline_data) for pipeline_name, pipeline_data in pipelines_data.items()]
 
 
-def _create_pipeline(pipeline_name: str, pipeline_data: dict[str, Any]) -> Pipeline:
+def _create_pipeline(pipeline_name: str, phase_data: dict[str, Any]) -> Pipeline:
     """Parse a single pipeline's data and return a pipeline instance."""
-    if not pipeline_data:
+    if not phase_data:
         raise ValueError("Pipeline attributes are empty")
 
     phases = {}
 
-    if "phases" not in pipeline_data:
+    if "phases" not in phase_data:
         raise ValueError("The argument `phases` in pipelines must be specified.")
-    for phase_name, phase_details in pipeline_data["phases"].items():
-        phases[phase_name] = _create_phase(phase_name, phase_details)
+    for phase_name, phase_details in phase_data["phases"].items():
+        phases[phase_name] = _parse_phase(phase_name, phase_details)
 
-    pipeline_data["phases"] = phases
-    return Pipeline(name=pipeline_name, **pipeline_data)
+    phase_data["phases"] = phases
+    return Pipeline(name=pipeline_name, **phase_data)
 
 
-def _create_phase(phase_name: str, phase_data: dict[str, Any]) -> PhaseInstance:
+def _parse_phase(phase_name: str, phase_data: dict[str, Any]) -> Phase:
     phase_pipeline: PipelinePhase = PipelinePhase(phase_name)
     phase_class = PHASE_CLASS_MAP[phase_pipeline]
 

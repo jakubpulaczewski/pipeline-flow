@@ -12,7 +12,7 @@ from core.executor import plugin_async_executor, plugin_sync_executor
 from core.models.phases import (
     ExtractPhase,
     LoadPhase,
-    PhaseInstance,
+    Phase,
     PipelinePhase,
     TransformLoadPhase,
     TransformPhase,
@@ -101,7 +101,7 @@ async def test_run_load_data() -> None:
 
 
 @pytest.mark.parametrize("phase_class", [(ExtractPhase), (LoadPhase), (TransformLoadPhase)])
-def test_create_phase_without_mandary_phase(phase_class: PhaseInstance) -> None:
+def test_create_phase_without_mandary_phase(phase_class: Phase) -> None:
     with pytest.raises(ValidationError, match="List should have at least 1 item after validation"):
         phase_class(steps=[])  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
 
@@ -126,7 +126,7 @@ def test_create_phase_extract(plugin_mock: MockType) -> None:
     )
 
 
-def test_create_phase_extract_with_merge_success(mocker: MockerFixture, plugin_registry_mock: MockType) -> None:
+def test_extract_with_merge_success(mocker: MockerFixture, plugin_registry_mock: MockType) -> None:
     mocker.patch("uuid.uuid4", return_value="12345678")
 
     extract = ExtractPhase(
@@ -152,7 +152,7 @@ def test_create_phase_extract_with_merge_success(mocker: MockerFixture, plugin_r
 
 
 @pytest.mark.usefixtures("plugin_registry_mock")
-def test_create_phase_extract_with_merge_failure() -> None:
+def test_extract_phase_rejects_merge_with_single_step() -> None:
     with pytest.raises(
         ValidationError,
         match="Validation Error! Merge can only be used if there is more than one extract step.",
@@ -165,6 +165,23 @@ def test_create_phase_extract_with_merge_failure() -> None:
                 }
             ],
             merge={"plugin": "mock_merger"},  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
+        )
+
+
+@pytest.mark.usefixtures("plugin_registry_mock")
+def test_extract_phase_rejects_merge_with_two_steps_and_no_merge() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="Validation Error! Merge is required when there are more than one extract step.",
+    ):
+        ExtractPhase(
+            steps=[  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
+                {
+                    "id": "extractor_id",
+                    "plugin": "mock_extractor",
+                },
+                {"id": "extractor_id_2", "plugin": "mock_extractor_2"},
+            ],
         )
 
 
