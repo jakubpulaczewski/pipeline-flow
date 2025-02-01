@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from core.models.phases import (
     ExtractPhase,
     LoadPhase,
-    PhaseInstance,
+    Phase,
     PipelinePhase,
     TransformLoadPhase,
     TransformPhase,
@@ -48,7 +48,7 @@ class Pipeline(BaseModel):
 
     name: Annotated[str, "Name of the pipeline job"]
     type: PipelineType
-    phases: dict[PipelinePhase, PhaseInstance]
+    phases: dict[PipelinePhase, Phase]
 
     # Optional
     description: str | None = None
@@ -84,8 +84,8 @@ class Pipeline(BaseModel):
     @field_validator("phases")
     @classmethod
     def validate_phase_existence(
-        cls, phases: dict[PipelinePhase, PhaseInstance], info: ValidationInfo
-    ) -> dict[PipelinePhase, PhaseInstance]:
+        cls, phases: dict[PipelinePhase, Phase], info: ValidationInfo
+    ) -> dict[PipelinePhase, Phase]:
         pipeline_type = info.data["type"]
 
         pipeline_phases = MANDATORY_PHASES_BY_PIPELINE_TYPE[pipeline_type]
