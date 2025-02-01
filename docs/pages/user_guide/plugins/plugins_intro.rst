@@ -10,6 +10,8 @@ Built-in Plugins
 ----------------
 As of now, there are no ref:`built-in plugins <core_plugins>` available. However, as the project grows, we will add more plugins to the core system.
 We will be adding plugins for common use cases, including:
+
+
 - Database Connectors (MySQL, PostgreSQL, etc.)
 - Cloud Storage Connectors (AWS S3, Google Cloud Storage, etc.)
 - API Connectors (REST, GraphQL, etc.)
@@ -38,6 +40,7 @@ For a list of available plugins, visit the `Community Plugin Repository <https:/
 Custom Plugins
 --------------
 For advanced use cases, you can build custom plugins to extend the functionality. Custom plugins enable:
+
 - Custom Data Extraction: Connect to APIs, web services, or proprietary data sources.
 - Advanced Transformations: Implement business-specific data processing logic.
 - Specialized Load Mechanisms: Load data into unique storage formats or non-standard databases.

@@ -40,7 +40,7 @@ You can either provide a yaml file path or a python string to the ``start`` func
 The yaml file should contain the pipeline configuration. 
 
 Configuration Template
--------------
+-----------------------
 Setup a configuration file for your pipeline. Create a new YAML file (e.g., ``pipeline.yaml``) 
 and define your pipeline steps. 
 

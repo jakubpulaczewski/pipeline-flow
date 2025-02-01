@@ -58,8 +58,6 @@ For example, to register the plugin created in the previous step:
   >>>     async def inner(data: str) -> None:
   >>>         return data.upper()
   >>>     return inner
-...
-
 
 
 Using Your Plugin
