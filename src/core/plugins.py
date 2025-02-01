@@ -1,3 +1,4 @@
+# Standard Imports
 from __future__ import annotations
 
 import logging
@@ -6,8 +7,10 @@ from collections.abc import Awaitable, Callable  # noqa: TC003 False Positive
 from functools import wraps
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
+# Third Party Imports
 from pydantic.dataclasses import dataclass
 
+# Project Imports
 from common.type_def import ETLData  # noqa: TC001 False Positive
 from common.utils import SingletonMeta
 
@@ -112,4 +115,8 @@ class PluginRegistry(metaclass=SingletonMeta):
         plugin_factory = cls.get(phase_pipeline, plugin_name)
 
         plugin_id = plugin_data.get("id") or f"{plugin_factory.__name__}_{uuid.uuid4()}"
-        return PluginWrapper(id=plugin_id, func=plugin_factory(**plugin_data))
+        plugin_params = plugin_data.get("params", {})
+        if plugin_params:
+            return PluginWrapper(id=plugin_id, func=plugin_factory(**plugin_params))
+
+        return PluginWrapper(id=plugin_id, func=plugin_factory())

@@ -46,18 +46,18 @@ def test_create_pipeline_with_only_mandatory_phases(mocker: MockerFixture) -> No
         side_effect=[
             ExtractPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="extractor_id", func=mocks.mock_extractor("extractor_id")),
+                    PluginWrapper(id="extractor_id", func=mocks.mock_extractor()),
                     PluginWrapper(
                         id="extractor_id_2",
-                        func=mocks.mock_extractor("extractor_id_2"),
+                        func=mocks.mock_extractor(),
                     ),
                 ]
             ),
             TransformPhase.model_construct(steps=[]),
             LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="loader_id", func=mocks.mock_loader("loader_id")),
-                    PluginWrapper(id="loader_id_2", func=mocks.mock_loader("loader_id_2")),
+                    PluginWrapper(id="loader_id", func=mocks.mock_loader()),
+                    PluginWrapper(id="loader_id_2", func=mocks.mock_loader()),
                 ]
             ),
         ],
@@ -115,10 +115,10 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker: MockerFixtur
         side_effect=[
             ExtractPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="extractor_id", func=mocks.mock_extractor("extractor_id")),
+                    PluginWrapper(id="extractor_id", func=mocks.mock_extractor()),
                     PluginWrapper(
                         id="extractor_id_2",
-                        func=mocks.mock_extractor("extractor_id_2"),
+                        func=mocks.mock_extractor(),
                     ),
                 ]
             ),
@@ -126,18 +126,18 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker: MockerFixtur
                 steps=[
                     PluginWrapper(
                         id="transformer_id",
-                        func=mocks.mock_transformer("transformer_id"),
+                        func=mocks.mock_transformer(),
                     ),
                     PluginWrapper(
                         id="transformer_id_2",
-                        func=mocks.mock_transformer("transformer_id_2"),
+                        func=mocks.mock_transformer(),
                     ),
                 ]
             ),
             LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="loader_id", func=mocks.mock_loader("loader_id")),
-                    PluginWrapper(id="loader_id_2", func=mocks.mock_loader("loader_id_2")),
+                    PluginWrapper(id="loader_id", func=mocks.mock_loader()),
+                    PluginWrapper(id="loader_id_2", func=mocks.mock_loader()),
                 ]
             ),
         ],

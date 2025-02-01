@@ -42,7 +42,7 @@ def sync_pre(output: str, delay: float = 0.2) -> SyncPlugin:
     return inner
 
 
-def upper_transformer(id: str) -> SyncPlugin:  # noqa: A002,ARG001
+def upper_transformer() -> SyncPlugin:
     @wraps(upper_transformer)
     def inner(data: str) -> str:
         return data.upper()
@@ -52,9 +52,7 @@ def upper_transformer(id: str) -> SyncPlugin:  # noqa: A002,ARG001
 
 @pytest.mark.asyncio
 async def test_run_extractor_without_delay() -> None:
-    extract = ExtractPhase.model_construct(
-        steps=[PluginWrapper(id="extractor_id", func=mocks.mock_async_extractor(id="extractor_id"))]
-    )
+    extract = ExtractPhase.model_construct(steps=[PluginWrapper(id="extractor_id", func=mocks.mock_async_extractor())])
     result = await run_extractor(extract)
 
     assert result == "async_extracted_data"
@@ -64,10 +62,10 @@ async def test_run_extractor_without_delay() -> None:
 async def test_run_extractor_multiple_without_delay() -> None:
     extracts = ExtractPhase.model_construct(
         steps=[
-            PluginWrapper(id="extractor_id", func=mocks.mock_async_extractor(id="extractor_id")),
+            PluginWrapper(id="extractor_id", func=mocks.mock_async_extractor()),
             PluginWrapper(
                 id="extractor_id_2",
-                func=mocks.mock_async_extractor(id="extractor_id_2"),
+                func=mocks.mock_async_extractor(),
             ),
         ],
         merge=PluginWrapper(id="func_mock", func=mocks.mock_merger()),
@@ -79,7 +77,7 @@ async def test_run_extractor_multiple_without_delay() -> None:
 
 def test_run_transformer() -> None:
     transformations = TransformPhase.model_construct(
-        steps=[PluginWrapper(id="transformer_id", func=mocks.mock_transformer(id="transformer_id"))]
+        steps=[PluginWrapper(id="transformer_id", func=mocks.mock_transformer())]
     )
 
     result = run_transformer("DATA", transformations)
@@ -91,8 +89,8 @@ def test_run_multiple_transformer() -> None:
     data = "initial_data"
     transformations = TransformPhase.model_construct(
         steps=[
-            PluginWrapper(id="transformer_id", func=mocks.mock_transformer(id="transformer_id")),
-            PluginWrapper(id="transformer_upper", func=upper_transformer(id="transformer_upper")),
+            PluginWrapper(id="transformer_id", func=mocks.mock_transformer()),
+            PluginWrapper(id="transformer_upper", func=upper_transformer()),
         ]
     )
 
@@ -104,9 +102,7 @@ def test_run_multiple_transformer() -> None:
 @pytest.mark.asyncio
 async def test_run_loader_without_delay() -> None:
     data = "INITIAL_DATA_SUFFIX"
-    destinations = LoadPhase.model_construct(
-        steps=[PluginWrapper(id="loader_id", func=mocks.mock_loader(id="loader_id"))]
-    )
+    destinations = LoadPhase.model_construct(steps=[PluginWrapper(id="loader_id", func=mocks.mock_loader())])
     result = await run_loader(data, destinations)
 
     assert result == [{"id": "loader_id", "success": True}]
@@ -117,8 +113,8 @@ async def test_run_loader_multiple_without_delay() -> None:
     data = "TRANSFORMED_ETL_DATA"
     destinations = LoadPhase.model_construct(
         steps=[
-            PluginWrapper(id="loader_id", func=mocks.mock_loader(id="loader_id")),
-            PluginWrapper(id="loader_id_2", func=mocks.mock_loader(id="loader_id_2")),
+            PluginWrapper(id="loader_id", func=mocks.mock_loader()),
+            PluginWrapper(id="loader_id_2", func=mocks.mock_loader()),
         ]
     )
     result = await run_loader(data, destinations)
@@ -133,7 +129,7 @@ def test_run_transformer_after_load() -> None:
         steps=[
             PluginWrapper(
                 id="mock_transform_loader_id",
-                func=mocks.mock_load_transformer(id="mock_transform_loader_id", query="SELECT 1"),
+                func=mocks.mock_load_transformer(query="SELECT 1"),
             )
         ]
     )
@@ -149,11 +145,11 @@ def test_run_transformer_after_load_multiple() -> None:
         steps=[
             PluginWrapper(
                 id="mock_transform_loader_id",
-                func=mocks.mock_load_transformer(id="mock_transform_loader_id", query="SELECT 1"),
+                func=mocks.mock_load_transformer(query="SELECT 1"),
             ),
             PluginWrapper(
                 id="mock_transform_loader_id_2",
-                func=mocks.mock_load_transformer(id="mock_transform_loader_id_2", query="SELECT 2"),
+                func=mocks.mock_load_transformer(query="SELECT 2"),
             ),
         ]
     )
@@ -193,7 +189,7 @@ class TestUnitPipelineStrategyConcurrency:
             steps=[
                 PluginWrapper(
                     id="async_extractor_id",
-                    func=mocks.mock_async_extractor(id="async_extractor_id", delay=0.1),
+                    func=mocks.mock_async_extractor(delay=0.1),
                 )
             ],
             pre=[
@@ -217,11 +213,11 @@ class TestUnitPipelineStrategyConcurrency:
             steps=[
                 PluginWrapper(
                     id="async_extractor_id",
-                    func=mocks.mock_async_extractor(id="async_extractor_id", delay=0.1),
+                    func=mocks.mock_async_extractor(delay=0.1),
                 ),
                 PluginWrapper(
                     id="async_extractor_id_2",
-                    func=mocks.mock_async_extractor(id="async_extractor_id_2", delay=0.2),
+                    func=mocks.mock_async_extractor(delay=0.2),
                 ),
             ],
             merge=PluginWrapper(id="func_mock", func=mocks.mock_merger()),
@@ -240,7 +236,7 @@ class TestUnitPipelineStrategyConcurrency:
             steps=[
                 PluginWrapper(
                     id="async_loader_id",
-                    func=mocks.mock_async_loader(id="async_loader_id", delay=0.1),
+                    func=mocks.mock_async_loader(delay=0.1),
                 )
             ],
             pre=[
@@ -263,11 +259,11 @@ class TestUnitPipelineStrategyConcurrency:
             steps=[
                 PluginWrapper(
                     id="async_loader_id",
-                    func=mocks.mock_async_loader(id="async_loader_id", delay=0.4),
+                    func=mocks.mock_async_loader(delay=0.4),
                 ),
                 PluginWrapper(
                     id="async_loader_id_2",
-                    func=mocks.mock_async_loader(id="async_loader_id_2", delay=0.2),
+                    func=mocks.mock_async_loader(delay=0.2),
                 ),
             ]
         )
@@ -289,11 +285,11 @@ class TestUnitPipelineStrategyConcurrency:
             steps=[
                 PluginWrapper(
                     id="async_transformer_id",
-                    func=mocks.mock_sync_transformer(id="async_transformer_id", delay=0.2),
+                    func=mocks.mock_sync_transformer(delay=0.2),
                 ),
                 PluginWrapper(
                     id="async_transformer_id_2",
-                    func=mocks.mock_sync_transformer(id="async_transformer_id_2", delay=0.1),
+                    func=mocks.mock_sync_transformer(delay=0.1),
                 ),
             ]
         )
@@ -310,11 +306,11 @@ class TestUnitPipelineStrategyConcurrency:
             steps=[
                 PluginWrapper(
                     id="async_transform_loader_id",
-                    func=mocks.mock_sync_load_transformer(id="async_transform_loader_id", delay=0.1),
+                    func=mocks.mock_sync_load_transformer(delay=0.1),
                 ),
                 PluginWrapper(
                     id="async_transform_loader_id_2",
-                    func=mocks.mock_sync_load_transformer(id="async_transform_loader_id_2", delay=0.2),
+                    func=mocks.mock_sync_load_transformer(delay=0.2),
                 ),
             ]
         )

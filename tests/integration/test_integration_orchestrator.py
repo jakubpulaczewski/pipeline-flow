@@ -31,14 +31,14 @@ async def test_execute_pipeline(
 ) -> None:
     job1 = etl_pipeline_factory(
         name="ETL Pipeline 1",
-        extract=[PluginWrapper(id="mock_extractor", func=mocks.mock_extractor(id="mock_extractor"))],
+        extract=[PluginWrapper(id="mock_extractor", func=mocks.mock_extractor())],
         transform=[
             PluginWrapper(
                 id="mock_transformer",
-                func=mocks.mock_transformer(id="mock_transformer"),
+                func=mocks.mock_transformer(),
             )
         ],
-        load=[PluginWrapper(id="mock_loader", func=mocks.mock_loader(id="mock_loader"))],
+        load=[PluginWrapper(id="mock_loader", func=mocks.mock_loader())],
     )
     await orchestrator.pipeline_queue_producer([job1])
 

@@ -1,17 +1,15 @@
 # Standard Imports
 from functools import wraps
 
-# Third Party
+# Third Party Imports
 import pytest
 from pytest_mock import MockerFixture
 
+# Project
 from common.type_def import AsyncPlugin, SyncPlugin
 from core.models.phases import PipelinePhase
 from core.plugins import PluginRegistry, PluginWrapper, plugin
-
-# Project
 from tests.resources import mocks
-from tests.resources.constants import EXTRACT_PHASE
 
 
 def mock_plugin(id: str) -> AsyncPlugin:  # noqa: A002,ARG001
@@ -60,35 +58,35 @@ class TestUnitPluginDecorator:
 class TestUnitPluginRegistry:
     @staticmethod
     def test_register_plugin() -> None:
-        result = PluginRegistry.register(EXTRACT_PHASE, "mock_plugin", mock_plugin)
+        result = PluginRegistry.register(PipelinePhase.EXTRACT_PHASE, "mock_plugin", mock_plugin)
         assert result is True
         assert PipelinePhase.EXTRACT_PHASE in PluginRegistry._registry
         assert PluginRegistry._registry[PipelinePhase.EXTRACT_PHASE] == {"mock_plugin": mock_plugin}
 
     @staticmethod
     def test_register_duplicate_plugin() -> None:
-        result = PluginRegistry.register(EXTRACT_PHASE, "fake_plugin", mock_plugin)
+        result = PluginRegistry.register(PipelinePhase.EXTRACT_PHASE, "fake_plugin", mock_plugin)
         assert result is True
-        result = PluginRegistry.register(EXTRACT_PHASE, "fake_plugin", mock_plugin)
+        result = PluginRegistry.register(PipelinePhase.EXTRACT_PHASE, "fake_plugin", mock_plugin)
         assert result is False
 
     @staticmethod
     def test_remove_plugin() -> None:
         plugin_name = "fake_plugin"
         # Add the plugin
-        PluginRegistry.register(EXTRACT_PHASE, plugin_name, mock_plugin)
+        PluginRegistry.register(PipelinePhase.EXTRACT_PHASE, plugin_name, mock_plugin)
 
         # Removes the plugin
-        result = PluginRegistry.remove(EXTRACT_PHASE, plugin_name)
+        result = PluginRegistry.remove(PipelinePhase.EXTRACT_PHASE, plugin_name)
         assert result is True
 
         # Try to remove the same plugin, should return False
-        result = PluginRegistry.remove(EXTRACT_PHASE, plugin_name)
+        result = PluginRegistry.remove(PipelinePhase.EXTRACT_PHASE, plugin_name)
         assert result is False
 
     @staticmethod
     def test_remove_nonexistent_plugin() -> None:
-        result = PluginRegistry.remove(EXTRACT_PHASE, "fake_plugin")
+        result = PluginRegistry.remove(PipelinePhase.EXTRACT_PHASE, "fake_plugin")
         assert result is False
 
     @staticmethod
@@ -96,22 +94,22 @@ class TestUnitPluginRegistry:
         plugin_name = "mock_plugin"
 
         # Registering the plugin
-        PluginRegistry.register(EXTRACT_PHASE, plugin_name, mock_plugin)
+        PluginRegistry.register(PipelinePhase.EXTRACT_PHASE, plugin_name, mock_plugin)
 
         # Fetch it
-        plugin_class = PluginRegistry.get(EXTRACT_PHASE, plugin_name)
+        plugin_class = PluginRegistry.get(PipelinePhase.EXTRACT_PHASE, plugin_name)
         assert plugin_class is mock_plugin
 
         # Try to get the same plugin plugin, after its removed, should raise an exception
-        PluginRegistry.remove(EXTRACT_PHASE, plugin_name)
+        PluginRegistry.remove(PipelinePhase.EXTRACT_PHASE, plugin_name)
 
         with pytest.raises(ValueError, match="Plugin class was not found for following plugin `mock_plugin`."):
-            PluginRegistry.get(EXTRACT_PHASE, plugin_name)
+            PluginRegistry.get(PipelinePhase.EXTRACT_PHASE, plugin_name)
 
     @staticmethod
     def test_get_nonexistent_plugin() -> None:
         with pytest.raises(ValueError, match="Plugin class was not found for following plugin `fake_plugin`."):
-            PluginRegistry.get(EXTRACT_PHASE, "fake_plugin")
+            PluginRegistry.get(PipelinePhase.EXTRACT_PHASE, "fake_plugin")
 
     @staticmethod
     @pytest.mark.parametrize(

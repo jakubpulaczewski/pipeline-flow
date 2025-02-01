@@ -55,7 +55,7 @@ async def test_etl_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_extractor_id",
-                        func=mocks.mock_async_extractor(id="async_extractor_id", delay=0.2),
+                        func=mocks.mock_async_extractor(delay=0.2),
                     )
                 ],
             ),
@@ -63,7 +63,7 @@ async def test_etl_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_transformer_id",
-                        func=mocks.mock_sync_transformer(id="async_transformer_id", delay=0.1),
+                        func=mocks.mock_sync_transformer(delay=0.1),
                     ),
                 ]
             ),
@@ -71,15 +71,15 @@ async def test_etl_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_loader_id",
-                        func=mocks.mock_async_loader(id="async_loader_id", delay=0.2),
+                        func=mocks.mock_async_loader(delay=0.2),
                     ),
                     PluginWrapper(
                         id="async_loader_id",
-                        func=mocks.mock_async_loader(id="async_loader_id", delay=0.1),
+                        func=mocks.mock_async_loader(delay=0.1),
                     ),
                     PluginWrapper(
                         id="async_loader_id",
-                        func=mocks.mock_async_loader(id="async_loader_id", delay=0.3),
+                        func=mocks.mock_async_loader(delay=0.3),
                     ),
                 ]
             ),
@@ -104,7 +104,7 @@ async def test_elt_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_extractor_id",
-                        func=mocks.mock_async_extractor(id="async_extractor_id", delay=0.2),
+                        func=mocks.mock_async_extractor(delay=0.2),
                     )
                 ],
             ),
@@ -112,11 +112,11 @@ async def test_elt_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_loader_id",
-                        func=mocks.mock_async_loader(id="async_loader_id", delay=0.2),
+                        func=mocks.mock_async_loader(delay=0.2),
                     ),
                     PluginWrapper(
                         id="async_loader_id",
-                        func=mocks.mock_async_loader(id="async_loader_id", delay=0.1),
+                        func=mocks.mock_async_loader(delay=0.1),
                     ),
                 ]
             ),
@@ -124,11 +124,11 @@ async def test_elt_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_transform_loader_id",
-                        func=mocks.mock_sync_load_transformer(id="async_transform_loader_id", delay=0.1),
+                        func=mocks.mock_sync_load_transformer(delay=0.1),
                     ),
                     PluginWrapper(
                         id="async_transform_loader_id_2",
-                        func=mocks.mock_sync_load_transformer(id="async_transform_loader_id_2", delay=0.1),
+                        func=mocks.mock_sync_load_transformer(delay=0.1),
                     ),
                 ]
             ),
@@ -153,7 +153,7 @@ async def test_etlt_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_extractor_id",
-                        func=mocks.mock_async_extractor(id="async_extractor_id", delay=0.2),
+                        func=mocks.mock_async_extractor(delay=0.2),
                     )
                 ],
             ),
@@ -161,7 +161,7 @@ async def test_etlt_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_transformer_id",
-                        func=mocks.mock_sync_transformer(id="async_transformer_id", delay=0.1),
+                        func=mocks.mock_sync_transformer(delay=0.1),
                     )
                 ],
             ),
@@ -169,11 +169,11 @@ async def test_etlt_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_loader_id",
-                        func=mocks.mock_async_loader(id="async_loader_id", delay=0.2),
+                        func=mocks.mock_async_loader(delay=0.2),
                     ),
                     PluginWrapper(
                         id="async_loader_id",
-                        func=mocks.mock_async_loader(id="async_loader_id", delay=0.1),
+                        func=mocks.mock_async_loader(delay=0.1),
                     ),
                 ]
             ),
@@ -181,11 +181,11 @@ async def test_etlt_strategy_with_delay() -> None:
                 steps=[
                     PluginWrapper(
                         id="async_transform_loader_id",
-                        func=mocks.mock_sync_load_transformer(id="async_transform_loader_id", delay=0.1),
+                        func=mocks.mock_sync_load_transformer(delay=0.1),
                     ),
                     PluginWrapper(
                         id="async_transform_loader_id_2",
-                        func=mocks.mock_sync_load_transformer(id="async_transform_loader_id_2", delay=0.1),
+                        func=mocks.mock_sync_load_transformer(delay=0.1),
                     ),
                 ]
             ),

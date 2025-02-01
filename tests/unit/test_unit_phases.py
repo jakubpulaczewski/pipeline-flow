@@ -45,7 +45,7 @@ def plugin_registry_mock(plugin_mock: MockType) -> MockType:
 
 def test_unique_id_validator_with_single_id() -> None:
     steps = [
-        PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id")),
+        PluginWrapper(id="extractor_id", func=mocks.mock_extractor()),
     ]
 
     assert unique_id_validator(steps=steps) == steps
@@ -54,8 +54,8 @@ def test_unique_id_validator_with_single_id() -> None:
 def test_unique_id_validator_with_different_ids() -> None:
     # Should pass with multiple different IDs
     steps = [
-        PluginWrapper(id="extractor_id_1", func=mocks.mock_extractor(id="extractor_id_1")),
-        PluginWrapper(id="extractor_id_2", func=mocks.mock_extractor(id="extractor_id_2")),
+        PluginWrapper(id="extractor_id_1", func=mocks.mock_extractor()),
+        PluginWrapper(id="extractor_id_2", func=mocks.mock_extractor()),
     ]
 
     assert unique_id_validator(steps=steps) == steps
@@ -65,9 +65,9 @@ def test_unique_id_validator_with_multiple_duplicate_ids() -> None:
     with pytest.raises(ValueError, match="The `ID` is not unique. There already exists an 'ID' with this name."):
         unique_id_validator(
             steps=[
-                PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id")),
-                PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id")),
-                PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id")),
+                PluginWrapper(id="extractor_id", func=mocks.mock_extractor()),
+                PluginWrapper(id="extractor_id", func=mocks.mock_extractor()),
+                PluginWrapper(id="extractor_id", func=mocks.mock_extractor()),
             ]
         )
 
@@ -76,27 +76,27 @@ def test_unique_id_validator_with_multiple_duplicate_ids() -> None:
 async def test_run_async_extractor() -> None:
     executor = PluginWrapper(
         id="async_extractor_id",
-        func=mocks.mock_async_extractor(id="async_extractor_id"),
+        func=mocks.mock_async_extractor(),
     )
     assert await plugin_async_executor(executor) == "async_extracted_data"
 
 
 def test_run_transform_data() -> None:
-    transformer = PluginWrapper(id="transformer_id", func=mocks.mock_transformer(id="transformer_id"))
+    transformer = PluginWrapper(id="transformer_id", func=mocks.mock_transformer())
     assert plugin_sync_executor(transformer, data="extracted_data") == "transformed_etl_data"
 
 
 def test_run_transform_load_data() -> None:
     load_transformer = PluginWrapper(
         id="mock_transform_loader_id",
-        func=mocks.mock_load_transformer(id="mock_transform_loader_id", query="SELECT 1"),
+        func=mocks.mock_load_transformer(query="SELECT 1"),
     )
     assert plugin_sync_executor(load_transformer) is None
 
 
 @pytest.mark.asyncio
 async def test_run_load_data() -> None:
-    loader = PluginWrapper(id="loader_id", func=mocks.mock_loader(id="loader_id"))
+    loader = PluginWrapper(id="loader_id", func=mocks.mock_loader())
     assert await plugin_async_executor(loader, data="data") is None
 
 
@@ -122,7 +122,7 @@ def test_create_phase_extract(plugin_mock: MockType) -> None:
     plugin_mock.assert_called_once_with(PipelinePhase.EXTRACT_PHASE, "mock_extractor")
 
     assert extract == ExtractPhase.model_construct(
-        steps=[PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id"))]
+        steps=[PluginWrapper(id="extractor_id", func=mocks.mock_extractor())]
     )
 
 
@@ -147,8 +147,8 @@ def test_create_phase_extract_with_merge_success(mocker: MockerFixture, plugin_r
     plugin_registry_mock.assert_any_call(PipelinePhase.EXTRACT_PHASE, "mock_merger")
 
     assert extract.merge == PluginWrapper(id="mock_merger_12345678", func=mocks.mock_merger())
-    assert extract.steps[0] == PluginWrapper(id="extractor_id", func=mocks.mock_extractor(id="extractor_id"))
-    assert extract.steps[1] == PluginWrapper(id="extractor_id_2", func=mocks.mock_extractor(id="extractor_id_2"))
+    assert extract.steps[0] == PluginWrapper(id="extractor_id", func=mocks.mock_extractor())
+    assert extract.steps[1] == PluginWrapper(id="extractor_id_2", func=mocks.mock_extractor())
 
 
 @pytest.mark.usefixtures("plugin_registry_mock")
@@ -199,7 +199,7 @@ def test_create_phase_function_transform(plugin_mock: MockType) -> None:
     plugin_mock.assert_called_once()
     plugin_mock.assert_called_once_with(PipelinePhase.TRANSFORM_PHASE, "mock_transformer")
     assert transform == TransformPhase.model_construct(
-        steps=[PluginWrapper(id="transformer_id", func=mocks.mock_transformer(id="transformer_id"))]
+        steps=[PluginWrapper(id="transformer_id", func=mocks.mock_transformer())]
     )
 
 
@@ -211,9 +211,7 @@ def test_create_phase_load(plugin_mock: MockType) -> None:
     plugin_mock.assert_called_once()
     plugin_mock.assert_called_once_with(PipelinePhase.LOAD_PHASE, "mock_loader")
 
-    assert loader == LoadPhase.model_construct(
-        steps=[PluginWrapper(id="loader_id", func=mocks.mock_loader(id="loader_id"))]
-    )
+    assert loader == LoadPhase.model_construct(steps=[PluginWrapper(id="loader_id", func=mocks.mock_loader())])
 
 
 def test_create_phase_transform_at_load(plugin_mock: MockType) -> None:
@@ -223,8 +221,8 @@ def test_create_phase_transform_at_load(plugin_mock: MockType) -> None:
         steps=[  # type: ignore[reportArgumentType] - The dict is parsed into PluginWrapper object
             {
                 "id": "mock_transform_loader_id",
-                "query": "SELECT 1",
                 "plugin": "mock_transformer_loader",
+                "params": {"query": "SELECT 1"},
             }
         ]
     )
@@ -236,7 +234,7 @@ def test_create_phase_transform_at_load(plugin_mock: MockType) -> None:
         steps=[
             PluginWrapper(
                 id="mock_transform_loader_id",
-                func=mocks.mock_load_transformer(id="mock_transform_loader_id", query="SELECT 1"),
+                func=mocks.mock_load_transformer(query="SELECT 1"),
             )
         ]
     )

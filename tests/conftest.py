@@ -71,14 +71,14 @@ def etl_pipeline_factory(request: pytest.FixtureRequest) -> Callable[..., Pipeli
     default_config = {
         "name": "ETL Pipeline",
         "type": "ETL",
-        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor(id="mock_extractor"))],
+        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor())],
         "transform": [
             PluginWrapper(
                 id="mock_transformer",
-                func=mocks.mock_transformer(id="mock_transformer"),
+                func=mocks.mock_transformer(),
             )
         ],
-        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader(id="mock_loader"))],
+        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader())],
         "needs": None,
     }
 
@@ -93,12 +93,12 @@ def elt_pipeline_factory(request: pytest.FixtureRequest) -> Callable[..., Pipeli
     default_config = {
         "name": "ELT Pipeline",
         "type": "ELT",
-        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor(id="mock_extractor"))],
-        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader(id="mock_loader"))],
+        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor())],
+        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader())],
         "transform_at_load": [
             PluginWrapper(
                 id="mock_load_transformer",
-                func=mocks.mock_load_transformer(id="mock_load_transformer", query="SELECT 1"),
+                func=mocks.mock_load_transformer(query="SELECT 1"),
             )
         ],
         "needs": None,
@@ -115,18 +115,18 @@ def etlt_pipeline_factory(request: pytest.FixtureRequest) -> Callable[..., Pipel
     default_config = {
         "name": "ETLT Pipeline",
         "type": "ETLT",
-        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor(id="mock_extractor"))],
+        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor())],
         "transform": [
             PluginWrapper(
                 id="mock_transformer",
-                func=mocks.mock_transformer(id="mock_transformer"),
+                func=mocks.mock_transformer(),
             )
         ],
-        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader(id="mock_loader"))],
+        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader())],
         "transform_at_load": [
             PluginWrapper(
                 id="mock_load_transformer",
-                func=mocks.mock_load_transformer(id="mock_load_transformer", query="SELECT 1"),
+                func=mocks.mock_load_transformer(query="SELECT 1"),
             )
         ],
         "needs": None,

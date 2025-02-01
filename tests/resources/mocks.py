@@ -17,7 +17,7 @@ def mock_merger() -> SyncPlugin:
     return inner
 
 
-def mock_extractor(id: str) -> AsyncPlugin:
+def mock_extractor() -> AsyncPlugin:
     @wraps(mock_extractor)
     async def inner() -> str:
         return "extracted_data"
@@ -25,7 +25,7 @@ def mock_extractor(id: str) -> AsyncPlugin:
     return inner
 
 
-def mock_async_extractor(id: str, delay: float = 0) -> AsyncPlugin:
+def mock_async_extractor(delay: float = 0) -> AsyncPlugin:
     @wraps(mock_async_extractor)
     async def inner() -> str:
         await asyncio.sleep(delay)
@@ -34,7 +34,7 @@ def mock_async_extractor(id: str, delay: float = 0) -> AsyncPlugin:
     return inner
 
 
-def mock_transformer(id: str) -> SyncPlugin:
+def mock_transformer() -> SyncPlugin:
     @wraps(mock_transformer)
     def inner(data: str) -> str:
         return "transformed_etl_data"
@@ -42,7 +42,7 @@ def mock_transformer(id: str) -> SyncPlugin:
     return inner
 
 
-def mock_sync_transformer(id: str, delay: float) -> SyncPlugin:
+def mock_sync_transformer(delay: float) -> SyncPlugin:
     @wraps(mock_sync_transformer)
     def inner(data: str) -> str:
         time.sleep(delay)
@@ -51,7 +51,7 @@ def mock_sync_transformer(id: str, delay: float) -> SyncPlugin:
     return inner
 
 
-def mock_loader(id: str) -> AsyncPlugin:
+def mock_loader() -> AsyncPlugin:
     @wraps(mock_loader)
     async def inner(data: str) -> None:
         return
@@ -59,7 +59,7 @@ def mock_loader(id: str) -> AsyncPlugin:
     return inner
 
 
-def mock_async_loader(id: str, delay: float) -> AsyncPlugin:
+def mock_async_loader(delay: float) -> AsyncPlugin:
     @wraps(mock_async_loader)
     async def inner(data: str) -> None:
         await asyncio.sleep(delay)
@@ -67,7 +67,7 @@ def mock_async_loader(id: str, delay: float) -> AsyncPlugin:
     return inner
 
 
-def mock_load_transformer(id: str, query: str) -> SyncPlugin:
+def mock_load_transformer(query: str) -> SyncPlugin:
     @wraps(mock_load_transformer)
     def inner() -> None:
         return
@@ -75,7 +75,7 @@ def mock_load_transformer(id: str, query: str) -> SyncPlugin:
     return inner
 
 
-def mock_sync_load_transformer(id: str, delay: float) -> SyncPlugin:
+def mock_sync_load_transformer(delay: float) -> SyncPlugin:
     @wraps(mock_sync_load_transformer)
     def inner() -> None:
         time.sleep(delay)
