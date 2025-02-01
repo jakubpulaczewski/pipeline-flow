@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from enum import Enum, unique
 from typing import TYPE_CHECKING, Annotated, Self
 
@@ -19,15 +18,11 @@ from pydantic import (
     model_validator,
 )
 
+# Project Imports
 from core.plugins import PluginRegistry, PluginWrapper
 
-# Project Imports
-
-
-# A callable type representing all interfaces of the phases.
-
 # A callable class type representing all phase objects.
-type PhaseInstance = ExtractPhase | TransformPhase | LoadPhase | TransformLoadPhase
+type Phase = ExtractPhase | TransformPhase | LoadPhase | TransformLoadPhase
 
 
 @unique
@@ -58,12 +53,8 @@ def unique_id_validator(steps: list[PluginWrapper]) -> list[PluginWrapper]:
         return steps
 
     ids = {}
-    id_pattern = re.compile(r"^[a-zA-Z0-9_]+$")
 
     for step in steps:
-        if not id_pattern.match(step.id):
-            raise ValueError("The `ID` must only contain alphanumeric characters and underscores.")
-
         if step.id in ids:
             raise ValueError("The `ID` is not unique. There already exists an 'ID' with this name.")
 
@@ -94,6 +85,9 @@ class ExtractPhase(BaseModel):
     def check_merge_condition(self: Self) -> Self:
         if self.merge and not len(self.steps) > 1:
             raise ValueError("Validation Error! Merge can only be used if there is more than one extract step.")
+
+        if len(self.steps) > 1 and not self.merge:
+            raise ValueError("Validation Error! Merge is required when there are more than one extract step.")
 
         return self
 
@@ -131,11 +125,3 @@ class TransformLoadPhase(BaseModel):
         Field(min_length=1),
         BeforeValidator(serialize_plugins(PipelinePhase.TRANSFORM_AT_LOAD_PHASE)),
     ]
-
-
-PHASE_CLASS_MAP = {
-    PipelinePhase.EXTRACT_PHASE: ExtractPhase,
-    PipelinePhase.TRANSFORM_PHASE: TransformPhase,
-    PipelinePhase.LOAD_PHASE: LoadPhase,
-    PipelinePhase.TRANSFORM_AT_LOAD_PHASE: TransformLoadPhase,
-}
