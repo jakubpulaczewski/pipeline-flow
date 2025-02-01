@@ -77,6 +77,7 @@ docstring-code-line-length = "dynamic"
 
 [lint.per-file-ignores]
 "tests/*" = [
+    "ANN001",
     "D100", "D101", "D102", "D103", "D104", "D105", "D107",
     "D401",
     "EM101",
@@ -87,6 +88,11 @@ docstring-code-line-length = "dynamic"
     "S101",
     "SLF001",
     "PLR2004"
+]
+
+"tests/e2e/test_e2e_entrypoint.py" = [
+    "S608",
+    "ARG001"
 ]
 
 "src/*" = [
