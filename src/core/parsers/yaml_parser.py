@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Self
 
 import aiofiles
 import yaml
+import yamlcore
 
 if TYPE_CHECKING:
     from common.type_def import PluginRegistryJSON
@@ -41,7 +42,7 @@ class YamlParser:
 
     @classmethod
     def from_text(cls, yaml_text: str) -> YamlParser:
-        return cls(yaml.safe_load(yaml_text))
+        return cls(yaml.load(yaml_text, Loader=yamlcore.CoreLoader))  # noqa: S506 - Extension of PyYAML YAML 1.2 Compliant
 
     @classmethod
     async def from_file(cls, file_path: str, encoding: str = "utf-8") -> YamlParser:
