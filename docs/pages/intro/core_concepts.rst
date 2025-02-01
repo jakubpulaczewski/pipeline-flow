@@ -7,7 +7,7 @@ you understand its core principles and how it functions.
 
 Data Pipelines
 ----------------------
-``pipeline-orchestrator`` supports three types of data pipelines: ETL, ELT, and ETLT. Each pipeline 
+``pipeline-orchestrator`` supports all three types of data pipelines: ETL, ELT, and ETLT. Each pipeline 
 type has a unique structure and workflow, as described below:
 
 .. list-table:: Data Pipeline Types

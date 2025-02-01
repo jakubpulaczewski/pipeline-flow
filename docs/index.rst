@@ -17,14 +17,15 @@ Welcome to pipeline-orchestrator documentation!
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Userguide
 
    pages/user_guide/plugins/index.rst
+   pages/user_guide/configuration/index.rst
 
    
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Developer Guide 
 
    pages/developer_guide/architecture.rst
