@@ -23,6 +23,10 @@ format: ## Reformat source code
 precommit: format build test ## Running Precommit checks.
 	@echo "Pre-commit checks completed successfully."
 
+poetry-publish:
+	@echo "Publishing to PyPI..."
+	poetry publish --build
+	@echo "Publishing complete!"
 
 setup: ## Setup or update local env
 	@echo "Setting up or updating local environment..."
