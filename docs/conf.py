@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "pipeline-orchestrator"
+project = "pipeline-flow"
 copyright = "2025, Jakub Pulaczewski"
 author = "Jakub Pulaczewski"
 release = "0.0.0"

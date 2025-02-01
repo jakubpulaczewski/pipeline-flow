@@ -2,12 +2,12 @@
 
 Core Concepts
 ==============
-This section introduces the fundamental concepts behind ``pipeline-orchestrator``, helping
+This section introduces the fundamental concepts behind ``pipeline-flow``, helping
 you understand its core principles and how it functions.
 
 Data Pipelines
 ----------------------
-``pipeline-orchestrator`` supports all three types of data pipelines: ETL, ELT, and ETLT. Each pipeline 
+``pipeline-flow`` supports all three types of data pipelines: ETL, ELT, and ETLT. Each pipeline 
 type has a unique structure and workflow, as described below:
 
 .. list-table:: Data Pipeline Types
@@ -26,7 +26,7 @@ type has a unique structure and workflow, as described below:
 
 Asynchronous Workflows Basics
 -----------------------------
-Unlike traditional sequential workflows, ``pipeline-orchestrator`` utilizes asynchronous pipeline execution to
+Unlike traditional sequential workflows, ``pipeline-flow`` utilizes asynchronous pipeline execution to
 maximize efficiency and reduce processing time. This approach allows multiple pipelines to run concurrently, and 
 can be particularly useful for I/O-bound tasks.
 
@@ -38,7 +38,7 @@ can be particularly useful for I/O-bound tasks.
 
 Plugins and Dynamic Behavior
 ----------------------------
-``pipeline-orchestrator`` supports a :ref:`dynamic plugin system <plugins>` that allows users and the community to extend functionality
+``pipeline-flow`` supports a :ref:`dynamic plugin system <plugins>` that allows users and the community to extend functionality
 without modifying the core codebase. Plugins can be added or updated on the fly, enabling rapid development and deployment.
 
 
@@ -50,7 +50,7 @@ without modifying the core codebase. Plugins can be added or updated on the fly,
 Orchestration Pipeline
 ----------------------
 Orchestration refers to the automated arrangement, coordination, and management of pipelines in a workflow. 
-``pipeline-orchestrator`` uses pipeline configuration file to define the sequence of steps and dependencies
+``pipeline-flow`` uses pipeline configuration file to define the sequence of steps and dependencies
 
 
 Example YAML configuration for using a plugin:

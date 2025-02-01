@@ -2,7 +2,7 @@
 
 Plugin Development Guide
 ========================
-Plugins are the building blocks of ``pipeline-orchestrator`` that enable users to meet their specific
+Plugins are the building blocks of ``pipeline-flow`` that enable users to meet their specific
 data processing needs.
 
 Plugins follow a standardised structure and can be easily integrated into the system. This guide will help you
@@ -106,7 +106,7 @@ Best Practices
 Sharing Your Plugin
 -------------------
 Once your plugin is ready, consider sharing it with the community by contributing to the 
-`official plugin repository <https://github.com/jakubpulaczewski/pipeline-orchestrator-community>`_.
+`official plugin repository <https://github.com/jakubpulaczewski/pipeline-flow-community>`_.
 
 
 

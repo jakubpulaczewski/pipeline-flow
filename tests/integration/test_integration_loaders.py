@@ -15,7 +15,7 @@ class TestIntegrationPluginLoader:
 
         # Load the custom plugin
         plugins = {
-            "/workspaces/pipeline-orchestrator/tests/resources/custom_plugins.py",
+            "/workspaces/pipeline-flow/tests/resources/custom_plugins.py",
         }
         load_custom_plugins(plugins)
 
@@ -33,7 +33,7 @@ class TestIntegrationPluginLoader:
 
     def test_load_plugins_success(self: Self) -> None:
         # Load the plugins
-        plugins = {"/workspaces/pipeline-orchestrator/tests/resources/custom_plugins.py"}
+        plugins = {"/workspaces/pipeline-flow/tests/resources/custom_plugins.py"}
         load_custom_plugins(plugins)
 
         # Verify plugins were loaded

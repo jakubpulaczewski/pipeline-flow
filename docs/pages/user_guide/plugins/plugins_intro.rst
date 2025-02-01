@@ -2,7 +2,7 @@
 
 Plugins
 =======
-Plugins extend the functionality of ``pipeline-orchestrator``, allowing users to integrate with 
+Plugins extend the functionality of ``pipeline-flow``, allowing users to integrate with 
 different data sources, apply custom transformations, and enhance pipeline capabilities without 
 modifying the core system.
 
@@ -22,7 +22,7 @@ plugins are by default available in the system and do not require additional ins
 
 Community Plugins
 -----------------
-The community can contribute plugins to the ``pipeline-orchestrator`` ecosystem. Community plugins can be shared with others 
+The community can contribute plugins to the ``pipeline-flow`` ecosystem. Community plugins can be shared with others 
 and used in different pipelines. To use a community plugin, you need to install the plugin package using a package manager like
 pip or poetry.
 
@@ -31,11 +31,11 @@ as well defined in the yaml configuration file.
 
 .. code:: bash
 
-  pip install 'pipeline-orchestrator-community[PLUGIN_NAME]'
+  pip install 'pipeline-flow-community[PLUGIN_NAME]'
   
 where ``PLUGIN_NAME`` is the name of the plugin defined as an extra dependency in the plugin package.
 
-For a list of available plugins, visit the `Community Plugin Repository <https://github.com/jakubpulaczewski/pipeline-orchestrator-community>`_.
+For a list of available plugins, visit the `Community Plugin Repository <https://github.com/jakubpulaczewski/pipeline-flow-community>`_.
 
 Custom Plugins
 --------------

@@ -2,12 +2,12 @@
 
 Quick Start
 ===========
-This guilde will walk you through setting up ``pipeline-orchestrator``, running your first pipeline and understand the 
+This guilde will walk you through setting up ``pipeline-flow``, running your first pipeline and understand the 
 basic workflow.
 
 Prerequisites
 -------------
-Before installing ``pipeline-orchestrator``, ensure you have the following dependencies installed:
+Before installing ``pipeline-flow``, ensure you have the following dependencies installed:
 
 - Python 3.12 or later installed on your machine.
 - A python package manager (e.g., pip or poetry).
@@ -22,11 +22,11 @@ To check your Python version, run:
 
 Installation
 ------------
-``pipeline-orchestrator`` is available on PyPI and can be installed using pip or poetry. To install using pip, run:
+``pipeline-flow`` is available on PyPI and can be installed using pip or poetry. To install using pip, run:
 
 .. code:: bash
 
-  pip install pipeline-orchestrator  # or better use poetry
+  pip install pipeline-flow  # or better use poetry
 
 Setup
 ------------
@@ -34,7 +34,7 @@ After installation, add the following import statement to your Python script:
 
 .. code:: python
 
-  >>> from pipeline-orchestrator.entrypoint import start
+  >>> from pipeline-flow.entrypoint import start
 
 You can either provide a yaml file path or a python string to the ``start`` function. 
 The yaml file should contain the pipeline configuration. 
