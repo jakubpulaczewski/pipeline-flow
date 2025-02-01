@@ -23,7 +23,7 @@ format: ## Reformat source code
 precommit: format build test ## Running Precommit checks.
 	@echo "Pre-commit checks completed successfully."
 
-poetry-publish:
+poetry-publish: ## Publish to PyPI
 	@echo "Publishing to PyPI..."
 	poetry publish --build
 	@echo "Publishing complete!"
@@ -38,3 +38,9 @@ setup: ## Setup or update local env
 
 test:
 	poetry run pytest
+
+build-sphinx: ## Build Sphinx documentation
+	rm -rf docs/_build && \
+	cd docs && \
+	make html && \
+	python -m http.server --directory _build/html

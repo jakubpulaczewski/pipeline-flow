@@ -1,21 +1,21 @@
 Introduction
 ============
-
-Welcome to the documentation for ``pipeline-orchestrator``, a tool for managing ETL/ELT/ETLT pipelines with asynchronous
-execution and dynamic plugin support. Whether you're processing big data, building real-time analytics, or designing scalable workflows.
+Whether you're processing big data, building real-time analytics, or designing scalable workflows,
+``pipeline-orchestrator`` provides a lightweight and extensible solution for managing ELT/ETL/ETLT data pipelines.
 
 This documentation will guide you through the process of setting up and using ``pipeline-orchestrator``. 
 If you have any questions or need help, please don't hesitate to reach out to us.
 
 Why
 ---
-One of the most common challenges in data engineering is managing complex and numerous data workflows. 
-Traditional tools like Apache Airflow or Luigi are powerful but can be cumbersome to set up and maintain. 
+Managing complex data workflows is a common challenge in data engineering. Traditional tools like **Apache Airflow** and **Luigi** 
+are powerful but require complex setups, heavyweight infrastructure, and extensive maintenance.
 
-``pipeline-orchestrator`` aims to provide a lightweight, flexible, and scalable alternative for orchestrating data pipelines.
+``pipeline-orchestrator`` provides a lightweight, flexible, and scalable alternative for orchestrating data pipelines 
+with minimal overhead.
 
-Key Features:
-~~~~~~~~~~~~~
+Key Features
+-------------
 Key features of ``pipeline-orchestrator`` include:
 
 - **Easy Configuration**: Define pipelines with a simple YAML file.
@@ -27,20 +27,19 @@ Key features of ``pipeline-orchestrator`` include:
 
 
 Use Cases
-~~~~~~~~~
+------------
 ``pipeline-orchestrator`` is ideal for:
 
-- **ETL/ETL/ETLT Pipelines**: Extracting, transforming, and loading data into warehouses or lakes.
-- **Real-Time Analytics**: Processing streaming data for dashboards or reports.
-- **IoT Data Processing**: Managing asynchronous sensor data ingestion and transformation.
-- **Data Science Pipelines**: Automating data preprocessing, feature engineering, and model training workflows.
+- **Data Pipelines**: Extract, transform, and load data into warehouses or lakes.
+- **ETL/ELT/ETLT Workflows**: Automating data transformation and loading processes.
+- **Workflow Automation**: Orchestrating complex workflows with multiple dependencies.
 
 How It Works
 ------------
 At a high level, ``pipeline-orchestrator`` works as follows:
 
-1. **Define Pipelines**: Specify the steps (e.g., extract, transform, load) using plugins.
-2. **Configure Settings**: Customize the orchestrator's behavior with a simple YAML file.
+1. **Define Pipelines**: Specify the steps (e.g., extract, transform, load) using :ref:`plugins <plugins>`.
+2. **Configure Settings**: Customize behaviour with a YAML configuration file.
 3. **Run Asynchronously**: Execute tasks in parallel to maximize efficiency.
 4. **Monitor and Adjust**: Track progress, debug errors, and make runtime adjustments.
 
@@ -48,9 +47,9 @@ Comparison with Traditional Tools
 ---------------------------------
 Unlike traditional tools like Apache Airflow or Luigi, ``pipeline-orchestrator`` focuses on:
 
-- Asynchronous task execution for faster processing.
-- A lightweight and modular plugin system.
-- Simplicity in configuration and deployment.
+- Asynchronous task execution for concurrent processing.
+- A lightweight, modular plugin system for easy extensibility.
+- Simpler configuratio with YAML, reducing setup overhead.
 
 Getting Started
 ---------------

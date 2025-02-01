@@ -8,8 +8,26 @@ Welcome to pipeline-orchestrator documentation!
 
 
 .. toctree::
-  :maxdepth: 2
-  :caption: Introduction
+   :maxdepth: 2
+   :caption: Introduction
 
-  pages/introduction.rst
-  pages/quick_start.rst
+   pages/introduction.rst
+   pages/quick_start.rst
+   pages/core_concepts.rst
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Plugins
+
+   pages/plugins.rst
+   pages/core_plugins.rst
+   pages/plugin_development.rst
+   
+
+   
+.. toctree::
+   :maxdepth: 2
+   :caption: Architecture 
+
+   pages/architecture.rst
