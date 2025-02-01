@@ -1,5 +1,6 @@
 # Standard Imports
 from functools import wraps
+from typing import Callable
 
 # Third Party Imports
 import pytest
@@ -117,19 +118,19 @@ class TestUnitPluginRegistry:
         [
             (
                 "extractor_id",
-                "mocks.mock_extractor",
+                "mock_extractor",
                 PipelinePhase.EXTRACT_PHASE,
                 mocks.mock_extractor,
             ),
             (
                 "transformer_id",
-                "mocks.mock_transformer",
+                "mock_transformer",
                 PipelinePhase.TRANSFORM_PHASE,
                 mocks.mock_transformer,
             ),
             (
                 "loader_id",
-                "mocks.mock_loader",
+                "mock_loader",
                 PipelinePhase.LOAD_PHASE,
                 mocks.mock_loader,
             ),
@@ -147,3 +148,22 @@ class TestUnitPluginRegistry:
 
         resolved_plugin = PluginRegistry.instantiate_plugin(phase, plugin_payload)
         assert isinstance(resolved_plugin, PluginWrapper)
+
+    @staticmethod
+    def test_instantiate_plugin_with_params(mocker: MockerFixture) -> None:
+        def plugin_with_params(table_name: str, columns: list[str]) -> Callable[[], str]:
+            def inner() -> str:
+                return f"Extracting data from {table_name} with columns {columns}"
+
+            return inner
+
+        mocker.patch.object(PluginRegistry, "get").return_value = plugin_with_params
+        plugin_payload = {
+            "id": "plugin_with_params_id",
+            "plugin": "plugin_with_params",
+            "params": {"table_name": "source_customers", "columns": ["customer_id", "name", "email"]},
+        }
+
+        resolved_plugin = PluginRegistry.instantiate_plugin(PipelinePhase.EXTRACT_PHASE, plugin_payload)
+        assert isinstance(resolved_plugin, PluginWrapper)
+        assert isinstance(resolved_plugin.func, Callable)

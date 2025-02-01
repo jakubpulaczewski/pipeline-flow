@@ -109,8 +109,7 @@ class PluginRegistry(metaclass=SingletonMeta):
         """Resolve and return a single plugin instance."""
         plugin_name = plugin_data.pop("plugin", None)
         if not plugin_name:
-            msg = "The attribute 'plugin' is empty."
-            raise ValueError(msg)
+            raise ValueError("The attribute 'plugin' is empty.")
 
         plugin_factory = cls.get(phase_pipeline, plugin_name)
 

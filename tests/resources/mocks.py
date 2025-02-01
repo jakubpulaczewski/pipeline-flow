@@ -8,7 +8,14 @@ from functools import wraps
 from common.type_def import AsyncPlugin, SyncPlugin
 
 
-# TODO: Verify the claim of using ExtractedData and so on....
+def plugin_mock() -> SyncPlugin:
+    @wraps(plugin_mock)
+    def inner() -> str:
+        return "plugin_mock"
+
+    return inner
+
+
 def mock_merger() -> SyncPlugin:
     @wraps(mock_merger)
     def inner(extracted_data: str) -> str:

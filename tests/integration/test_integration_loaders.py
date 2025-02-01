@@ -1,4 +1,4 @@
-from types import FunctionType
+from collections.abc import Callable
 from typing import Self
 
 import pytest
@@ -26,10 +26,10 @@ class TestIntegrationPluginLoader:
         assert len(PluginRegistry._registry.keys()) == 2
 
         assert extractor_plugin.__name__ == "custom_extractor"
-        assert type(extractor_plugin) is FunctionType
+        assert isinstance(extractor_plugin, Callable)
 
         assert loader_plugin.__name__ == "custom_loader"
-        assert type(loader_plugin) is FunctionType
+        assert isinstance(loader_plugin, Callable)
 
     def test_load_plugins_success(self: Self) -> None:
         # Load the plugins
