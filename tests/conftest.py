@@ -6,6 +6,7 @@ from typing import Any, Generator
 # Third-party Imports
 import pytest
 
+from common.logger import setup_logger
 from core.models.phases import (
     ExtractPhase,
     LoadPhase,
@@ -16,12 +17,18 @@ from core.models.pipeline import Pipeline
 from core.plugins import PluginRegistry, PluginWrapper
 
 # Project Imports
-from tests.resources import mocks
+from tests.resources.plugins import (
+    simple_extractor_plugin,
+    simple_loader_plugin,
+    simple_transform_load_plugin,
+    simple_transform_plugin,
+)
 
 
 @pytest.fixture(autouse=True)
 def setup_logging_level() -> None:
-    os.environ["LOG_LEVEL"] = "debug"
+    os.environ["LOG_LEVEL"] = "info"
+    setup_logger()
 
 
 @pytest.fixture(autouse=True)
@@ -31,7 +38,7 @@ def plugin_registry_setup() -> Generator[None]:
     PluginRegistry._registry = {}  # Clean up after each test
 
 
-def pipeline_factory(default_config: dict[str, Any]) -> Callable[..., Pipeline]:
+def _pipeline_factory(default_config: dict[str, Any]) -> Callable[..., Pipeline]:
     # Factory function for creating pipelines
     def create_pipeline(**overrides: dict[str, Any]) -> Pipeline:
         config = default_config.copy()
@@ -71,21 +78,21 @@ def etl_pipeline_factory(request: pytest.FixtureRequest) -> Callable[..., Pipeli
     default_config = {
         "name": "ETL Pipeline",
         "type": "ETL",
-        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor())],
+        "extract": [PluginWrapper(id="mock_extractor", func=simple_extractor_plugin(delay=0))],
         "transform": [
             PluginWrapper(
                 id="mock_transformer",
-                func=mocks.mock_transformer(),
+                func=simple_transform_plugin(delay=0),
             )
         ],
-        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader())],
+        "load": [PluginWrapper(id="mock_loader", func=simple_loader_plugin(delay=0))],
         "needs": None,
     }
 
     if hasattr(request, "param"):
         default_config.update(request.param)
 
-    return pipeline_factory(default_config=default_config)
+    return _pipeline_factory(default_config=default_config)
 
 
 @pytest.fixture
@@ -93,12 +100,12 @@ def elt_pipeline_factory(request: pytest.FixtureRequest) -> Callable[..., Pipeli
     default_config = {
         "name": "ELT Pipeline",
         "type": "ELT",
-        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor())],
-        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader())],
+        "extract": [PluginWrapper(id="mock_extractor", func=simple_extractor_plugin(delay=0))],
+        "load": [PluginWrapper(id="mock_loader", func=simple_loader_plugin(delay=0))],
         "transform_at_load": [
             PluginWrapper(
                 id="mock_load_transformer",
-                func=mocks.mock_load_transformer(query="SELECT 1"),
+                func=simple_transform_load_plugin(query="SELECT 1"),
             )
         ],
         "needs": None,
@@ -107,7 +114,7 @@ def elt_pipeline_factory(request: pytest.FixtureRequest) -> Callable[..., Pipeli
     if hasattr(request, "param"):
         default_config.update(request.param)
 
-    return pipeline_factory(default_config=default_config)
+    return _pipeline_factory(default_config=default_config)
 
 
 @pytest.fixture
@@ -115,18 +122,18 @@ def etlt_pipeline_factory(request: pytest.FixtureRequest) -> Callable[..., Pipel
     default_config = {
         "name": "ETLT Pipeline",
         "type": "ETLT",
-        "extract": [PluginWrapper(id="mock_extractor", func=mocks.mock_extractor())],
+        "extract": [PluginWrapper(id="mock_extractor", func=simple_extractor_plugin(delay=0))],
         "transform": [
             PluginWrapper(
                 id="mock_transformer",
-                func=mocks.mock_transformer(),
+                func=simple_transform_plugin(delay=0),
             )
         ],
-        "load": [PluginWrapper(id="mock_loader", func=mocks.mock_loader())],
+        "load": [PluginWrapper(id="mock_loader", func=simple_loader_plugin(delay=0))],
         "transform_at_load": [
             PluginWrapper(
                 id="mock_load_transformer",
-                func=mocks.mock_load_transformer(query="SELECT 1"),
+                func=simple_transform_load_plugin(query="SELECT 1"),
             )
         ],
         "needs": None,
@@ -135,4 +142,4 @@ def etlt_pipeline_factory(request: pytest.FixtureRequest) -> Callable[..., Pipel
     if hasattr(request, "param"):
         default_config.update(request.param)
 
-    return pipeline_factory(default_config=default_config)
+    return _pipeline_factory(default_config=default_config)

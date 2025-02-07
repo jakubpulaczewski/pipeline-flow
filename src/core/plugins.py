@@ -19,12 +19,9 @@ if TYPE_CHECKING:
     from core.models.phases import PipelinePhase
 
 
-def plugin(plugin_phase: PipelinePhase, plugin_name: str | None = None) -> Callable[[WrappedPlugin], WrappedPlugin]:
+def plugin(plugin_phase: PipelinePhase, plugin_name: str) -> Callable[[WrappedPlugin], WrappedPlugin]:
     @wraps(plugin)
     def decorator(func: WrappedPlugin) -> WrappedPlugin:
-        nonlocal plugin_name
-        plugin_name = func.__name__ if plugin_name is None else plugin_name
-
         PluginRegistry.register(plugin_phase, plugin_name, func)
         return func
 
@@ -113,7 +110,7 @@ class PluginRegistry(metaclass=SingletonMeta):
 
         plugin_factory = cls.get(phase_pipeline, plugin_name)
 
-        plugin_id = plugin_data.get("id") or f"{plugin_factory.__name__}_{uuid.uuid4()}"
+        plugin_id = plugin_data.pop("id", None) or f"{plugin_factory.__name__}_{uuid.uuid4()}"
         plugin_params = plugin_data.get("params", {})
         if plugin_params:
             return PluginWrapper(id=plugin_id, func=plugin_factory(**plugin_params))

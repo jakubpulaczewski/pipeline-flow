@@ -8,45 +8,27 @@ from typing import Self
 # Project Imports
 
 
-class ExtractError(Exception):
-    """A custom exception is raised when a problem occurs when trying to extract data from a source."""
+class PipelineBaseError(Exception):
+    """A base exception class for any pipeline errors."""
 
-    def __init__(self: Self, message: str) -> None:
-        super().__init__(message)
+    def __init__(self: Self, message: str, original_exception: Exception | None = None) -> None:
         self.message = message
+        self.original_exception = original_exception
+        super().__init__(self.message)
 
     def __str__(self: Self) -> str:
-        return f"{super().__str__()}"
+        if self.original_exception:
+            return f"{self.message} | Caused by: {self.original_exception}"
+        return self.message
 
 
-class TransformError(Exception):
-    """A custom exception is raised when a problem occurs when trying to execute transformation on data."""
-
-    def __init__(self: Self, message: str) -> None:
-        super().__init__(message)
-        self.message = message
-
-    def __str__(self: Self) -> str:
-        return f"{super().__str__()}"
+class ExtractError(PipelineBaseError): ...
 
 
-class LoadError(Exception):
-    """A custom exception is raised when a problem occurs when trying to load data into a destination."""
-
-    def __init__(self: Self, message: str) -> None:
-        super().__init__(message)
-        self.message = message
-
-    def __str__(self: Self) -> str:
-        return f"{super().__str__()}"
+class TransformError(PipelineBaseError): ...
 
 
-class TransformLoadError(Exception):
-    """A custom exception is raised when a problem occurs when trying to execute transformation on data."""
+class LoadError(PipelineBaseError): ...
 
-    def __init__(self: Self, message: str) -> None:
-        super().__init__(message)
-        self.message = message
 
-    def __str__(self: Self) -> str:
-        return f"{super().__str__()}"
+class TransformLoadError(PipelineBaseError): ...

@@ -9,7 +9,7 @@ from core.models.phases import ExtractPhase, LoadPhase, Phase, TransformLoadPhas
 from core.models.pipeline import Pipeline, PipelineType
 from core.parsers import pipeline_parser
 from core.plugins import PluginRegistry, PluginWrapper
-from tests.resources import mocks
+from tests.resources.plugins import simple_dummy_plugin
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,7 @@ from tests.resources import mocks
     ],
 )
 def test_parse_phase(pipeline_phase: str, expected: type[Phase], mocker: MockerFixture) -> None:
-    mocker.patch.object(PluginRegistry, "get", return_value=mocks.plugin_mock)
+    mocker.patch.object(PluginRegistry, "get", return_value=simple_dummy_plugin)
     phase_details = {
         "steps": [
             {
@@ -70,14 +70,14 @@ def test_create_pipeline_with_only_mandatory_phases(mocker: MockerFixture) -> No
         side_effect=[
             ExtractPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="extractor_id", func=mocks.mock_extractor()),
+                    PluginWrapper(id="extractor_id", func=simple_dummy_plugin()),
                 ]
             ),
             TransformPhase.model_construct(steps=[]),
             LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="loader_id", func=mocks.mock_loader()),
-                    PluginWrapper(id="loader_id_2", func=mocks.mock_loader()),
+                    PluginWrapper(id="loader_id", func=simple_dummy_plugin()),
+                    PluginWrapper(id="loader_id_2", func=simple_dummy_plugin()),
                 ]
             ),
         ],
@@ -133,25 +133,25 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker: MockerFixtur
         side_effect=[
             ExtractPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="extractor_id", func=mocks.mock_extractor()),
+                    PluginWrapper(id="extractor_id", func=simple_dummy_plugin()),
                 ]
             ),
             TransformPhase.model_construct(
                 steps=[
                     PluginWrapper(
                         id="transformer_id",
-                        func=mocks.mock_transformer(),
+                        func=simple_dummy_plugin(),
                     ),
                     PluginWrapper(
                         id="transformer_id_2",
-                        func=mocks.mock_transformer(),
+                        func=simple_dummy_plugin(),
                     ),
                 ]
             ),
             LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="loader_id", func=mocks.mock_loader()),
-                    PluginWrapper(id="loader_id_2", func=mocks.mock_loader()),
+                    PluginWrapper(id="loader_id", func=simple_dummy_plugin),
+                    PluginWrapper(id="loader_id_2", func=simple_dummy_plugin),
                 ]
             ),
         ],

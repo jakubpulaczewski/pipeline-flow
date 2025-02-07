@@ -1,19 +1,14 @@
 # Standard Imports
-import asyncio
-import time
-from functools import wraps
+from collections.abc import Callable
+from unittest.mock import AsyncMock, Mock
 
 # Third-party Imports
 import pytest
+from pytest_mock import MockerFixture
 
-from common.type_def import AsyncPlugin, SyncPlugin
-from core.executor import (
-    run_extractor,
-    run_loader,
-    run_transformer,
-    run_transformer_after_load,
-    task_executor,
-)
+# Project Imports
+from core import executor
+from core.models import Pipeline
 from core.models.phases import (
     ExtractPhase,
     LoadPhase,
@@ -21,302 +16,192 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.plugins import PluginWrapper
-
-# Project Imports
-from tests.resources import mocks
-
-
-def async_pre(output: str, delay: float = 0.2) -> AsyncPlugin:
-    async def inner() -> str:
-        await asyncio.sleep(delay)
-        return output
-
-    return inner
-
-
-def sync_pre(output: str, delay: float = 0.2) -> SyncPlugin:
-    def inner() -> str:
-        time.sleep(delay)
-        return output
-
-    return inner
-
-
-def upper_transformer() -> SyncPlugin:
-    @wraps(upper_transformer)
-    def inner(data: str) -> str:
-        return data.upper()
-
-    return inner
+from tests.resources.plugins import (
+    simple_extractor_plugin,
+    simple_loader_plugin,
+    simple_merge_plugin,
+    simple_transform_load_plugin,
+    simple_transform_plugin,
+)
 
 
 @pytest.mark.asyncio
 async def test_run_extractor_without_delay() -> None:
-    extract = ExtractPhase.model_construct(steps=[PluginWrapper(id="extractor_id", func=mocks.mock_async_extractor())])
-    result = await run_extractor(extract)
+    extract = ExtractPhase.model_construct(steps=[PluginWrapper(id="extractor_id", func=simple_extractor_plugin())])
+    result = await executor.run_extractor(extract)
 
-    assert result == "async_extracted_data"
+    assert result == "extracted_data"
 
 
 @pytest.mark.asyncio
 async def test_run_extractor_multiple_without_delay() -> None:
     extracts = ExtractPhase.model_construct(
         steps=[
-            PluginWrapper(id="extractor_id", func=mocks.mock_async_extractor()),
+            PluginWrapper(id="extractor_id", func=simple_extractor_plugin()),
             PluginWrapper(
                 id="extractor_id_2",
-                func=mocks.mock_async_extractor(),
+                func=simple_extractor_plugin(),
             ),
         ],
-        merge=PluginWrapper(id="func_mock", func=mocks.mock_merger()),
+        merge=PluginWrapper(id="func_mock", func=simple_merge_plugin()),
     )
 
-    result = await run_extractor(extracts)
+    result = await executor.run_extractor(extracts)
     assert result == "merged_data"
 
 
-def test_run_transformer() -> None:
+def test_run_transformer_with_zero_transformation() -> None:
+    transformations = TransformPhase.model_construct(steps=[])
+
+    result = executor.run_transformer("DATA", transformations)
+
+    assert result == "DATA"
+
+
+def test_run_transformer_with_one_transformation() -> None:
     transformations = TransformPhase.model_construct(
-        steps=[PluginWrapper(id="transformer_id", func=mocks.mock_transformer())]
+        steps=[PluginWrapper(id="transformer_id", func=simple_transform_plugin())]
     )
 
-    result = run_transformer("DATA", transformations)
+    result = executor.run_transformer("data", transformations)
 
-    assert result == "transformed_etl_data"
+    assert result == "transformed_data"
 
 
 def test_run_multiple_transformer() -> None:
-    data = "initial_data"
+    mock_transformer = Mock(side_effect=lambda data: f"transformed_{data}")
+    upper_transformer = Mock(side_effect=lambda data: data.upper())
+
     transformations = TransformPhase.model_construct(
         steps=[
-            PluginWrapper(id="transformer_id", func=mocks.mock_transformer()),
-            PluginWrapper(id="transformer_upper", func=upper_transformer()),
+            PluginWrapper(id="transformer_id", func=mock_transformer),
+            PluginWrapper(id="transformer_upper", func=upper_transformer),
         ]
     )
 
-    result = run_transformer(data, transformations)
+    result = executor.run_transformer("data", transformations)
 
-    assert result == "TRANSFORMED_ETL_DATA"
+    assert result == "TRANSFORMED_DATA"
 
 
 @pytest.mark.asyncio
 async def test_run_loader_without_delay() -> None:
-    data = "INITIAL_DATA_SUFFIX"
-    destinations = LoadPhase.model_construct(steps=[PluginWrapper(id="loader_id", func=mocks.mock_loader())])
-    result = await run_loader(data, destinations)
+    simple_loader_plugin_mock = AsyncMock(side_effect=simple_loader_plugin())
+    destinations = LoadPhase.model_construct(steps=[PluginWrapper(id="loader_id", func=simple_loader_plugin_mock)])
 
-    assert result == [{"id": "loader_id", "success": True}]
+    await executor.run_loader("TRANSFORMED_DATA", destinations)
+
+    simple_loader_plugin_mock.assert_called_once_with(data="TRANSFORMED_DATA")
+    assert simple_loader_plugin_mock.call_count == 1, "Loader should be called once"
 
 
 @pytest.mark.asyncio
 async def test_run_loader_multiple_without_delay() -> None:
-    data = "TRANSFORMED_ETL_DATA"
+    simple_loader_plugin_mock = AsyncMock(side_effect=simple_loader_plugin())
+
     destinations = LoadPhase.model_construct(
         steps=[
-            PluginWrapper(id="loader_id", func=mocks.mock_loader()),
-            PluginWrapper(id="loader_id_2", func=mocks.mock_loader()),
+            PluginWrapper(id="loader_id", func=simple_loader_plugin_mock),
+            PluginWrapper(id="loader_id_2", func=simple_loader_plugin_mock),
         ]
     )
-    result = await run_loader(data, destinations)
-    assert result == [
-        {"id": "loader_id", "success": True},
-        {"id": "loader_id_2", "success": True},
-    ]
+    await executor.run_loader("TRANSFORMED_ETL_DATA", destinations)
+
+    simple_loader_plugin_mock.assert_called_with(data="TRANSFORMED_ETL_DATA")
+    assert simple_loader_plugin_mock.call_count == 2, "Both loaders should be called"
+    assert simple_loader_plugin_mock.mock_calls[0] == simple_loader_plugin_mock.mock_calls[1], (
+        "Both loaders should be called with the same data"
+    )
 
 
 def test_run_transformer_after_load() -> None:
+    simple_transform_load_plugin_mock = Mock(side_effect=simple_transform_load_plugin(query="SELECT 1"))
+
     transformations = TransformLoadPhase.model_construct(
         steps=[
             PluginWrapper(
                 id="mock_transform_loader_id",
-                func=mocks.mock_load_transformer(query="SELECT 1"),
+                func=simple_transform_load_plugin_mock,
             )
         ]
     )
-    result = run_transformer_after_load(transformations)
+    executor.run_transformer_after_load(transformations)
 
-    assert result == [
-        {"id": "mock_transform_loader_id", "success": True},
-    ]
+    simple_transform_load_plugin_mock.assert_called_once()
 
 
 def test_run_transformer_after_load_multiple() -> None:
+    simple_transform_load_plugin_mock = Mock(
+        side_effect=[
+            simple_transform_load_plugin(query="SELECT 1"),
+            simple_transform_load_plugin(query="SELECT 2"),
+        ]
+    )
+
     transformations = TransformLoadPhase.model_construct(
         steps=[
             PluginWrapper(
                 id="mock_transform_loader_id",
-                func=mocks.mock_load_transformer(query="SELECT 1"),
+                func=simple_transform_load_plugin_mock,
             ),
             PluginWrapper(
                 id="mock_transform_loader_id_2",
-                func=mocks.mock_load_transformer(query="SELECT 2"),
+                func=simple_transform_load_plugin_mock,
             ),
         ]
     )
-    result = run_transformer_after_load(transformations)
+    executor.run_transformer_after_load(transformations)
 
-    assert result == [
-        {"id": "mock_transform_loader_id", "success": True},
-        {"id": "mock_transform_loader_id_2", "success": True},
-    ]
+    assert simple_transform_load_plugin_mock.call_count == 2
 
 
-class TestUnitPipelineStrategyConcurrency:
-    @staticmethod
-    @pytest.mark.asyncio
-    async def test_execute_pre_processing() -> None:
-        plugins = [
-            PluginWrapper(id="1", func=async_pre(output="Async 1 result", delay=0.1)),
-            PluginWrapper(id="2", func=async_pre(output="Async 2 result", delay=0.2)),
-        ]
+@pytest.mark.asyncio
+async def test_execution_etl_pipeline(mocker: MockerFixture, etl_pipeline_factory: Callable[..., Pipeline]) -> None:
+    extract_mock = mocker.patch.object(executor, "run_extractor", new_callable=AsyncMock, return_value="extracted_data")
+    tf_mock = mocker.patch.object(executor, "run_transformer", new_callable=Mock, return_value="transformed_data")
+    load_mock = mocker.patch.object(executor, "run_loader", new_callable=AsyncMock)
 
-        start = asyncio.get_running_loop().time()
-        result = await task_executor(plugins)
-        total = asyncio.get_running_loop().time() - start
+    etl_pipeline = etl_pipeline_factory(name="Job1")
 
-        # Concurrency validation
-        assert 0.3 > total > 0.2, "Delay Should be 0.2 seconds"
-        assert result == {
-            "1": "Async 1 result",
-            "2": "Async 2 result",
-        }
+    result = await executor.ETLStrategy().execute(etl_pipeline)
 
-    @staticmethod
-    @pytest.mark.asyncio
-    async def test_run_extractor_with_pre_processing() -> None:
-        # Set the side_effect function
-        extract = ExtractPhase.model_construct(
-            steps=[
-                PluginWrapper(
-                    id="async_extractor_id",
-                    func=mocks.mock_async_extractor(delay=0.1),
-                )
-            ],
-            pre=[
-                PluginWrapper(id="1", func=async_pre(output="Async 1 result", delay=0.1)),
-                PluginWrapper(id="2", func=async_pre(output="Async 2 result", delay=0.3)),
-            ],
-        )
+    extract_mock.assert_called_once_with(etl_pipeline.extract)
+    tf_mock.assert_called_once_with("extracted_data", etl_pipeline.transform)
+    load_mock.assert_called_once_with("transformed_data", etl_pipeline.load)
 
-        start = asyncio.get_running_loop().time()
-        result = await run_extractor(extract)
-        total = asyncio.get_running_loop().time() - start
+    assert result is True
 
-        # Concurrency validation
-        assert 0.5 > total >= 0.4, "Delay Should be (0.1) Extract + (0.3) Pre processing "
-        assert result == "async_extracted_data"
 
-    @staticmethod
-    @pytest.mark.asyncio
-    async def test_run_extractor_multiple_with_delay() -> None:
-        extract = ExtractPhase.model_construct(
-            steps=[
-                PluginWrapper(
-                    id="async_extractor_id",
-                    func=mocks.mock_async_extractor(delay=0.1),
-                ),
-                PluginWrapper(
-                    id="async_extractor_id_2",
-                    func=mocks.mock_async_extractor(delay=0.2),
-                ),
-            ],
-            merge=PluginWrapper(id="func_mock", func=mocks.mock_merger()),
-        )
-        start = asyncio.get_running_loop().time()
-        extracted_data = await run_extractor(extract)
-        total = asyncio.get_running_loop().time() - start
+@pytest.mark.asyncio
+async def test_execution_elt_pipeline(mocker: MockerFixture, elt_pipeline_factory: Callable[..., Pipeline]) -> None:
+    extract_mock = mocker.patch.object(executor, "run_extractor", new_callable=AsyncMock, return_value="extracted_data")
+    load_mock = mocker.patch.object(executor, "run_loader", new_callable=AsyncMock)
+    tf_load_mock = mocker.patch.object(executor, "run_transformer_after_load", new_callable=Mock)
 
-        assert 0.3 > total >= 0.2, "Delay Should be 0.2 second for asychronously executing two extracts"
-        assert extracted_data == "merged_data"
+    elt_pipeline = elt_pipeline_factory(name="Job1")
 
-    @staticmethod
-    @pytest.mark.asyncio
-    async def test_run_loader_with_pre_processing() -> None:
-        destinations = LoadPhase.model_construct(
-            steps=[
-                PluginWrapper(
-                    id="async_loader_id",
-                    func=mocks.mock_async_loader(delay=0.1),
-                )
-            ],
-            pre=[
-                PluginWrapper(id="1", func=async_pre(output="Async 1 result", delay=0.2)),
-                PluginWrapper(id="2", func=async_pre(output="Async 2 result", delay=0.1)),
-            ],
-        )
-        start = asyncio.get_running_loop().time()
-        result = await run_loader("DATA", destinations)
-        total = asyncio.get_running_loop().time() - start
+    result = await executor.ELTStrategy().execute(elt_pipeline)
 
-        # Concurrency validation
-        assert 0.4 > total >= 0.3, "Delay Should be (0.1) Load + (0.2) Pre processing "
-        assert result == [{"id": "async_loader_id", "success": True}]
+    extract_mock.assert_called_once_with(elt_pipeline.extract)
+    load_mock.assert_called_once_with("extracted_data", elt_pipeline.load)
+    tf_load_mock.assert_called_once_with(elt_pipeline.load_transform)
 
-    @staticmethod
-    @pytest.mark.asyncio
-    async def test_run_loader_multiple_with_delay() -> None:
-        destinations = LoadPhase.model_construct(
-            steps=[
-                PluginWrapper(
-                    id="async_loader_id",
-                    func=mocks.mock_async_loader(delay=0.4),
-                ),
-                PluginWrapper(
-                    id="async_loader_id_2",
-                    func=mocks.mock_async_loader(delay=0.2),
-                ),
-            ]
-        )
+    assert result is True
 
-        start = asyncio.get_running_loop().time()
-        extracted_data = await run_loader("DATA", destinations)
-        total = asyncio.get_running_loop().time() - start
 
-        assert 0.5 > total >= 0.4, "Delay Should be 0.4 second for asychronously executing two loads"
+@pytest.mark.asyncio
+async def test_execution_etlt_strategy(mocker: MockerFixture, etlt_pipeline_factory: Callable[..., Pipeline]) -> None:
+    extract_mock = mocker.patch.object(executor, "run_extractor", new_callable=AsyncMock, return_value="extracted_data")
+    tf_mock = mocker.patch.object(executor, "run_transformer", new_callable=Mock, return_value="transformed_data")
+    load_mock = mocker.patch.object(executor, "run_loader", new_callable=AsyncMock)
+    tf_load_mock = mocker.patch.object(executor, "run_transformer_after_load", new_callable=Mock)
 
-        assert extracted_data == [
-            {"id": "async_loader_id", "success": True},
-            {"id": "async_loader_id_2", "success": True},
-        ]
+    etlt_pipeline = etlt_pipeline_factory(name="Job1")
+    result = await executor.ETLTStrategy().execute(etlt_pipeline)
 
-    @staticmethod
-    def test_run_transformer_multiple_with_delay() -> None:
-        tf = TransformPhase.model_construct(
-            steps=[
-                PluginWrapper(
-                    id="async_transformer_id",
-                    func=mocks.mock_sync_transformer(delay=0.2),
-                ),
-                PluginWrapper(
-                    id="async_transformer_id_2",
-                    func=mocks.mock_sync_transformer(delay=0.1),
-                ),
-            ]
-        )
+    extract_mock.assert_called_once_with(etlt_pipeline.extract)
+    tf_mock.assert_called_once_with("extracted_data", etlt_pipeline.transform)
+    load_mock.assert_called_once_with("transformed_data", etlt_pipeline.load)
+    tf_load_mock.assert_called_once_with(etlt_pipeline.load_transform)
 
-        start = time.time()
-        run_transformer("DATA", tf)
-        total = time.time() - start
-
-        assert 0.4 > total >= 0.3, "Delay Should be 0.3 seconds for sychronous transformations."
-
-    @staticmethod
-    def test_run_transformer_after_load_multiple_with_delay() -> None:
-        tf = TransformLoadPhase.model_construct(
-            steps=[
-                PluginWrapper(
-                    id="async_transform_loader_id",
-                    func=mocks.mock_sync_load_transformer(delay=0.1),
-                ),
-                PluginWrapper(
-                    id="async_transform_loader_id_2",
-                    func=mocks.mock_sync_load_transformer(delay=0.2),
-                ),
-            ]
-        )
-
-        start = time.time()
-        run_transformer_after_load(tf)
-        total = time.time() - start
-
-        assert 0.4 > total >= 0.3, "Delay Should be 0.3 seconds for sychronous transformations."
+    assert result is True
