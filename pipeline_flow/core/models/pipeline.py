@@ -1,5 +1,5 @@
 import logging
-from enum import Enum, unique
+from enum import StrEnum, unique
 from typing import Annotated, cast
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
@@ -15,7 +15,7 @@ from pipeline_flow.core.models.phases import (
 
 
 @unique
-class PipelineType(Enum):
+class PipelineType(StrEnum):
     """A config class that contains constants and utilities related to pipelines."""
 
     ETL = "ETL"

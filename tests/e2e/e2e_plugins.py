@@ -6,9 +6,9 @@ from functools import wraps
 import pandas as pd
 
 # Project Imports
-from common.type_def import AsyncPlugin, SyncPlugin
-from core.models.phases import PipelinePhase
-from core.plugins import plugin
+from pipeline_flow.common.type_def import AsyncPlugin, SyncPlugin
+from pipeline_flow.core.models.phases import PipelinePhase
+from pipeline_flow.core.plugins import plugin
 
 
 @plugin(PipelinePhase.EXTRACT_PHASE, "sqlite_extractor")

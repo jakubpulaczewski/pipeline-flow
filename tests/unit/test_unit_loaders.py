@@ -1,14 +1,14 @@
 # Standard Imports
 from unittest.mock import MagicMock
 
-from core import loaders
-
-# Project
-from core.models.phases import PipelinePhase
-from core.plugins import PluginRegistry
-
 # Third Party
 from pytest_mock import MockerFixture
+
+from pipeline_flow.core import loaders
+
+# Project
+from pipeline_flow.core.models.phases import PipelinePhase
+from pipeline_flow.core.plugins import PluginRegistry
 
 
 def test_load_plugin_from_file_new_module(mocker: MockerFixture) -> None:

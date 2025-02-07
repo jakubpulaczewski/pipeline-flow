@@ -7,7 +7,7 @@ from typing import Generator
 import pytest
 
 # Project Imports
-from core.parsers import PluginParser
+from pipeline_flow.core.parsers import PluginParser
 
 
 @pytest.fixture

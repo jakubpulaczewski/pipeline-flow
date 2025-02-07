@@ -3,13 +3,13 @@ from collections.abc import Callable
 
 # Third Party Imports
 import pytest
-from core.models.pipeline import Pipeline
+
+from pipeline_flow.core.models.pipeline import Pipeline
 
 # Project Imports
-from core.orchestrator import PipelineOrchestrator
-from core.parsers.yaml_parser import YamlConfig
-from core.plugins import PluginWrapper
-
+from pipeline_flow.core.orchestrator import PipelineOrchestrator
+from pipeline_flow.core.parsers.yaml_parser import YamlConfig
+from pipeline_flow.core.plugins import PluginWrapper
 from tests.resources.plugins import (
     simple_extractor_plugin,
     simple_loader_plugin,

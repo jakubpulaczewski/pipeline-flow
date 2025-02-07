@@ -2,9 +2,9 @@
 from functools import wraps
 
 # Project Imports
-from common.type_def import AsyncPlugin
-from core.models.phases import PipelinePhase
-from core.plugins import plugin
+from pipeline_flow.common.type_def import AsyncPlugin
+from pipeline_flow.core.models.phases import PipelinePhase
+from pipeline_flow.core.plugins import plugin
 
 
 @plugin(PipelinePhase.EXTRACT_PHASE, "custom_extract")

@@ -3,8 +3,8 @@ from collections.abc import Callable
 
 # Third-party Imports
 # Project Imports
-from core.models.pipeline import Pipeline, PipelineType
-from core.plugins import PluginWrapper
+from pipeline_flow.core.models.pipeline import Pipeline, PipelineType
+from pipeline_flow.core.plugins import PluginWrapper
 
 
 def test_etl_pipeline_init_success(etl_pipeline_factory: Callable[..., Pipeline]) -> None:

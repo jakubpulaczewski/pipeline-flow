@@ -4,12 +4,11 @@
 import pytest
 
 # Project Imports
-from common.type_def import SyncPlugin
-from core.models.phases import PipelinePhase
-from core.models.pipeline import Pipeline
-from core.parsers import parse_pipelines
-from core.plugins import PluginRegistry, PluginWrapper
-
+from pipeline_flow.common.type_def import SyncPlugin
+from pipeline_flow.core.models.phases import PipelinePhase
+from pipeline_flow.core.models.pipeline import Pipeline
+from pipeline_flow.core.parsers import parse_pipelines
+from pipeline_flow.core.plugins import PluginRegistry, PluginWrapper
 from tests.resources.plugins import (
     simple_extractor_plugin,
     simple_loader_plugin,
@@ -91,7 +90,7 @@ def test_parse_etl_pipeline_with_missing_extract_phase() -> None:
         ValueError,
         match=(
             "Validation Error: The provided phases do not match the required phases for pipeline type "
-            "'PipelineType.ETL'. Missing phases: {<PipelinePhase.EXTRACT_PHASE: 'extract'>}."
+            "'ETL'. Missing phases: {<PipelinePhase.EXTRACT_PHASE: 'extract'>}."
         ),
     ):
         parse_pipelines(pipeline_data)  # type: ignore[reportFunctionMemberAccess]

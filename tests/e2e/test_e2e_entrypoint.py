@@ -5,7 +5,7 @@ import sqlite3
 import pytest
 
 # Project Imports
-from entrypoint import start
+from pipeline_flow.entrypoint import start
 
 
 @pytest.mark.asyncio

@@ -4,14 +4,15 @@ from collections.abc import Callable
 
 # Third Party Imports
 import pytest
-from core.executor import ETLStrategy
+from pytest_mock import MockerFixture
+
+from pipeline_flow.core.executor import ETLStrategy
 
 # Project Imports
-from core.models.exceptions import ExtractError
-from core.models.pipeline import Pipeline
-from core.orchestrator import PipelineOrchestrator
-from core.parsers.yaml_parser import YamlConfig
-from pytest_mock import MockerFixture
+from pipeline_flow.core.models.exceptions import ExtractError
+from pipeline_flow.core.models.pipeline import Pipeline
+from pipeline_flow.core.orchestrator import PipelineOrchestrator
+from pipeline_flow.core.parsers.yaml_parser import YamlConfig
 
 
 @pytest.fixture

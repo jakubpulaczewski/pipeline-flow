@@ -6,16 +6,15 @@ from collections.abc import Callable
 import pytest
 
 # Project Imports
-from core.executor import ELTStrategy, ETLStrategy, ETLTStrategy
-from core.models.phases import (
+from pipeline_flow.core.executor import ELTStrategy, ETLStrategy, ETLTStrategy
+from pipeline_flow.core.models.phases import (
     ExtractPhase,
     LoadPhase,
     TransformLoadPhase,
     TransformPhase,
 )
-from core.models.pipeline import Pipeline
-from core.plugins import PluginWrapper
-
+from pipeline_flow.core.models.pipeline import Pipeline
+from pipeline_flow.core.plugins import PluginWrapper
 from tests.resources.plugins import (
     simple_extractor_plugin,
     simple_loader_plugin,

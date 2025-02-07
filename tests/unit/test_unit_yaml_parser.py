@@ -8,7 +8,7 @@ import pytest
 import yaml
 
 # Project Imports
-from core.parsers import YamlParser
+from pipeline_flow.core.parsers import YamlParser
 
 
 @pytest.fixture(scope="session")

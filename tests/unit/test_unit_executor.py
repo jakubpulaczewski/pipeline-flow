@@ -4,19 +4,18 @@ from unittest.mock import AsyncMock, Mock
 
 # Third-party Imports
 import pytest
+from pytest_mock import MockerFixture
 
 # Project Imports
-from core import executor
-from core.models import Pipeline
-from core.models.phases import (
+from pipeline_flow.core import executor
+from pipeline_flow.core.models import Pipeline
+from pipeline_flow.core.models.phases import (
     ExtractPhase,
     LoadPhase,
     TransformLoadPhase,
     TransformPhase,
 )
-from core.plugins import PluginWrapper
-from pytest_mock import MockerFixture
-
+from pipeline_flow.core.plugins import PluginWrapper
 from tests.resources.plugins import (
     simple_extractor_plugin,
     simple_loader_plugin,

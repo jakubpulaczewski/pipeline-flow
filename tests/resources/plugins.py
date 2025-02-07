@@ -5,7 +5,7 @@ from functools import wraps
 
 # Third-party Imports
 # Project Imports
-from common.type_def import AsyncPlugin, SyncPlugin
+from pipeline_flow.common.type_def import AsyncPlugin, SyncPlugin
 
 
 def simple_dummy_plugin() -> SyncPlugin:

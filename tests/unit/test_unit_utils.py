@@ -7,7 +7,7 @@ import threading
 import pytest
 
 # # Project Imports
-from common.utils import SingletonMeta
+from pipeline_flow.common.utils import SingletonMeta
 
 
 @pytest.fixture

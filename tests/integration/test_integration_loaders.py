@@ -1,9 +1,10 @@
 from collections.abc import Callable
 
 import pytest
-from core.loaders import load_custom_plugins
-from core.models.phases import PipelinePhase
-from core.plugins import PluginRegistry
+
+from pipeline_flow.core.loaders import load_custom_plugins
+from pipeline_flow.core.models.phases import PipelinePhase
+from pipeline_flow.core.plugins import PluginRegistry
 
 
 def test_load_custom_multiple_plugins() -> None:

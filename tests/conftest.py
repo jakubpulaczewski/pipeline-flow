@@ -5,17 +5,17 @@ from typing import Any, Generator
 
 # Third-party Imports
 import pytest
-from common.logger import setup_logger
-from core.models.phases import (
+
+# Project Imports
+from pipeline_flow.common.logger import setup_logger
+from pipeline_flow.core.models.phases import (
     ExtractPhase,
     LoadPhase,
     TransformLoadPhase,
     TransformPhase,
 )
-from core.models.pipeline import Pipeline
-from core.plugins import PluginRegistry, PluginWrapper
-
-# Project Imports
+from pipeline_flow.core.models.pipeline import Pipeline
+from pipeline_flow.core.plugins import PluginRegistry, PluginWrapper
 from tests.resources.plugins import (
     simple_extractor_plugin,
     simple_loader_plugin,

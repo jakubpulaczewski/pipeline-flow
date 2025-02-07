@@ -5,20 +5,21 @@ from unittest.mock import AsyncMock, Mock
 
 # Third-party Imports
 import pytest
-from core.executor import (
+
+from pipeline_flow.core.executor import (
     run_extractor,
     run_loader,
     run_transformer,
     run_transformer_after_load,
     task_group_executor,
 )
-from core.models.phases import (
+from pipeline_flow.core.models.phases import (
     ExtractPhase,
     LoadPhase,
     TransformLoadPhase,
     TransformPhase,
 )
-from core.plugins import PluginWrapper
+from pipeline_flow.core.plugins import PluginWrapper
 
 # Project Imports
 from tests.resources.plugins import (

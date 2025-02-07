@@ -3,12 +3,11 @@ from unittest.mock import MagicMock
 
 # Third Party Imports
 import pytest
-
-# Project
-from core.models.phases import PipelinePhase
-from core.plugins import PluginRegistry, PluginWrapper, plugin
 from pytest_mock import MockerFixture, MockType
 
+# Project
+from pipeline_flow.core.models.phases import PipelinePhase
+from pipeline_flow.core.plugins import PluginRegistry, PluginWrapper, plugin
 from tests.resources import plugins
 
 
