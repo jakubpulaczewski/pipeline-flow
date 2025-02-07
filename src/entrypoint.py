@@ -1,4 +1,6 @@
 # Standard Imports
+import logging
+
 from common.logger import setup_logger
 from core.loaders import load_plugins
 from core.orchestrator import PipelineOrchestrator
@@ -30,6 +32,13 @@ async def start(yaml_text: str | None = None, file_path: str | None = None) -> b
     # Parse pipelines and execute them using the orchestrator
     pipelines = parse_pipelines(yaml_parser.get_pipelines_dict())
 
-    orchestrator = PipelineOrchestrator(yaml_config)
-    await orchestrator.execute_pipelines(pipelines)
-    return True
+    try:
+        orchestrator = PipelineOrchestrator(yaml_config)
+        await orchestrator.execute_pipelines(pipelines)
+
+    except Exception as e:
+        logging.error("The following error occurred: %s", e)
+        logging.error("The original cause is: %s", e.__cause__)
+        raise
+    else:
+        return True
