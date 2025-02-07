@@ -2,13 +2,14 @@
 
 # Third Party Imports
 import pytest
-from pytest_mock import MockerFixture
 
 # Project Imports
 from core.models.phases import ExtractPhase, LoadPhase, Phase, TransformLoadPhase, TransformPhase
 from core.models.pipeline import Pipeline, PipelineType
 from core.parsers import pipeline_parser
 from core.plugins import PluginRegistry, PluginWrapper
+from pytest_mock import MockerFixture
+
 from tests.resources.plugins import simple_dummy_plugin
 
 

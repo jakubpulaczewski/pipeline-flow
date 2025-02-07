@@ -1,19 +1,33 @@
 [tool.poetry]
 name = "pipeline-flow"
-version = "0.0.0a1"
-description = "A framework for building ETL, ELT and ETLT projects dynamically using plugins."
-authors = ["Jakub Pulaczewski"]
+version = "0.1.0a3"
+description = "A framework for building ETL, ELT and ETLT data pipelines dynamically using plugins."
+authors = [
+    "Jakub Pulaczewski <jakub.pulaczewski@example.com>"
+]
+maintainers = [
+   "Jakub Pulaczewski <jakub.pulaczewski@example.com>"
+]
 license = "BSD-3-Clause"
-packages = [
-    { include="**/*.py", from="src"}
+packages = [{ include = "pipeline_flow" }]
+
+keywords = [
+    "ETL",
+    "ELT",
+    "ETLT",
+    "data pipelines",
+    "plugins",
+    "asyncio",
+    "data engineering",
 ]
 
 [tool.poetry.dependencies]
-python = "^3.13"
-asyncio = "^3.4.3"
+python = "^3.12"
 pydantic = "^2.4.2"
 aiofiles = "^24.1.0"
 yamlcore = "^0.0.4"
+furo = "^2024.8.6"
+returns = "^0.24.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"

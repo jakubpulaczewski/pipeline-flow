@@ -1,6 +1,6 @@
 .PHONY: clean format precommit setup test build
 
-src_dir := src
+src_dir := pipeline_flow
 tests_dir := tests
 
 default: help

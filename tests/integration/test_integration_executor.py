@@ -15,6 +15,7 @@ from core.models.phases import (
 )
 from core.models.pipeline import Pipeline
 from core.plugins import PluginWrapper
+
 from tests.resources.plugins import (
     simple_extractor_plugin,
     simple_loader_plugin,

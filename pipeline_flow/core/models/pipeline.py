@@ -4,7 +4,7 @@ from typing import Annotated, cast
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 
-from core.models.phases import (
+from pipeline_flow.core.models.phases import (
     ExtractPhase,
     LoadPhase,
     Phase,

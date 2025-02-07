@@ -1,7 +1,7 @@
 import asyncio
+import functools as fn
 import time
 from timeit import default_timer as timer
-import functools as fn
 
 
 def lower(x):

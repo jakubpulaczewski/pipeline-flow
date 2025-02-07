@@ -5,7 +5,6 @@ from typing import Any, Generator
 
 # Third-party Imports
 import pytest
-
 from common.logger import setup_logger
 from core.models.phases import (
     ExtractPhase,

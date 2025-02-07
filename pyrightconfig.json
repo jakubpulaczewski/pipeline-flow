@@ -1,6 +1,6 @@
 {
     "include": [
-      "src"
+      "pipeline_flow"
     ],
   
     "exclude": [
@@ -10,18 +10,21 @@
     ],
   
     "ignore": [
-      "src/oldstuff"
+      ""
     ],
   
     "defineConstant": {
       "DEBUG": true
     },
   
-    "stubPath": "src/stubs",
+    "stubPath": "pipeline_flow/stubs",
   
     "reportMissingImports": "error",
     "reportMissingTypeStubs": false,
   
     "pythonVersion": "3.13",
+    "reportCallIssue": {
+        "tests/unit/test_unit_executor_concurrency.py": "none" 
+      }
   
   }

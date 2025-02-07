@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, Mock
 
 # Third-party Imports
 import pytest
-
 from core.executor import (
     run_extractor,
     run_loader,

@@ -9,28 +9,28 @@ from typing import TYPE_CHECKING, Any
 
 # Third Party Imports
 # Project Imports
-from common.decorator import async_time_it, sync_time_it
+from pipeline_flow.common.decorator import async_time_it, sync_time_it
 
 if TYPE_CHECKING:
-    from common.type_def import ETLData, ExtractedData, TransformedData
-    from core.plugins import PluginWrapper
+    from pipeline_flow.common.type_def import ETLData, ExtractedData, TransformedData
+    from pipeline_flow.core.plugins import PluginWrapper
 
 
 if TYPE_CHECKING:
-    from core.models.phases import (
+    from pipeline_flow.core.models.phases import (
         ExtractPhase,
         LoadPhase,
         TransformLoadPhase,
         TransformPhase,
     )
 
-from core.models.exceptions import (
+from pipeline_flow.core.models.exceptions import (
     ExtractError,
     LoadError,
     TransformError,
     TransformLoadError,
 )
-from core.models.pipeline import Pipeline, PipelineType
+from pipeline_flow.core.models.pipeline import Pipeline, PipelineType
 
 
 def plugin_sync_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401

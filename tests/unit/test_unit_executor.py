@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, Mock
 
 # Third-party Imports
 import pytest
-from pytest_mock import MockerFixture
 
 # Project Imports
 from core import executor
@@ -16,6 +15,8 @@ from core.models.phases import (
     TransformPhase,
 )
 from core.plugins import PluginWrapper
+from pytest_mock import MockerFixture
+
 from tests.resources.plugins import (
     simple_extractor_plugin,
     simple_loader_plugin,

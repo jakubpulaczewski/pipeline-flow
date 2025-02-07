@@ -9,6 +9,7 @@ from core.models.phases import PipelinePhase
 from core.models.pipeline import Pipeline
 from core.parsers import parse_pipelines
 from core.plugins import PluginRegistry, PluginWrapper
+
 from tests.resources.plugins import (
     simple_extractor_plugin,
     simple_loader_plugin,

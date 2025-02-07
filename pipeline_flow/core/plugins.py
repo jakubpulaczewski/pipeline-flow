@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING, Any, ClassVar, Self
 from pydantic.dataclasses import dataclass
 
 # Project Imports
-from common.type_def import ETLData  # noqa: TC001 False Positive
-from common.utils import SingletonMeta
+from pipeline_flow.common.type_def import ETLData  # noqa: TC001 False Positive
+from pipeline_flow.common.utils import SingletonMeta
 
 if TYPE_CHECKING:
-    from common.type_def import PluginName, WrappedPlugin
-    from core.models.phases import PipelinePhase
+    from pipeline_flow.common.type_def import PluginName, WrappedPlugin
+    from pipeline_flow.core.models.phases import PipelinePhase
 
 
 def plugin(plugin_phase: PipelinePhase, plugin_name: str) -> Callable[[WrappedPlugin], WrappedPlugin]:

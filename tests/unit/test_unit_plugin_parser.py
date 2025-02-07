@@ -2,10 +2,10 @@
 
 # Third Party Imports
 import pytest
-from pytest_mock import MockerFixture, MockType
 
 # Project Imports
 from core.parsers import PluginParser
+from pytest_mock import MockerFixture, MockType
 
 
 @pytest.fixture

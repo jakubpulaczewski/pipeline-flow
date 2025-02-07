@@ -10,7 +10,8 @@
     },
     "ruff.nativeServer": "on",
     "python.testing.pytestArgs": [
-        "tests"
+        "--verbose",
+        "--capture=no"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,

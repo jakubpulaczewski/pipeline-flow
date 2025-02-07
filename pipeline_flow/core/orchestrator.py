@@ -2,13 +2,11 @@
 import asyncio
 import logging
 
-from core.executor import PIPELINE_STRATEGY_MAP
-
-# Project Imports
-from core.models.pipeline import Pipeline
-from core.parsers.yaml_parser import YamlConfig
-
 # Third Party Imports
+# Project Imports
+from pipeline_flow.core.executor import PIPELINE_STRATEGY_MAP
+from pipeline_flow.core.models.pipeline import Pipeline
+from pipeline_flow.core.parsers.yaml_parser import YamlConfig
 
 
 class PipelineOrchestrator:

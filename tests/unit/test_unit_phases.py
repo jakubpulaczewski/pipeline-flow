@@ -3,8 +3,6 @@ from unittest.mock import AsyncMock, Mock
 
 # Third-party Imports
 import pytest
-from pydantic import ValidationError
-from pytest_mock import MockerFixture
 
 # Project Imports
 from core.executor import plugin_async_executor, plugin_sync_executor
@@ -18,6 +16,9 @@ from core.models.phases import (
     unique_id_validator,
 )
 from core.plugins import PluginRegistry, PluginWrapper
+from pydantic import ValidationError
+from pytest_mock import MockerFixture
+
 from tests.resources.plugins import (
     simple_dummy_plugin,
     simple_extractor_plugin,

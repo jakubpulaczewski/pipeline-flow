@@ -6,13 +6,12 @@ from typing import TYPE_CHECKING, Self
 import aiofiles
 import yaml
 import yamlcore
-
-if TYPE_CHECKING:
-    from common.type_def import PluginRegistryJSON
-
 from pydantic.dataclasses import dataclass
 
-from common.utils import SingletonMeta
+if TYPE_CHECKING:
+    from pipeline_flow.common.type_def import PluginRegistryJSON
+
+from pipeline_flow.common.utils import SingletonMeta
 
 type JSON_DATA = dict
 

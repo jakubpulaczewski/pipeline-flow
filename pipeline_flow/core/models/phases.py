@@ -19,7 +19,7 @@ from pydantic import (
 )
 
 # Project Imports
-from core.plugins import PluginRegistry, PluginWrapper
+from pipeline_flow.core.plugins import PluginRegistry, PluginWrapper
 
 # A callable class type representing all phase objects.
 type Phase = ExtractPhase | TransformPhase | LoadPhase | TransformLoadPhase

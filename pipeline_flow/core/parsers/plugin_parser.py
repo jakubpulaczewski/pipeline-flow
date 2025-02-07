@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
-    from common.type_def import PluginRegistryJSON
+    from pipeline_flow.common.type_def import PluginRegistryJSON
 
 
 class PluginParser:

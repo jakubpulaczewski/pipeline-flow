@@ -7,9 +7,9 @@ import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from common.type_def import PluginRegistryJSON
+    from pipeline_flow.common.type_def import PluginRegistryJSON
 
-from core.parsers import PluginParser
+from pipeline_flow.core.parsers import PluginParser
 
 
 def load_plugins(engine: str, plugins_payload: PluginRegistryJSON | None) -> None:
@@ -68,7 +68,7 @@ def _load_plugin_from_file(plugin_file: str) -> None:
 
 
 def load_core_engine_transformations(engine: str) -> None:
-    core_engine_file = f"src/plugins/transform/{engine}.py"
+    core_engine_file = f"pipeline_flow/plugins/transform/{engine}.py"
     _load_plugin_from_file(core_engine_file)
 
 

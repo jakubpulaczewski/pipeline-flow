@@ -2,8 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.models.phases import ExtractPhase, LoadPhase, Phase, PipelinePhase, TransformLoadPhase, TransformPhase
-from core.models.pipeline import Pipeline
+from pipeline_flow.core.models.phases import (
+    ExtractPhase,
+    LoadPhase,
+    Phase,
+    PipelinePhase,
+    TransformLoadPhase,
+    TransformPhase,
+)
+from pipeline_flow.core.models.pipeline import Pipeline
 
 PHASE_CLASS_MAP = {
     PipelinePhase.EXTRACT_PHASE: ExtractPhase,

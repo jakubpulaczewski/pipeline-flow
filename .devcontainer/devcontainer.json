@@ -32,11 +32,11 @@
 				"python.testing.pytestEnabled": true,
 				"autoDocstring.docstringFormat": "google",
 				"python.analysis.extraPaths": [
-					"${workspaceFolder}/src",
+					"${workspaceFolder}/pipeline_flow",
 					"${workspaceFolder}/tests"
 				],
 				"terminal.integrated.env.linux": {
-					"PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}/tests"
+					"PYTHONPATH": "${workspaceFolder}/pipeline_flow:${workspaceFolder}/tests"
 				}
 			},
 
@@ -56,6 +56,5 @@
 
 	},
 	"postCreateCommand": "chmod 700 /home/vscode/.ssh && chmod 600 /home/vscode/.ssh/id_rsa",
-
-    "remoteUser": "vscode"
+  
 }

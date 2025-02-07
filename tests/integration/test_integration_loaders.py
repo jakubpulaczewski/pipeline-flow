@@ -1,7 +1,6 @@
 from collections.abc import Callable
 
 import pytest
-
 from core.loaders import load_custom_plugins
 from core.models.phases import PipelinePhase
 from core.plugins import PluginRegistry
