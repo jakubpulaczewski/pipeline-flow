@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from abc import ABCMeta, abstractmethod
+from functools import reduce
 from typing import TYPE_CHECKING, Any
 
 # Third Party Imports
@@ -33,24 +34,20 @@ from core.models.pipeline import Pipeline, PipelineType
 
 
 def plugin_sync_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
-    try:
-        return plugin.func(*pipeline_args, **pipeline_kwargs)
-    except Exception:
-        error_msg = f"Error has occured during plugin `{plugin.id}` execution"
-        logging.error(error_msg)
-        raise
+    logging.debug("Executing plugin `%s`", plugin.id)
+    result = plugin.func(*pipeline_args, **pipeline_kwargs)
+    logging.debug("Finished executing plugin `%s`", plugin.id)
+    return result
 
 
 async def plugin_async_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
-    try:
-        return await plugin.func(*pipeline_args, **pipeline_kwargs)
-    except Exception:
-        error_msg = f"Error has occured during plugin `{plugin.id}` execution"
-        logging.error(error_msg)
-        raise
+    logging.debug("Executing plugin `%s`", plugin.id)
+    result = await plugin.func(*pipeline_args, **pipeline_kwargs)
+    logging.debug("Finished executing plugin `%s`", plugin.id)
+    return result
 
 
-async def task_executor(
+async def task_group_executor(
     plugins: list[PluginWrapper],
     *pipeline_args: Any,  # noqa: ANN401
     **pipeline_kwargs: Any,  # noqa: ANN401
@@ -70,9 +67,9 @@ async def run_extractor(extracts: ExtractPhase) -> ExtractedData:
 
     try:
         if extracts.pre:
-            await task_executor(extracts.pre)
+            await task_group_executor(extracts.pre)
 
-        results = await task_executor(extracts.steps)
+        results = await task_group_executor(extracts.steps)
 
         # Return the single result directly.
         if len(extracts.steps) == 1:
@@ -82,59 +79,49 @@ async def run_extractor(extracts: ExtractPhase) -> ExtractedData:
         return plugin_sync_executor(extracts.merge, extracted_data=results)  # type: ignore[reportArgumentType] - merge will always be populated when more than 2 extracts are provided
 
     except Exception as e:
-        error_message = f"Error during `extraction`: {e}"
-        logging.error(error_message)
-        raise ExtractError(error_message) from e
+        error_message = "Extraction Phase Error"
+        raise ExtractError(error_message, e) from e
 
 
 @sync_time_it
 def run_transformer(data: ExtractedData, transformations: TransformPhase) -> TransformedData:
+    if not transformations.steps:
+        logging.info("No transformations to run")
+        return data
+
     try:
-        for plugin in transformations.steps:
-            logging.info("Applying transformation: %s", plugin.id)
-            transformed_data = plugin_sync_executor(plugin, data)
-            data = transformed_data  # Pass the transformed data to the next step
-
+        transformed_data = reduce(lambda data, plugin: plugin_sync_executor(plugin, data), transformations.steps, data)
     except Exception as e:
-        error_message = "Error during `transform`"
-        logging.error(error_message)
-        raise TransformError(error_message) from e
+        msg = "Transformation Phase Error"
+        raise TransformError(msg, e) from e
 
-    return transformed_data  # type: ignore[reportPossiblyUnboundVariable]
+    return transformed_data
 
 
 @async_time_it
-async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPhase) -> list:
+async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPhase) -> None:
     if destinations.pre:
-        await task_executor(destinations.pre)
+        await task_group_executor(destinations.pre)
 
     try:
-        results = await task_executor(destinations.steps, data=data)
+        await task_group_executor(destinations.steps, data=data)
 
         if destinations.post:
-            await task_executor(destinations.post)
+            await task_group_executor(destinations.post)
     except Exception as e:
-        error_message = f"Error during `load`): {e}"
-        logging.error(error_message)
-        raise LoadError(error_message) from e
-
-    return [{"id": plugin_id, "success": True} for plugin_id, _ in results.items()]
+        error_message = "Load Phase Error"
+        raise LoadError(error_message, e) from e
 
 
 @sync_time_it
-def run_transformer_after_load(transformations: TransformLoadPhase) -> list[dict[str, bool]]:
-    results = []
-
+def run_transformer_after_load(transformations: TransformLoadPhase) -> None:
     try:
         for plugin in transformations.steps:
             plugin_sync_executor(plugin)
-            results.append({"id": plugin.id, "success": True})
 
     except Exception as e:
-        error_message = "Error during `transform_at_load`"
-        logging.error("Error during `transform_at_load`")
-        raise TransformLoadError(error_message) from e
-    return results
+        error_message = "Transform Load Phase Error"
+        raise TransformLoadError(error_message, e) from e
 
 
 class PipelineStrategy(metaclass=ABCMeta):
