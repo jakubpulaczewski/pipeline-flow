@@ -22,7 +22,7 @@ To check your Python version, run:
 
 Installation
 ------------
-``pipeline-flow`` is available on PyPI and can be installed using pip or poetry. To install using pip, run:
+``pipeline-flow`` is available on `PyPI <https://pypi.org/project/pipeline-flow/>`_ and can be installed using pip or poetry. To install using pip, run:
 
 .. code:: bash
 
@@ -34,15 +34,24 @@ After installation, add the following import statement to your Python script:
 
 .. code:: python
 
-  >>> from pipeline-flow.entrypoint import start
+  >>> from pipeline_flow.entrypoint import start
 
-You can either provide a yaml file path or a python string to the ``start`` function. 
+You can either provide a file path of the YAML or a python string represented in a YAML format to the ``start`` function. 
 The yaml file should contain the pipeline configuration. 
 
 Configuration Template
 -----------------------
 Setup a configuration file for your pipeline. Create a new YAML file (e.g., ``pipeline.yaml``) 
 and define your pipeline steps. 
+
+1. Define your custom or community plugins in the ``plugins`` section.
+2. Define your pipeline type (ETL, ELT or ETLT) in the ``pipelines`` section.
+3. Define the extract phase in the ``extract`` section.
+4. Define the transform phase in the ``transform`` section (if ETL or ETLT defined).
+5. Define the load phase in the ``load`` section.
+6. Define the transform at load phase in the ``transform_at_load`` section (if ETLT defined).
+
+And you are done! 🎉
 
 .. code:: yaml
 
@@ -54,16 +63,16 @@ and define your pipeline steps.
           phases:
             extract:
               steps:
-                - ... # Step 3. Define your extract phase
+                - plugin:  # Step 3. Define your extract phase
             transform:
               steps:
-                - ... # Step 4. Define your transform phase (if ETL or ETLT defined
+                - plugin: # Step 4. Define your transform phase (if ETL or ETLT defined
             load:
               steps:
-                - ... # Step 5. Define your load phase
+                - plugin: # Step 5. Define your load phase
             transform_at_load:
               steps:
-                - ... # Step 6. Define your transform at load phase (if ETLT defined)
+                - plugin: # Step 6. Define your transform at load phase (if ETLT defined)
 
 
 Next Steps
