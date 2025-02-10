@@ -1,28 +1,30 @@
 .. _core_concepts_pipeline_orchestration:
 
 Pipeline Orchestration
-----------------------
+================================
 Pipeline orchestration refers to how different phases of the pipeline are structured and executed. 
 ``pipeline-flow`` uses a pipeline configuration file to define the sequence of steps and dependencies in a pipeline.
 
 
 Pipeline phases
-~~~~~~~~~~~~~~~~
+-----------------
 A pipeline consists of multiple phases, each representing a stage in the data processing workflow.
 
 The typical phases in a pipeline are:
-    - Extract: Fetch data from various sources (e.g., databases, APIs).
-    - Transform: Process and clean the data.
-    - Load: Write the processed data to a target destination (e.g., database, file).
-    - Transform at Load: Perform additional transformations before loading the data.
+
+- Extract: Fetch data from various sources (e.g., databases, APIs).
+- Transform: Process and clean the data.
+- Load: Write the processed data to a target destination (e.g., database, file).
+- Transform at Load: Perform additional transformations before loading the data.
 
 Execution Rules
-~~~~~~~~~~~~~~~~
+-----------------
 The pipeline execution follows these rules:
-    - Each phase is executed sequentially.
-    - The output of one phase is passed as input to the next phase.
-    - A phase can have multiple steps, each representing a specific task or operation.
-    - Steps within a phase can be executed in parallel if they are can be run asynchronously.
+
+- Each phase is executed sequentially.
+- The output of one phase is passed as input to the next phase.
+- A phase can have multiple steps, each representing a specific task or operation.
+- Steps within a phase can be executed in parallel if they are can be run asynchronously.
 
 .. list-table:: Data Execution Rules
    :widths: 25 25 25
@@ -54,5 +56,5 @@ The pipeline execution follows these rules:
   - Running them out of order would lead to incorrect results.
 
 Next Steps
-~~~~~~~~~~~~~~~~
-# TODO
+-----------------
+- Explore the User Guide to learn more about the :ref:`Plugin Development <plugin_development>` process.

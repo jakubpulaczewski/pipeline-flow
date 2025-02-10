@@ -11,7 +11,7 @@ Please refer to the following topics to get started:
    :maxdepth: 2
 
    data_pipelines.rst
-   async_workflows.rst
+   concurrency.rst
    plugins_core_concepts.rst
    pipeline_orchestration.rst
 

@@ -3,18 +3,18 @@
 Quick Start
 ===========
 This guilde will walk you through setting up ``pipeline-flow``, running your first pipeline and understand the 
-basic workflow.
+basic workflow in less than 5 minutes! 🚀
 
 Prerequisites
 -------------
 Before installing ``pipeline-flow``, ensure you have the following dependencies installed:
 
 - Python 3.12 or later installed on your machine.
-- A python package manager (e.g., pip or poetry).
+- A Python Package Manager (e.g., pip or poetry).
 - Basic Knowledge of YAML (used for pipeline configuration).
-- Access to required data sources (e.g., S3 Buckets, databases, APIs).
+- Access to required data sources and data sinks (e.g., S3 Buckets, databases, APIs).
 
-To check your Python version, run:
+To check your Python version installed, run:
 
 .. code:: bash
 
@@ -29,55 +29,98 @@ Installation
   pip install pipeline-flow  # or better use poetry
 
 Setup
-------------
-After installation, add the following import statement to your Python script:
+---------------------------------------
+After installation, add import two following dependencies to your Python script:
 
 .. code:: python
 
-  >>> from pipeline_flow.entrypoint import start
+  >>> import asyncio     # Required for running asynchronous coroutines                                 
+  >>> from pipeline_flow.entrypoint import start_workflow  # Required for running the pipeline
 
-You can either provide a file path of the YAML or a python string represented in a YAML format to the ``start`` function. 
-The yaml file should contain the pipeline configuration. 
+
+If you are new to asychronous programming, no need to worrry. Please 
+refer to the :ref:`Asynchronous Workflows Basics <concurrency>` section for more information.
+
+
+Next, you need to define your pipeline configuration, using a YAML file, and then you can run your first pipeline! 
+Please refer to the configuration template below to help you get started.
+
+Running Your First Pipeline
+----------------------------
+When you have your pipeline configuration ready, you can run your first pipeline using ``start_workflow``
+function already imported in the previous step.
+
+To run the pipeline synchronously, you can use the ``asyncio.run`` function to run the ``start_workflow`` function.
+
+.. code:: python
+
+  >>> import asyncio
+  >>> result = asyncio.run(start_workflow(file_path='YOUR_FILE_PATH_TO_PIPELINE.YAML'))
+
+Alternatively, you could call wrap ``start_workflow`` in an async function (coroutine) 
+and use the ``await`` keyword to run the workflow asynchronously.
+
+.. code:: python
+
+  >>> import asyncio
+  
+  >>> async def some_wrapper_function(file_path: str):
+  >>>    result = await start_workflow(file_path)
+  >>> 
+  >>> asyncio.run(some_wrapper_function('YOUR_FILE_PATH_TO_PIPELINE.YAML'))
+
 
 Configuration Template
 -----------------------
 Setup a configuration file for your pipeline. Create a new YAML file (e.g., ``pipeline.yaml``) 
-and define your pipeline steps. 
+and define your pipeline steps in the following order:
 
-1. Define your custom or community plugins in the ``plugins`` section.
-2. Define your pipeline type (ETL, ELT or ETLT) in the ``pipelines`` section.
-3. Define the extract phase in the ``extract`` section.
-4. Define the transform phase in the ``transform`` section (if ETL or ETLT defined).
-5. Define the load phase in the ``load`` section.
-6. Define the transform at load phase in the ``transform_at_load`` section (if ETLT defined).
+#. Define your custom or community plugins in the ``plugins`` section.
+#. Define your pipeline type (ETL, ELT or ETLT) in the ``pipelines`` section.
+#. Define the extract phase in the ``extract`` section.
+#. Define the transform phase in the ``transform`` section (if ETL or ETLT defined).
+#. Define the load phase in the ``load`` section.
+#. Define the transform at load phase in the ``transform_at_load`` section (içf ETLT defined).
 
-And you are done! 🎉
+
+YAML Configuration Example:
+
 
 .. code:: yaml
 
-    plugins:
-       ... # Step 1. Add your plugins here
+    plugins:  # Step 1. Define your plugins here (custom or community)
+      custom:
+        dirs:
+          - /path/to/custom/plugins  # Directory where the custom plugins are located 
+                                     # (enables importing multiple plugins at once)
+        files:
+          - /path/to/custom/plugins/custom_plugin.py  # Or the file name where the custom plugin is defined
+      community: # Or use community plugins (if available)
+        - plugin_name1
+        - plugin_name2
+    
     pipelines:
-        pipeline1:
-          type: ... # Step 2. Define your pipeline type (ETL, ELT or ETLT)
-          phases:
-            extract:
-              steps:
-                - plugin:  # Step 3. Define your extract phase
-            transform:
-              steps:
-                - plugin: # Step 4. Define your transform phase (if ETL or ETLT defined
-            load:
-              steps:
-                - plugin: # Step 5. Define your load phase
-            transform_at_load:
-              steps:
-                - plugin: # Step 6. Define your transform at load phase (if ETLT defined)
+      pipeline1:
+        type: ... # Step 2. Define your pipeline type (ETL, ELT or ETLT)
+        phases:
+          extract:
+            steps:
+              - plugin:  # Step 3. Define your extract phase
+          transform:
+            steps:
+              - plugin: # Step 4. Define your transform phase (if ETL or ETLT defined
+          load:
+            steps:
+              - plugin: # Step 5. Define your load phase
+          transform_at_load:
+            steps:
+              - plugin: # Step 6. Define your transform at load phase (if ETLT defined)
 
 
 Next Steps
 -------------
 - Explore the full documentation to learn more about the pipeline configuration and advanced features.
+- Check out the :ref:`Core Concepts <core_concepts>` to understand the basic building blocks of ``pipeline-flow``.
 - Learn more about :ref:`Building Custom Plugins <plugin_development>`.
 
 Happy orchestrating! 🚀

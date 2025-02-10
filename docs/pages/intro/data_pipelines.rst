@@ -8,8 +8,8 @@ enabling organisations to extract, transform, and load data efficiently.
 ``pipeline-flow`` supports all three types of data pipelines: ETL, ELT, and ETLT. Each pipeline 
 type has a unique structure and workflow, as described below:
 
-.. list-table:: Data Pipeline Types
-   :widths: 25 50
+.. list-table:: Pipeline Types
+   :widths: 15 75
    :header-rows: 1
 
    * - Pipeline Type
@@ -23,4 +23,6 @@ type has a unique structure and workflow, as described below:
 
 Next Steps
 ~~~~~~~~~~~~~~~~
-- #TODO: Add Next Steps.
+- Check out the :ref:`Concurrency <concurrency>` guide to learn how ``pipeline-flow`` uses asynchronous programming to execute tasks concurrently.
+- Explore the :ref:`Plugin Basics <plugin_core_concepts>` guide to learn more about plugins.
+- Check out the :ref:`Pipeline Orchestration <core_concepts_pipeline_orchestration>` guide to learn how to manage pipeline dependencies and their execution order.
