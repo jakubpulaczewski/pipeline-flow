@@ -19,8 +19,12 @@ extensions = [
     "sphinx.ext.napoleon",  # Support for Google/NumPy docstrings
     "sphinx.ext.doctest",  # Enable execution of Python examples
     "sphinx.ext.viewcode",  # Adds links to highlighted source code
-    "myst_parser",  # Markdown support
+    "myst_parser",  # Markdown support,
+    "sphinxemoji.sphinxemoji",  # Emoji support
 ]
+
+# A consisteny emoji style across the documentation
+sphinxemoji_style = "twemoji"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -30,9 +34,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 
-import sphinx_rtd_theme
-
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
 html_static_path = ["_static"]
 html_sidebars = {}
