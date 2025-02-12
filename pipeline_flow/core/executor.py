@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from pipeline_flow.plugins import IPlugin
 
 
-# TODO: Add Callable type fo IPlugin
 def plugin_sync_executor(plugin: IPlugin, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
     logging.debug("Executing plugin `%s`", plugin.id)
     result = plugin(*pipeline_args, **pipeline_kwargs)
