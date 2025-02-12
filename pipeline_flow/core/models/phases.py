@@ -1,14 +1,10 @@
 # Standard Imports
 from __future__ import annotations
 
-import logging
-from enum import Enum, unique
-from typing import TYPE_CHECKING, Annotated, Self
+from enum import StrEnum, unique
+from typing import Annotated, Self
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-# Third-party Imports
+# Project Imports
 from pydantic import (
     AfterValidator,
     BaseModel,
@@ -18,67 +14,46 @@ from pydantic import (
     model_validator,
 )
 
-# Project Imports
-from pipeline_flow.core.plugins import PluginRegistry, PluginWrapper
+from pipeline_flow.common.utils import serialize_plugin, serialize_plugins, unique_id_validator
+from pipeline_flow.plugins import (
+    IExtractPlugin,
+    ILoadPlugin,
+    IMergeExtractPlugin,
+    IPlugin,
+    ITransformLoadPlugin,
+    ITransformPlugin,
+)
+
+# Type Imports
 
 # A callable class type representing all phase objects.
 type Phase = ExtractPhase | TransformPhase | LoadPhase | TransformLoadPhase
 
 
 @unique
-class PipelinePhase(Enum):
+class PipelinePhase(StrEnum):
     EXTRACT_PHASE = "extract"
     LOAD_PHASE = "load"
     TRANSFORM_PHASE = "transform"
     TRANSFORM_AT_LOAD_PHASE = "transform_at_load"
 
 
-def serialize_plugin(phase_pipeline: PipelinePhase) -> Callable[[dict], PluginWrapper]:
-    def validator(value: dict) -> PluginWrapper:
-        return PluginRegistry.instantiate_plugin(phase_pipeline, value)
-
-    return validator
-
-
-def serialize_plugins(phase_pipeline: PipelinePhase) -> Callable[[list], list[PluginWrapper]]:
-    def validator(value: list) -> list[PluginWrapper]:
-        return [PluginRegistry.instantiate_plugin(phase_pipeline, plugin_dict) for plugin_dict in value]
-
-    return validator
-
-
-def unique_id_validator(steps: list[PluginWrapper]) -> list[PluginWrapper]:
-    if not steps:
-        logging.debug("No plugins to validate for unique ID.")
-        return steps
-
-    ids = {}
-
-    for step in steps:
-        if step.id in ids:
-            raise ValueError("The `ID` is not unique. There already exists an 'ID' with this name.")
-
-        ids[step.id] = 1
-
-    return steps
-
-
 class ExtractPhase(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     steps: Annotated[
-        list[PluginWrapper],
+        list[IExtractPlugin],
         Field(min_length=1),
-        BeforeValidator(serialize_plugins(PipelinePhase.EXTRACT_PHASE)),
+        BeforeValidator(serialize_plugins),
         AfterValidator(unique_id_validator),
     ]
     pre: Annotated[
-        list[PluginWrapper] | None,
-        BeforeValidator(serialize_plugins(PipelinePhase.EXTRACT_PHASE)),
+        list[IPlugin] | None,
+        BeforeValidator(serialize_plugins),
     ] = None
 
     merge: Annotated[
-        PluginWrapper | None,
-        BeforeValidator(serialize_plugin(PipelinePhase.EXTRACT_PHASE)),
+        IMergeExtractPlugin | None,
+        BeforeValidator(serialize_plugin),
     ] = None
 
     @model_validator(mode="after")
@@ -95,33 +70,33 @@ class ExtractPhase(BaseModel):
 class TransformPhase(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     steps: Annotated[
-        list[PluginWrapper],
-        BeforeValidator(serialize_plugins(PipelinePhase.TRANSFORM_PHASE)),
+        list[ITransformPlugin],
+        BeforeValidator(serialize_plugins),
     ]
 
 
 class LoadPhase(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     steps: Annotated[
-        list[PluginWrapper],
+        list[ILoadPlugin],
         Field(min_length=1),
-        BeforeValidator(serialize_plugins(PipelinePhase.LOAD_PHASE)),
+        BeforeValidator(serialize_plugins),
     ]
     pre: Annotated[
-        list[PluginWrapper] | None,
-        BeforeValidator(serialize_plugins(PipelinePhase.LOAD_PHASE)),
+        list[IPlugin] | None,
+        BeforeValidator(serialize_plugins),
     ] = None
 
     post: Annotated[
-        list[PluginWrapper] | None,
-        BeforeValidator(serialize_plugins(PipelinePhase.LOAD_PHASE)),
+        list[IPlugin] | None,
+        BeforeValidator(serialize_plugins),
     ] = None
 
 
 class TransformLoadPhase(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     steps: Annotated[
-        list[PluginWrapper],
+        list[ITransformLoadPlugin],
         Field(min_length=1),
-        BeforeValidator(serialize_plugins(PipelinePhase.TRANSFORM_AT_LOAD_PHASE)),
+        BeforeValidator(serialize_plugins),
     ]

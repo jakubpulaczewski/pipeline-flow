@@ -4,23 +4,21 @@
 import pytest
 
 # Project Imports
-from pipeline_flow.common.type_def import SyncPlugin
-from pipeline_flow.core.models.phases import PipelinePhase
 from pipeline_flow.core.models.pipeline import Pipeline
 from pipeline_flow.core.parsers import parse_pipelines
-from pipeline_flow.core.plugins import PluginRegistry, PluginWrapper
+from pipeline_flow.core.registry import PluginRegistry
+from pipeline_flow.plugins import IPlugin
 from tests.resources.plugins import (
-    simple_extractor_plugin,
-    simple_loader_plugin,
-    simple_transform_load_plugin,
-    simple_transform_plugin,
+    SimpleExtractorPlugin,
+    SimpleLoaderPlugin,
+    SimpleTransformLoadPlugin,
+    SimpleTransformPlugin,
 )
 
 
-def setup_plugins(plugin_dict: dict[PipelinePhase, list[tuple[str, SyncPlugin]]]) -> None:
-    for phase, plugins in plugin_dict.items():
-        for plugin_name, plugin_callable in plugins:
-            PluginRegistry.register(phase, plugin_name, plugin_callable)
+def setup_plugins(plugins: list[tuple[str, IPlugin]]) -> None:
+    for plugin_name, plugin_callable in plugins:
+        PluginRegistry.register(plugin_name, plugin_callable)
 
 
 def test_parse_pipeline_without_pipelines() -> None:
@@ -61,10 +59,11 @@ def test_parse_pipeline_without_registered_plugins() -> None:
 
 def test_parse_etl_pipeline_with_missing_extract_phase() -> None:
     # Register Plugins
-    plugins = {
-        PipelinePhase.TRANSFORM_PHASE: [("transform_plugin", simple_transform_plugin)],
-        PipelinePhase.LOAD_PHASE: [("load_plugin", simple_loader_plugin)],
-    }
+    plugins = [
+        ("transform_plugin", SimpleTransformPlugin),
+        ("load_plugin", SimpleLoaderPlugin),
+    ]
+
     setup_plugins(plugins)
 
     pipeline_data = {
@@ -98,12 +97,12 @@ def test_parse_etl_pipeline_with_missing_extract_phase() -> None:
 
 def test_parse_etl_pipeline_with_extra_phases() -> None:
     # Register Plugins
-    plugins = {
-        PipelinePhase.EXTRACT_PHASE: [("extractor_plugin", simple_extractor_plugin)],
-        PipelinePhase.TRANSFORM_PHASE: [("transform_plugin", simple_transform_plugin)],
-        PipelinePhase.LOAD_PHASE: [("load_plugin", simple_loader_plugin)],
-        PipelinePhase.TRANSFORM_AT_LOAD_PHASE: [("transform_at_load_plugin", simple_transform_load_plugin)],
-    }
+    plugins = [
+        ("extractor_plugin", SimpleExtractorPlugin),
+        ("transform_plugin", SimpleTransformPlugin),
+        ("load_plugin", SimpleLoaderPlugin),
+        ("transform_at_load_plugin", SimpleTransformLoadPlugin),
+    ]
     setup_plugins(plugins)
 
     pipeline_data = {
@@ -146,10 +145,11 @@ def test_parse_etl_pipeline_with_extra_phases() -> None:
 
 def test_parse_etl_pipeline_with_only_mandatory_phases() -> None:
     # Register Plugins
-    plugins = {
-        PipelinePhase.EXTRACT_PHASE: [("extractor_plugin", simple_extractor_plugin)],
-        PipelinePhase.LOAD_PHASE: [("load_plugin", simple_loader_plugin)],
-    }
+    plugins = [
+        ("extractor_plugin", SimpleExtractorPlugin),
+        ("load_plugin", SimpleLoaderPlugin),
+    ]
+
     setup_plugins(plugins)
 
     pipeline_data = {
@@ -174,24 +174,20 @@ def test_parse_etl_pipeline_with_only_mandatory_phases() -> None:
     assert pipeline.name == "pipeline1"
 
     assert len(pipeline.extract.steps) == 1
-    assert pipeline.extract.steps[0] == PluginWrapper(id="mock_extract1", func=simple_extractor_plugin())
+    assert isinstance(pipeline.extract.steps[0], SimpleExtractorPlugin)
 
     assert len(pipeline.load.steps) == 1
-    assert pipeline.load.steps[0] == PluginWrapper(id="mock_load1", func=simple_loader_plugin())
+    assert isinstance(pipeline.load.steps[0], SimpleLoaderPlugin)
 
 
 def test_parse_etl_multiple_pipelines() -> None:
     # Register Required Plugins
-    plugins = {
-        PipelinePhase.EXTRACT_PHASE: [
-            ("extract_plugin1", simple_extractor_plugin),
-        ],
-        PipelinePhase.TRANSFORM_PHASE: [("aggregate_sum_etl", simple_transform_plugin)],
-        PipelinePhase.LOAD_PHASE: [
-            ("load_plugin1", simple_loader_plugin),
-            ("load_plugin2", simple_loader_plugin),
-        ],
-    }
+    plugins = [
+        ("extract_plugin1", SimpleExtractorPlugin),
+        ("aggregate_sum_etl", SimpleTransformPlugin),
+        ("load_plugin", SimpleLoaderPlugin),
+    ]
+
     setup_plugins(plugins)
 
     pipelines_data = {
@@ -200,14 +196,14 @@ def test_parse_etl_multiple_pipelines() -> None:
             "phases": {
                 "extract": {"steps": [{"id": "mock_extract1", "plugin": "extract_plugin1"}]},
                 "transform": {"steps": [{"id": "mock_tranformation1", "plugin": "aggregate_sum_etl"}]},
-                "load": {"steps": [{"id": "mock_load1", "plugin": "load_plugin1"}]},
+                "load": {"steps": [{"id": "mock_load1", "plugin": "load_plugin"}]},
             },
         },
         "pipeline2": {
             "type": "ETL",
             "phases": {
                 "extract": {"steps": [{"id": "mock_extract2", "plugin": "extract_plugin1"}]},
-                "load": {"steps": [{"id": "mock_load2", "plugin": "load_plugin2"}]},
+                "load": {"steps": [{"id": "mock_load2", "plugin": "load_plugin"}]},
             },
         },
     }
@@ -220,36 +216,30 @@ def test_parse_etl_multiple_pipelines() -> None:
 
     # Pipeline 1
     assert len(pipelines[0].extract.steps) == 1
-    assert pipelines[0].extract.steps[0] == PluginWrapper(id="mock_extract1", func=simple_extractor_plugin())
+    assert isinstance(pipelines[0].extract.steps[0], SimpleExtractorPlugin)
 
     assert len(pipelines[0].transform.steps) == 1
-    assert pipelines[0].transform.steps[0] == PluginWrapper(
-        id="mock_tranformation1",
-        func=simple_transform_plugin(),
-    )
+    assert isinstance(pipelines[0].transform.steps[0], SimpleTransformPlugin)
 
     assert len(pipelines[0].load.steps) == 1
-    assert pipelines[0].load.steps[0] == PluginWrapper(id="mock_load1", func=simple_loader_plugin())
+    assert isinstance(pipelines[0].load.steps[0], SimpleLoaderPlugin)
 
     # Pipeline 2
     assert len(pipelines[1].extract.steps) == 1
-    assert pipelines[1].extract.steps[0] == PluginWrapper(id="mock_extract2", func=simple_extractor_plugin())
+    assert isinstance(pipelines[1].extract.steps[0], SimpleExtractorPlugin)
 
     assert len(pipelines[1].load.steps) == 1
-    assert pipelines[1].load.steps[0] == PluginWrapper(id="mock_load2", func=simple_loader_plugin())
+    assert isinstance(pipelines[1].load.steps[0], SimpleLoaderPlugin)
 
 
 def test_parse_elt_pipeline() -> None:
     # Register Required Plugins
-    plugins = {
-        PipelinePhase.EXTRACT_PHASE: [
-            ("extract_plugin1", simple_extractor_plugin),
-        ],
-        PipelinePhase.LOAD_PHASE: [
-            ("load_plugin1", simple_loader_plugin),
-        ],
-        PipelinePhase.TRANSFORM_AT_LOAD_PHASE: [("upsert_transformation", simple_transform_load_plugin)],
-    }
+    plugins = [
+        ("extract_plugin1", SimpleExtractorPlugin),
+        ("load_plugin1", SimpleLoaderPlugin),
+        ("upsert_transformation", SimpleTransformLoadPlugin),
+    ]
+
     setup_plugins(plugins)
 
     pipeline_data = {
@@ -278,30 +268,23 @@ def test_parse_elt_pipeline() -> None:
     assert pipelines[0].name == "pipeline1"
 
     assert len(pipelines[0].extract.steps) == 1
-    assert pipelines[0].extract.steps[0] == PluginWrapper(id="mock_extract1", func=simple_extractor_plugin())
+    assert isinstance(pipelines[0].extract.steps[0], SimpleExtractorPlugin)
 
     assert len(pipelines[0].load.steps) == 1
-    assert pipelines[0].load.steps[0] == PluginWrapper(id="mock_load1", func=simple_loader_plugin())
+    assert isinstance(pipelines[0].load.steps[0], SimpleLoaderPlugin)
 
     assert len(pipelines[0].load_transform.steps) == 1
-    assert pipelines[0].load_transform.steps[0] == PluginWrapper(
-        id="mock_load_transformer1",
-        func=simple_transform_load_plugin(query="Select 2"),
-    )
+    assert isinstance(pipelines[0].load_transform.steps[0], SimpleTransformLoadPlugin)
 
 
 def test_parse_etlt_pipeline() -> None:
     # Setup Required Plugins
-    plugins = {
-        PipelinePhase.EXTRACT_PHASE: [
-            ("extract_plugin1", simple_extractor_plugin),
-        ],
-        PipelinePhase.TRANSFORM_PHASE: [("transform_plugin", simple_transform_plugin)],
-        PipelinePhase.LOAD_PHASE: [
-            ("load_plugin1", simple_loader_plugin),
-        ],
-        PipelinePhase.TRANSFORM_AT_LOAD_PHASE: [("upsert_transformation", simple_transform_load_plugin)],
-    }
+    plugins = [
+        ("extract_plugin1", SimpleExtractorPlugin),
+        ("transform_plugin", SimpleTransformPlugin),
+        ("load_plugin1", SimpleLoaderPlugin),
+        ("upsert_transformation", SimpleTransformLoadPlugin),
+    ]
 
     setup_plugins(plugins)
 
@@ -332,19 +315,13 @@ def test_parse_etlt_pipeline() -> None:
     assert pipelines[0].name == "pipeline_ETLT"
 
     assert len(pipelines[0].extract.steps) == 1
-    assert pipelines[0].extract.steps[0] == PluginWrapper(id="mock_extract1", func=simple_extractor_plugin())
+    assert isinstance(pipelines[0].extract.steps[0], SimpleExtractorPlugin)
 
     assert len(pipelines[0].transform.steps) == 1
-    assert pipelines[0].transform.steps[0] == PluginWrapper(
-        id="mock_tranformation1",
-        func=simple_transform_plugin(),
-    )
+    assert isinstance(pipelines[0].transform.steps[0], SimpleTransformPlugin)
 
     assert len(pipelines[0].load.steps) == 1
-    assert pipelines[0].load.steps[0] == PluginWrapper(id="mock_load1", func=simple_loader_plugin())
+    assert isinstance(pipelines[0].load.steps[0], SimpleLoaderPlugin)
 
     assert len(pipelines[0].load_transform.steps) == 1
-    assert pipelines[0].load_transform.steps[0] == PluginWrapper(
-        id="mock_load_transformer1",
-        func=simple_transform_load_plugin(query="Select 1"),
-    )
+    assert isinstance(pipelines[0].load_transform.steps[0], SimpleTransformLoadPlugin)

@@ -1,68 +1,75 @@
 # Standard Imports
 import asyncio
 import time
-from functools import wraps
+from typing import Self
 
 # Third-party Imports
 # Project Imports
-from pipeline_flow.common.type_def import AsyncPlugin, SyncPlugin
+from pipeline_flow.plugins import (
+    IExtractPlugin,
+    ILoadPlugin,
+    IMergeExtractPlugin,
+    IPlugin,
+    IPreProcessPlugin,
+    ITransformLoadPlugin,
+    ITransformPlugin,
+)
 
 
-def simple_dummy_plugin() -> SyncPlugin:
-    @wraps(simple_dummy_plugin)
-    def inner() -> str:
+class SimpleDummyPlugin(IPlugin, plugin_name="simple_dummy_plugin"):
+    def __call__(self: Self) -> str:
         return "simple_dummy_plugin"
 
-    return inner
 
+class SimpleExtractorPlugin(IExtractPlugin, plugin_name="simple_extractor_plugin"):
+    def __init__(self: Self, plugin_id: str, delay: float = 0) -> None:
+        super().__init__(plugin_id)
+        self.delay = delay
 
-def simple_extractor_plugin(delay: float = 0) -> AsyncPlugin:
-    @wraps(simple_extractor_plugin)
-    async def inner() -> str:
-        await asyncio.sleep(delay)
+    async def __call__(self) -> str:
+        await asyncio.sleep(self.delay)
         return "extracted_data"
 
-    return inner
 
-
-def simple_merge_plugin() -> SyncPlugin:
-    @wraps(simple_merge_plugin)
-    def inner(extracted_data: str) -> str:  # noqa: ARG001
+class SimpleMergePlugin(IMergeExtractPlugin, plugin_name="simple_merge_plugin"):
+    def __call__(self: Self, extracted_data: dict) -> str:  # noqa: ARG002
         return "merged_data"
 
-    return inner
 
+class SimpleTransformPlugin(ITransformPlugin, plugin_name="simple_transform_plugin"):
+    def __init__(self: Self, plugin_id: str, delay: float = 0) -> None:
+        super().__init__(plugin_id)
+        self.delay = delay
 
-def simple_transform_plugin(delay: float = 0) -> SyncPlugin:
-    @wraps(simple_transform_plugin)
-    def inner(data: str) -> str:
-        time.sleep(delay)
+    def __call__(self: Self, data: str) -> str:  # noqa: ARG002
+        time.sleep(self.delay)
         return f"transformed_{data}"
 
-    return inner
+
+class SimpleLoaderPlugin(ILoadPlugin, plugin_name="simple_loader_plugin"):
+    def __init__(self: Self, plugin_id: str, delay: float = 0) -> None:
+        super().__init__(plugin_id)
+        self.delay = delay
+
+    async def __call__(self: Self, data: str) -> None:  # noqa: ARG002
+        await asyncio.sleep(self.delay)  # Simulating a slow loader
 
 
-def simple_loader_plugin(delay: float = 0) -> AsyncPlugin:
-    @wraps(simple_loader_plugin)
-    async def inner(data: str) -> None:  # noqa: ARG001
-        await asyncio.sleep(delay)  # Simulating a slow loader
-        return  # noqa: PLR1711
+class SimpleTransformLoadPlugin(ITransformLoadPlugin, plugin_name="simple_transform_load_plugin"):
+    def __init__(self: Self, plugin_id: str, query: str, delay: float = 0) -> None:
+        super().__init__(plugin_id)
+        self.delay = delay
+        self.query = query
 
-    return inner
-
-
-def simple_transform_load_plugin(query: str, delay: float = 0) -> SyncPlugin:  # noqa: ARG001
-    @wraps(simple_transform_load_plugin)
-    def inner() -> None:
-        time.sleep(delay)  # Stimulating a transformation at load phase where data is transformed on
-        return  # noqa: PLR1711
-
-    return inner
+    def __call__(self: Self) -> str:
+        time.sleep(self.delay)  # Stimulating a transformation at load phase where data is transformed on
 
 
-def async_pre(delay: float = 0) -> AsyncPlugin:
-    async def inner() -> str:
-        await asyncio.sleep(delay)
+class SimpleAsyncPrePlugin(IPreProcessPlugin, plugin_name="simple_async_pre_plugin"):
+    def __init__(self: Self, plugin_id: str, delay: float = 0) -> None:
+        super().__init__(plugin_id)
+        self.delay = delay
+
+    async def __call__(self: Self) -> str:
+        await asyncio.sleep(self.delay)  # Stimulate some delay.
         return "Async result"
-
-    return inner

@@ -6,10 +6,9 @@ from collections.abc import Callable
 import pytest
 from pytest_mock import MockerFixture
 
-from pipeline_flow.core.executor import ETLStrategy
-
 # Project Imports
-from pipeline_flow.core.models.exceptions import ExtractError
+from pipeline_flow.common.exceptions import ExtractError
+from pipeline_flow.core.executor import ETLStrategy
 from pipeline_flow.core.models.pipeline import Pipeline
 from pipeline_flow.core.orchestrator import PipelineOrchestrator
 from pipeline_flow.core.parsers.yaml_parser import YamlConfig

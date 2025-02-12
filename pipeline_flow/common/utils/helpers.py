@@ -3,16 +3,19 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 import time
 from functools import wraps
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
-
-# Third-party Imports
+from typing import TYPE_CHECKING, Any, ClassVar
 
 # Project Imports
+
+# Third-party imports
+
+
+# Type Imports
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
 
 
 def async_time_it[**P, R](func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
@@ -51,3 +54,16 @@ def sync_time_it[**P, R](func: Callable[P, R]) -> Callable[P, R]:
         return result
 
     return inner
+
+
+class SingletonMeta[T](type):
+    _instances: ClassVar[dict] = {}
+
+    _lock: threading.Lock = threading.Lock()
+
+    def __call__(cls, *args: Any, **kwargs: Any) -> T:  #  noqa: ANN401
+        with cls._lock:
+            if cls not in cls._instances:
+                instance = super().__call__(*args, **kwargs)
+                cls._instances[cls] = instance
+        return cls._instances[cls]

@@ -4,7 +4,7 @@ from collections.abc import Callable
 # Third-party Imports
 # Project Imports
 from pipeline_flow.core.models.pipeline import Pipeline, PipelineType
-from pipeline_flow.core.plugins import PluginWrapper
+from pipeline_flow.plugins import IExtractPlugin, ILoadPlugin, ITransformLoadPlugin, ITransformPlugin
 
 
 def test_etl_pipeline_init_success(etl_pipeline_factory: Callable[..., Pipeline]) -> None:
@@ -18,9 +18,9 @@ def test_etl_pipeline_init_success(etl_pipeline_factory: Callable[..., Pipeline]
     assert len(pipeline.transform.steps) == 1
     assert len(pipeline.load.steps) == 1
 
-    assert isinstance(pipeline.extract.steps[0], PluginWrapper)
-    assert isinstance(pipeline.transform.steps[0], PluginWrapper)
-    assert isinstance(pipeline.load.steps[0], PluginWrapper)
+    assert isinstance(pipeline.extract.steps[0], IExtractPlugin)
+    assert isinstance(pipeline.transform.steps[0], ITransformPlugin)
+    assert isinstance(pipeline.load.steps[0], ILoadPlugin)
 
     assert not pipeline.is_executed
 
@@ -36,9 +36,9 @@ def test_elt_pipeline_init_success(elt_pipeline_factory: Callable[..., Pipeline]
     assert len(pipeline.load.steps) == 1
     assert len(pipeline.load_transform.steps) == 1
 
-    assert isinstance(pipeline.extract.steps[0], PluginWrapper)
-    assert isinstance(pipeline.load.steps[0], PluginWrapper)
-    assert isinstance(pipeline.load_transform.steps[0], PluginWrapper)
+    assert isinstance(pipeline.extract.steps[0], IExtractPlugin)
+    assert isinstance(pipeline.load.steps[0], ILoadPlugin)
+    assert isinstance(pipeline.load_transform.steps[0], ITransformLoadPlugin)
 
     assert not pipeline.is_executed
 
@@ -55,9 +55,9 @@ def test_etlt_pipeline_init_success(etlt_pipeline_factory: Callable[..., Pipelin
     assert len(pipeline.load.steps) == 1
     assert len(pipeline.load_transform.steps) == 1
 
-    assert isinstance(pipeline.extract.steps[0], PluginWrapper)
-    assert isinstance(pipeline.transform.steps[0], PluginWrapper)
-    assert isinstance(pipeline.load.steps[0], PluginWrapper)
-    assert isinstance(pipeline.load_transform.steps[0], PluginWrapper)
+    assert isinstance(pipeline.extract.steps[0], IExtractPlugin)
+    assert isinstance(pipeline.transform.steps[0], ITransformPlugin)
+    assert isinstance(pipeline.load.steps[0], ILoadPlugin)
+    assert isinstance(pipeline.load_transform.steps[0], ITransformLoadPlugin)
 
     assert not pipeline.is_executed

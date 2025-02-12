@@ -7,7 +7,7 @@ from pytest_httpx import HTTPXMock
 
 # Local Imports
 from pipeline_flow.common.type_def import AsyncPlugin
-from pipeline_flow.plugins.extract import async_get_httpx_paginated
+from pipeline_flow.plugins.extract import RestApiAsyncExtractor
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def test_endpoint() -> str:
 
 @pytest.fixture
 def api_client(test_api_key: str, base_url: str, test_endpoint: str) -> AsyncPlugin:
-    return async_get_httpx_paginated(test_api_key, base_url, test_endpoint)
+    return RestApiAsyncExtractor(test_api_key, base_url, test_endpoint)
 
 
 @pytest.mark.asyncio

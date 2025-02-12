@@ -7,48 +7,48 @@ from abc import ABCMeta, abstractmethod
 from functools import reduce
 from typing import TYPE_CHECKING, Any
 
+from pipeline_flow.common.exceptions import (
+    ExtractError,
+    LoadError,
+    TransformError,
+    TransformLoadError,
+)
+
 # Third Party Imports
-# Project Imports
-from pipeline_flow.common.decorator import async_time_it, sync_time_it
+# Local Imports
+from pipeline_flow.common.utils import async_time_it, sync_time_it
+from pipeline_flow.core.models.pipeline import Pipeline, PipelineType
+
+# Type Imports
 
 if TYPE_CHECKING:
     from pipeline_flow.common.type_def import ETLData, ExtractedData, TransformedData
-    from pipeline_flow.core.plugins import PluginWrapper
-
-
-if TYPE_CHECKING:
     from pipeline_flow.core.models.phases import (
         ExtractPhase,
         LoadPhase,
         TransformLoadPhase,
         TransformPhase,
     )
-
-from pipeline_flow.core.models.exceptions import (
-    ExtractError,
-    LoadError,
-    TransformError,
-    TransformLoadError,
-)
-from pipeline_flow.core.models.pipeline import Pipeline, PipelineType
+    from pipeline_flow.plugins import IPlugin
 
 
-def plugin_sync_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
+# TODO: Add Callable type fo IPlugin
+def plugin_sync_executor(plugin: IPlugin, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
     logging.debug("Executing plugin `%s`", plugin.id)
-    result = plugin.func(*pipeline_args, **pipeline_kwargs)
+    result = plugin(*pipeline_args, **pipeline_kwargs)
     logging.debug("Finished executing plugin `%s`", plugin.id)
     return result
 
 
-async def plugin_async_executor(plugin: PluginWrapper, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
+async def plugin_async_executor(plugin: IPlugin, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
     logging.debug("Executing plugin `%s`", plugin.id)
-    result = await plugin.func(*pipeline_args, **pipeline_kwargs)
+    result = await plugin(*pipeline_args, **pipeline_kwargs)
     logging.debug("Finished executing plugin `%s`", plugin.id)
     return result
 
 
 async def task_group_executor(
-    plugins: list[PluginWrapper],
+    plugins: list[IPlugin],
     *pipeline_args: Any,  # noqa: ANN401
     **pipeline_kwargs: Any,  # noqa: ANN401
 ) -> dict[str, ETLData]:

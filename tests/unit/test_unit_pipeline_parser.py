@@ -8,21 +8,28 @@ from pytest_mock import MockerFixture
 from pipeline_flow.core.models.phases import ExtractPhase, LoadPhase, Phase, TransformLoadPhase, TransformPhase
 from pipeline_flow.core.models.pipeline import Pipeline, PipelineType
 from pipeline_flow.core.parsers import pipeline_parser
-from pipeline_flow.core.plugins import PluginRegistry, PluginWrapper
-from tests.resources.plugins import simple_dummy_plugin
+from pipeline_flow.core.registry import PluginRegistry
+from tests.resources.plugins import (
+    IPlugin,
+    SimpleExtractorPlugin,
+    SimpleLoaderPlugin,
+    SimpleTransformLoadPlugin,
+    SimpleTransformPlugin,
+)
 
 
 @pytest.mark.parametrize(
-    ("pipeline_phase", "expected"),
+    ("pipeline_phase", "expected", "plugin_callable"),
     [
-        ("extract", ExtractPhase),
-        ("transform", TransformPhase),
-        ("load", LoadPhase),
-        ("transform_at_load", TransformLoadPhase),
+        ("extract", ExtractPhase, SimpleExtractorPlugin),
+        ("transform", TransformPhase, SimpleTransformPlugin),
+        ("load", LoadPhase, SimpleLoaderPlugin),
     ],
 )
-def test_parse_phase(pipeline_phase: str, expected: type[Phase], mocker: MockerFixture) -> None:
-    mocker.patch.object(PluginRegistry, "get", return_value=simple_dummy_plugin)
+def test_parse_phase(
+    pipeline_phase: str, expected: type[Phase], plugin_callable: IPlugin, mocker: MockerFixture
+) -> None:
+    mocker.patch.object(PluginRegistry, "get", return_value=plugin_callable)
     phase_details = {
         "steps": [
             {
@@ -35,6 +42,26 @@ def test_parse_phase(pipeline_phase: str, expected: type[Phase], mocker: MockerF
 
     assert len(parsed_phase.steps) == 1
     assert isinstance(parsed_phase, expected)
+
+
+def test_parse_transform_load_phase(mocker: MockerFixture) -> None:
+    # Since TransformLoadPhase requires an extra parameter (e.g. "query"), it is better handled in its own test.
+    mocker.patch.object(PluginRegistry, "get", return_value=SimpleTransformLoadPlugin)
+    phase_details = {
+        "steps": [
+            {
+                "id": "mock_id",
+                "plugin": "mock_plugin",
+                "params": {
+                    "query": "SELECT 1",
+                },
+            }
+        ],
+    }
+    parsed_phase = pipeline_parser._parse_phase("transform_at_load", phase_details)
+
+    assert len(parsed_phase.steps) == 1
+    assert isinstance(parsed_phase, TransformLoadPhase)
 
 
 def test_create_pipeline_with_no_pipeline_attributes() -> None:
@@ -68,16 +95,12 @@ def test_create_pipeline_with_only_mandatory_phases(mocker: MockerFixture) -> No
         pipeline_parser,
         "_parse_phase",
         side_effect=[
-            ExtractPhase.model_construct(
-                steps=[
-                    PluginWrapper(id="extractor_id", func=simple_dummy_plugin()),
-                ]
-            ),
+            ExtractPhase.model_construct(steps=[SimpleExtractorPlugin(plugin_id="extractor_id")]),
             TransformPhase.model_construct(steps=[]),
             LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="loader_id", func=simple_dummy_plugin()),
-                    PluginWrapper(id="loader_id_2", func=simple_dummy_plugin()),
+                    SimpleLoaderPlugin(plugin_id="loader_id"),
+                    SimpleLoaderPlugin(plugin_id="loader_id_2"),
                 ]
             ),
         ],
@@ -91,11 +114,14 @@ def test_create_pipeline_with_only_mandatory_phases(mocker: MockerFixture) -> No
     assert pipeline.needs is None
 
     assert len(pipeline.extract.steps) == 1
+    assert isinstance(pipeline.extract.steps[0], SimpleExtractorPlugin)
     assert pipeline.extract.steps[0].id == "extractor_id"
 
     assert len(pipeline.transform.steps) == 0
 
     assert len(pipeline.load.steps) == 2
+    assert isinstance(pipeline.load.steps[0], SimpleLoaderPlugin)
+    assert isinstance(pipeline.load.steps[1], SimpleLoaderPlugin)
     assert pipeline.load.steps[0].id == "loader_id"
     assert pipeline.load.steps[1].id == "loader_id_2"
 
@@ -133,25 +159,19 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker: MockerFixtur
         side_effect=[
             ExtractPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="extractor_id", func=simple_dummy_plugin()),
+                    SimpleExtractorPlugin(plugin_id="extractor_id"),
                 ]
             ),
             TransformPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="transformer_id",
-                        func=simple_dummy_plugin(),
-                    ),
-                    PluginWrapper(
-                        id="transformer_id_2",
-                        func=simple_dummy_plugin(),
-                    ),
+                    SimpleTransformPlugin(plugin_id="transformer_id"),
+                    SimpleTransformPlugin(plugin_id="transformer_id_2"),
                 ]
             ),
             LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(id="loader_id", func=simple_dummy_plugin),
-                    PluginWrapper(id="loader_id_2", func=simple_dummy_plugin),
+                    SimpleLoaderPlugin(plugin_id="loader_id"),
+                    SimpleLoaderPlugin(plugin_id="loader_id_2"),
                 ]
             ),
         ],
@@ -163,11 +183,16 @@ def test_create_pipeline_with_multiple_sources_destinations(mocker: MockerFixtur
 
     assert len(pipeline.extract.steps) == 1
     assert pipeline.extract.steps[0].id == "extractor_id"
+    assert isinstance(pipeline.extract.steps[0], SimpleExtractorPlugin)
 
     assert len(pipeline.transform.steps) == 2
+    assert isinstance(pipeline.transform.steps[0], SimpleTransformPlugin)
+    assert isinstance(pipeline.transform.steps[1], SimpleTransformPlugin)
     assert pipeline.transform.steps[0].id == "transformer_id"
     assert pipeline.transform.steps[1].id == "transformer_id_2"
 
     assert len(pipeline.load.steps) == 2
+    assert isinstance(pipeline.load.steps[0], SimpleLoaderPlugin)
+    assert isinstance(pipeline.load.steps[1], SimpleLoaderPlugin)
     assert pipeline.load.steps[0].id == "loader_id"
     assert pipeline.load.steps[1].id == "loader_id_2"

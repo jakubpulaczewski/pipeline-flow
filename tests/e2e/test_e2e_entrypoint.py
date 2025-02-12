@@ -5,7 +5,7 @@ import sqlite3
 import pytest
 
 # Project Imports
-from pipeline_flow.entrypoint import start
+from pipeline_flow.entrypoint import start_workflow
 
 
 @pytest.mark.asyncio
@@ -14,7 +14,7 @@ async def test_e2e_etl_pipeline(populate_source_e2e_tables, db_connection: sqlit
     plugins:
       custom:
         files:
-          - tests/e2e/e2e_plugins.py
+          - tests/resources/e2e_plugins.py
     pipelines:
       customer_order_pipeline:
         type: ETL
@@ -64,7 +64,7 @@ async def test_e2e_etl_pipeline(populate_source_e2e_tables, db_connection: sqlit
                   table: customer_orders
     """
 
-    result = await start(yaml_text=yaml_config)
+    result = await start_workflow(yaml_text=yaml_config)
 
     assert result is True
     sqlite3_cursor = db_connection.cursor()
@@ -80,7 +80,7 @@ async def test_e2e_elt_pipeline(populate_source_e2e_tables, db_connection: sqlit
     plugins:
       custom:
         files:
-          - tests/e2e/e2e_plugins.py
+          - tests/resources/e2e_plugins.py
     pipelines:
       customer_order_pipeline:
         type: ELT
@@ -135,7 +135,7 @@ async def test_e2e_elt_pipeline(populate_source_e2e_tables, db_connection: sqlit
                       GROUP BY customer_id, name;
     """
 
-    result = await start(yaml_text=yaml_config)
+    result = await start_workflow(yaml_text=yaml_config)
 
     assert result is True
     sqlite3_cursor = db_connection.cursor()
@@ -151,7 +151,7 @@ async def test_e2e_etlt_pipeline(populate_source_e2e_tables, db_connection: sqli
     plugins:
       custom:
         files:
-          - tests/e2e/e2e_plugins.py
+          - tests/resources/e2e_plugins.py
     pipelines:
       customer_order_pipeline:
         type: ETLT
@@ -210,7 +210,7 @@ async def test_e2e_etlt_pipeline(populate_source_e2e_tables, db_connection: sqli
                     SET name = UPPER(name);
     """
 
-    result = await start(yaml_text=yaml_config)
+    result = await start_workflow(yaml_text=yaml_config)
     assert result is True
     sqlite3_cursor = db_connection.cursor()
     sqlite3_cursor.execute("SELECT * FROM customer_orders")

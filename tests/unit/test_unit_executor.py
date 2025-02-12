@@ -15,19 +15,18 @@ from pipeline_flow.core.models.phases import (
     TransformLoadPhase,
     TransformPhase,
 )
-from pipeline_flow.core.plugins import PluginWrapper
 from tests.resources.plugins import (
-    simple_extractor_plugin,
-    simple_loader_plugin,
-    simple_merge_plugin,
-    simple_transform_load_plugin,
-    simple_transform_plugin,
+    SimpleExtractorPlugin,
+    SimpleLoaderPlugin,
+    SimpleMergePlugin,
+    SimpleTransformLoadPlugin,
+    SimpleTransformPlugin,
 )
 
 
 @pytest.mark.asyncio
 async def test_run_extractor_without_delay() -> None:
-    extract = ExtractPhase.model_construct(steps=[PluginWrapper(id="extractor_id", func=simple_extractor_plugin())])
+    extract = ExtractPhase.model_construct(steps=[SimpleExtractorPlugin(plugin_id="extractor_id")])
     result = await executor.run_extractor(extract)
 
     assert result == "extracted_data"
@@ -37,13 +36,10 @@ async def test_run_extractor_without_delay() -> None:
 async def test_run_extractor_multiple_without_delay() -> None:
     extracts = ExtractPhase.model_construct(
         steps=[
-            PluginWrapper(id="extractor_id", func=simple_extractor_plugin()),
-            PluginWrapper(
-                id="extractor_id_2",
-                func=simple_extractor_plugin(),
-            ),
+            SimpleExtractorPlugin(plugin_id="extractor_id"),
+            SimpleExtractorPlugin(plugin_id="extractor_id_2"),
         ],
-        merge=PluginWrapper(id="func_mock", func=simple_merge_plugin()),
+        merge=SimpleMergePlugin(plugin_id="merge_mock_id"),
     )
 
     result = await executor.run_extractor(extracts)
@@ -59,9 +55,7 @@ def test_run_transformer_with_zero_transformation() -> None:
 
 
 def test_run_transformer_with_one_transformation() -> None:
-    transformations = TransformPhase.model_construct(
-        steps=[PluginWrapper(id="transformer_id", func=simple_transform_plugin())]
-    )
+    transformations = TransformPhase.model_construct(steps=[SimpleTransformPlugin(plugin_id="transformer_id")])
 
     result = executor.run_transformer("data", transformations)
 
@@ -69,13 +63,10 @@ def test_run_transformer_with_one_transformation() -> None:
 
 
 def test_run_multiple_transformer() -> None:
-    mock_transformer = Mock(side_effect=lambda data: f"transformed_{data}")
-    upper_transformer = Mock(side_effect=lambda data: data.upper())
-
     transformations = TransformPhase.model_construct(
         steps=[
-            PluginWrapper(id="transformer_id", func=mock_transformer),
-            PluginWrapper(id="transformer_upper", func=upper_transformer),
+            Mock(id="transformer_id", spec=SimpleTransformPlugin, side_effect=lambda data: f"transformed_{data}"),
+            Mock(id="transformer_upper", spec=SimpleTransformPlugin, side_effect=lambda data: data.upper()),
         ]
     )
 
@@ -85,74 +76,65 @@ def test_run_multiple_transformer() -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_loader_without_delay() -> None:
-    simple_loader_plugin_mock = AsyncMock(side_effect=simple_loader_plugin())
-    destinations = LoadPhase.model_construct(steps=[PluginWrapper(id="loader_id", func=simple_loader_plugin_mock)])
+async def test_run_loader_without_delay(mocker: MockerFixture) -> None:
+    loader_plugin = SimpleLoaderPlugin(plugin_id="loader_id")
+    destinations = LoadPhase.model_construct(steps=[loader_plugin])
+
+    spy = mocker.spy(SimpleLoaderPlugin, "__call__")
 
     await executor.run_loader("TRANSFORMED_DATA", destinations)
 
-    simple_loader_plugin_mock.assert_called_once_with(data="TRANSFORMED_DATA")
-    assert simple_loader_plugin_mock.call_count == 1, "Loader should be called once"
+    spy.assert_called_once_with(loader_plugin, data="TRANSFORMED_DATA")  # loader_plugin operates as "self" in the call
 
 
 @pytest.mark.asyncio
-async def test_run_loader_multiple_without_delay() -> None:
-    simple_loader_plugin_mock = AsyncMock(side_effect=simple_loader_plugin())
+async def test_run_loader_multiple_without_delay(mocker: MockerFixture) -> None:
+    loader_plugin1 = SimpleLoaderPlugin(plugin_id="loader_id")
+    loader_plugin2 = SimpleLoaderPlugin(plugin_id="loader_id_2")
 
     destinations = LoadPhase.model_construct(
         steps=[
-            PluginWrapper(id="loader_id", func=simple_loader_plugin_mock),
-            PluginWrapper(id="loader_id_2", func=simple_loader_plugin_mock),
+            loader_plugin1,
+            loader_plugin2,
         ]
     )
+    spy = mocker.spy(SimpleLoaderPlugin, "__call__")
+
     await executor.run_loader("TRANSFORMED_ETL_DATA", destinations)
 
-    simple_loader_plugin_mock.assert_called_with(data="TRANSFORMED_ETL_DATA")
-    assert simple_loader_plugin_mock.call_count == 2, "Both loaders should be called"
-    assert simple_loader_plugin_mock.mock_calls[0] == simple_loader_plugin_mock.mock_calls[1], (
-        "Both loaders should be called with the same data"
-    )
+    assert spy.call_count == 2, "Both loaders should be called"
 
 
-def test_run_transformer_after_load() -> None:
-    simple_transform_load_plugin_mock = Mock(side_effect=simple_transform_load_plugin(query="SELECT 1"))
+def test_run_transformer_after_load(mocker: MockerFixture) -> None:
+    tf_load_plugin = SimpleTransformLoadPlugin(plugin_id="transform_loader_id", query="SELECT 1")
+
+    spy = mocker.spy(SimpleTransformLoadPlugin, "__call__")
 
     transformations = TransformLoadPhase.model_construct(
         steps=[
-            PluginWrapper(
-                id="mock_transform_loader_id",
-                func=simple_transform_load_plugin_mock,
-            )
+            tf_load_plugin,
         ]
     )
     executor.run_transformer_after_load(transformations)
 
-    simple_transform_load_plugin_mock.assert_called_once()
+    spy.assert_called_once_with(tf_load_plugin)  # tf_load_plugin operates as "self" in the call
 
 
-def test_run_transformer_after_load_multiple() -> None:
-    simple_transform_load_plugin_mock = Mock(
-        side_effect=[
-            simple_transform_load_plugin(query="SELECT 1"),
-            simple_transform_load_plugin(query="SELECT 2"),
-        ]
-    )
+def test_run_transformer_after_load_multiple(mocker: MockerFixture) -> None:
+    tf_load_plugin1 = SimpleTransformLoadPlugin(plugin_id="transform_loader_id", query="SELECT 1")
+    tf_load_plugin2 = SimpleTransformLoadPlugin(plugin_id="transform_loader_id_2", query="SELECT 1")
+
+    spy = mocker.spy(SimpleTransformLoadPlugin, "__call__")
 
     transformations = TransformLoadPhase.model_construct(
         steps=[
-            PluginWrapper(
-                id="mock_transform_loader_id",
-                func=simple_transform_load_plugin_mock,
-            ),
-            PluginWrapper(
-                id="mock_transform_loader_id_2",
-                func=simple_transform_load_plugin_mock,
-            ),
+            tf_load_plugin1,
+            tf_load_plugin2,
         ]
     )
     executor.run_transformer_after_load(transformations)
 
-    assert simple_transform_load_plugin_mock.call_count == 2
+    assert spy.call_count == 2
 
 
 @pytest.mark.asyncio

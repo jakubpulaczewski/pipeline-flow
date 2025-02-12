@@ -14,12 +14,11 @@ from pipeline_flow.core.models.phases import (
     TransformPhase,
 )
 from pipeline_flow.core.models.pipeline import Pipeline
-from pipeline_flow.core.plugins import PluginWrapper
 from tests.resources.plugins import (
-    simple_extractor_plugin,
-    simple_loader_plugin,
-    simple_transform_load_plugin,
-    simple_transform_plugin,
+    SimpleExtractorPlugin,
+    SimpleLoaderPlugin,
+    SimpleTransformLoadPlugin,
+    SimpleTransformPlugin,
 )
 
 
@@ -57,34 +56,19 @@ async def test_etl_strategy_with_delay() -> None:
         phases={  # type: ignore[reportArgumentType]
             "extract": ExtractPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_extractor_id",
-                        func=simple_extractor_plugin(delay=0.2),
-                    )
+                    SimpleExtractorPlugin(plugin_id="async_extractor_id", delay=0.2),
                 ],
             ),
             "transform": TransformPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_transformer_id",
-                        func=simple_transform_plugin(delay=0.1),
-                    ),
+                    SimpleTransformPlugin(plugin_id="async_transformer_id", delay=0.1),
                 ]
             ),
             "load": LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_loader_id",
-                        func=simple_loader_plugin(delay=0.2),
-                    ),
-                    PluginWrapper(
-                        id="async_loader_id",
-                        func=simple_loader_plugin(delay=0.1),
-                    ),
-                    PluginWrapper(
-                        id="async_loader_id",
-                        func=simple_loader_plugin(delay=0.3),
-                    ),
+                    SimpleLoaderPlugin(plugin_id="async_loader_id1", delay=0.2),
+                    SimpleLoaderPlugin(plugin_id="async_loader_id2", delay=0.1),
+                    SimpleLoaderPlugin(plugin_id="async_loader_id3", delay=0.3),
                 ]
             ),
         },
@@ -106,34 +90,19 @@ async def test_elt_strategy_with_delay() -> None:
         phases={  # type: ignore[reportArgumentType]
             "extract": ExtractPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_extractor_id",
-                        func=simple_extractor_plugin(delay=0.2),
-                    )
+                    SimpleExtractorPlugin(plugin_id="async_extractor_id", delay=0.2),
                 ],
             ),
             "load": LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_loader_id",
-                        func=simple_loader_plugin(delay=0.2),
-                    ),
-                    PluginWrapper(
-                        id="async_loader_id",
-                        func=simple_loader_plugin(delay=0.1),
-                    ),
+                    SimpleLoaderPlugin(plugin_id="async_loader_id1", delay=0.2),
+                    SimpleLoaderPlugin(plugin_id="async_loader_id2", delay=0.1),
                 ]
             ),
             "transform_at_load": TransformLoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_transform_loader_id",
-                        func=simple_transform_load_plugin(query="SELECT 1", delay=0.1),
-                    ),
-                    PluginWrapper(
-                        id="async_transform_loader_id_2",
-                        func=simple_transform_load_plugin(query="SELECT 1", delay=0.1),
-                    ),
+                    SimpleTransformLoadPlugin(plugin_id="async_transform_loader_id", query="SELECT 1", delay=0.1),
+                    SimpleTransformLoadPlugin(plugin_id="async_transform_loader_id_2", query="SELECT 2", delay=0.1),
                 ]
             ),
         },
@@ -155,42 +124,24 @@ async def test_etlt_strategy_with_delay() -> None:
         phases={  # type: ignore[reportArgumentType]
             "extract": ExtractPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_extractor_id",
-                        func=simple_extractor_plugin(delay=0.2),
-                    )
+                    SimpleExtractorPlugin(plugin_id="async_extractor_id", delay=0.2),
                 ],
             ),
             "transform": TransformPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_transformer_id",
-                        func=simple_transform_plugin(delay=0.1),
-                    )
+                    SimpleTransformPlugin(plugin_id="async_transformer_id", delay=0.1),
                 ],
             ),
             "load": LoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_loader_id",
-                        func=simple_loader_plugin(delay=0.2),
-                    ),
-                    PluginWrapper(
-                        id="async_loader_id",
-                        func=simple_loader_plugin(delay=0.1),
-                    ),
+                    SimpleLoaderPlugin(plugin_id="async_loader_id1", delay=0.2),
+                    SimpleLoaderPlugin(plugin_id="async_loader_id2", delay=0.1),
                 ]
             ),
             "transform_at_load": TransformLoadPhase.model_construct(
                 steps=[
-                    PluginWrapper(
-                        id="async_transform_loader_id",
-                        func=simple_transform_load_plugin(query="SELECT 1", delay=0.1),
-                    ),
-                    PluginWrapper(
-                        id="async_transform_loader_id_2",
-                        func=simple_transform_load_plugin(query="SELECT 1", delay=0.1),
-                    ),
+                    SimpleTransformLoadPlugin(plugin_id="async_transform_loader_id", query="SELECT 1", delay=0.1),
+                    SimpleTransformLoadPlugin(plugin_id="async_transform_loader_id_2", query="SELECT 1", delay=0.1),
                 ]
             ),
         },

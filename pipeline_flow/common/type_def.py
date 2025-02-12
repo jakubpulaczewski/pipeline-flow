@@ -6,9 +6,12 @@ from typing import Annotated, Any, TypedDict
 from pydantic.dataclasses import dataclass
 
 type ExtractedData = Any
+type ExtractMergedData = Any
 type TransformedData = Any
+type UnifiedExtractData = ExtractedData | ExtractMergedData
+type ETLData = UnifiedExtractData | TransformedData
 
-type ETLData = ExtractedData | TransformedData
+
 type PluginName = str
 
 type SyncPlugin = Callable[..., ETLData]

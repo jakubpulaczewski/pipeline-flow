@@ -1,25 +1,15 @@
 # Standard Imports
-from functools import wraps
 
 # Project Imports
-from pipeline_flow.common.type_def import AsyncPlugin
-from pipeline_flow.core.models.phases import PipelinePhase
-from pipeline_flow.core.plugins import plugin
+from pipeline_flow.plugins import IExtractPlugin, ILoadPlugin
 
 
-@plugin(PipelinePhase.EXTRACT_PHASE, "custom_extract")
-def custom_extractor() -> AsyncPlugin:
-    @wraps(custom_extractor)
-    async def inner() -> str:
+class CustomExtractor(IExtractPlugin, plugin_name="custom_extract"):
+    async def extract(self) -> str:
         return "CUSTOM EXTRACTED DATA"
 
-    return inner
 
-
-@plugin(PipelinePhase.LOAD_PHASE, "custom_load")
-def custom_loader() -> AsyncPlugin:
-    @wraps(custom_loader)
-    async def inner(data: str) -> None:  # noqa: ARG001
+class CustomLoader(ILoadPlugin, plugin_name="custom_load"):
+    async def load(self, data: str) -> None:
+        # Stimulate loading data
         return
-
-    return inner

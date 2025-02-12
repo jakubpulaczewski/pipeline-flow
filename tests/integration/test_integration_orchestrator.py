@@ -9,12 +9,6 @@ from pipeline_flow.core.models.pipeline import Pipeline
 # Project Imports
 from pipeline_flow.core.orchestrator import PipelineOrchestrator
 from pipeline_flow.core.parsers.yaml_parser import YamlConfig
-from pipeline_flow.core.plugins import PluginWrapper
-from tests.resources.plugins import (
-    simple_extractor_plugin,
-    simple_loader_plugin,
-    simple_transform_plugin,
-)
 
 
 @pytest.fixture
@@ -30,20 +24,10 @@ async def test_execute_pipelines_with_empty_list(orchestrator: PipelineOrchestra
 
 
 @pytest.mark.asyncio
-async def test_execute_pipeline(
+async def test_execute_single_pipeline(
     etl_pipeline_factory: Callable[..., Pipeline], orchestrator: PipelineOrchestrator
 ) -> None:
-    job1 = etl_pipeline_factory(
-        name="ETL Pipeline 1",
-        extract=[PluginWrapper(id="mock_extractor", func=simple_extractor_plugin(delay=0))],
-        transform=[
-            PluginWrapper(
-                id="mock_transformer",
-                func=simple_transform_plugin(delay=0),
-            )
-        ],
-        load=[PluginWrapper(id="mock_loader", func=simple_loader_plugin(delay=0))],
-    )
+    job1 = etl_pipeline_factory(name="Job1")
     await orchestrator.pipeline_queue_producer([job1])
 
     await orchestrator._execute_pipeline()
