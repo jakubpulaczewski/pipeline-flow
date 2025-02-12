@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
 from typing import Annotated, Any, TypedDict
 
 from pydantic.dataclasses import dataclass
@@ -13,10 +12,6 @@ type ETLData = UnifiedExtractData | TransformedData
 
 
 type PluginName = str
-
-type SyncPlugin = Callable[..., ETLData]
-type AsyncPlugin = Callable[..., Awaitable[ETLData]]
-type WrappedPlugin[**PluginArgs] = Callable[PluginArgs, SyncPlugin] | Callable[PluginArgs, AsyncPlugin]
 
 
 class CustomPluginRegistryJSON(TypedDict):

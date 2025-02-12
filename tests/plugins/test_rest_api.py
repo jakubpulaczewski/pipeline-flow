@@ -1,15 +1,13 @@
 # Standad Imports
 
 # Third Party Imports
-import asyncio
-
 import pytest
 from httpx import HTTPStatusError
 from pytest_httpx import HTTPXMock
 from pytest_mock import MockerFixture
 
 # Local Imports
-from pipeline_flow.common.type_def import AsyncPlugin
+from pipeline_flow.plugins import IPlugin
 from pipeline_flow.plugins.extract import RestApiAsyncExtractor
 
 
@@ -29,12 +27,12 @@ def test_endpoint() -> str:
 
 
 @pytest.fixture
-def api_client(test_api_key: str, base_url: str, test_endpoint: str) -> AsyncPlugin:
+def api_client(test_api_key: str, base_url: str, test_endpoint: str) -> IPlugin:
     return RestApiAsyncExtractor(test_api_key, base_url, test_endpoint)
 
 
 @pytest.mark.asyncio
-async def test_direct_list_response(api_client: AsyncPlugin, httpx_mock: HTTPXMock) -> None:
+async def test_direct_list_response(api_client: IPlugin, httpx_mock: HTTPXMock) -> None:
     json = [{"id": 1, "name": "Single Item"}]
     httpx_mock.add_response(status_code=200, json=json)
 
@@ -44,7 +42,7 @@ async def test_direct_list_response(api_client: AsyncPlugin, httpx_mock: HTTPXMo
 
 
 @pytest.mark.asyncio
-async def test_direct_dict_response(api_client: AsyncPlugin, httpx_mock: HTTPXMock) -> None:
+async def test_direct_dict_response(api_client: IPlugin, httpx_mock: HTTPXMock) -> None:
     json = {"id": 1, "name": "Single Item"}
     httpx_mock.add_response(status_code=200, json=json)
 
@@ -54,7 +52,7 @@ async def test_direct_dict_response(api_client: AsyncPlugin, httpx_mock: HTTPXMo
 
 
 @pytest.mark.asyncio
-async def test_pagination_single_page(api_client: AsyncPlugin, httpx_mock: HTTPXMock) -> None:
+async def test_pagination_single_page(api_client: IPlugin, httpx_mock: HTTPXMock) -> None:
     json = {"data": [{"id": 1, "name": "Single Item"}], "pagination": {"has_more": False, "next_page": None}}
 
     httpx_mock.add_response(status_code=200, json=json)
@@ -65,7 +63,7 @@ async def test_pagination_single_page(api_client: AsyncPlugin, httpx_mock: HTTPX
 
 
 @pytest.mark.asyncio
-async def test_pagination_multiple_pages(api_client: AsyncPlugin, httpx_mock: HTTPXMock) -> None:
+async def test_pagination_multiple_pages(api_client: IPlugin, httpx_mock: HTTPXMock) -> None:
     first_page = {
         "data": [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}],
         "pagination": {"has_more": True, "next_page": "https://api.example.com/v1/users?page=2"},
@@ -88,9 +86,7 @@ async def test_pagination_multiple_pages(api_client: AsyncPlugin, httpx_mock: HT
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status_code", [(403), (404), (429), (500), (502), (503), (504)])
-async def test_api_failure(
-    status_code: int, api_client: AsyncPlugin, httpx_mock: HTTPXMock, mocker: MockerFixture
-) -> None:
+async def test_api_failure(status_code: int, api_client: IPlugin, httpx_mock: HTTPXMock, mocker: MockerFixture) -> None:
     asyncio_sleep = mocker.patch("asyncio.sleep")
     httpx_mock.add_response(status_code=429, is_reusable=True)
 

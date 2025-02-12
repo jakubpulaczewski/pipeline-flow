@@ -3,21 +3,30 @@ from __future__ import annotations
 
 import asyncio
 from abc import ABC, abstractmethod
-from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, ParamSpec, Self
 
 # Third Party Imports
 # Local Imports
 from pipeline_flow.core.registry import PluginRegistry
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pipeline_flow.common.type_def import ExtractedData, ExtractMergedData, TransformedData, UnifiedExtractData
+
+_P = ParamSpec("_P")
 
 
 class AsyncAdapterMixin:
-    """Mixin class to run sychronous code in a new event loop thread such that it can be awaited and does not block the main event loop."""
+    """Mixin class to run sychronous code in a new event loop thread.
 
-    async def async_wrap[**P](self: Self, func: Callable[..., Any], *args: P.args, **kwargs: P.kwargs) -> Any:
+    This mixin allows running synchronous code in a separate thread using
+    asyncio.to_thread, so it can be awaited without blocking the main event loop.
+    It is useful for wrapping blocking I/O operations (e.g. using `pandas`) in an
+    async function.
+    """
+
+    async def async_wrap(self: Self, func: Callable[..., Any], *args: _P.args, **kwargs: _P.kwargs) -> Any:
         """Wrap synchronous code in an async function."""
         return await asyncio.to_thread(func, *args, **kwargs)
 
@@ -39,6 +48,7 @@ class IPlugin:
         if not plugin_name:
             raise ValueError("Plugin name must be provided for concrete classes.")
 
+        # Register the plugin with the plugin registry.
         PluginRegistry.register(plugin_name, cls)
 
     def __init__(self: Self, plugin_id: str) -> None:
