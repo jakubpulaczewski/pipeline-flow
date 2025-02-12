@@ -1,4 +1,5 @@
 # Standard Imports
+import asyncio
 import logging
 import os
 from http import HTTPStatus
@@ -6,12 +7,18 @@ from typing import Any, Self
 
 # Third Party Imports
 import httpx
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_random
 
 # Local Imports
 from pipeline_flow.plugins import IExtractPlugin
 from pipeline_flow.plugins.utils.pagination import PaginationStrategy, PaginationTypes, get_pagination_strategy
 
 JSON_DATA = dict[str, Any]
+
+
+async def async_sleep(seconds: float) -> None:
+    logging.debug("Retrying in %s seconds", seconds)
+    await asyncio.sleep(seconds)
 
 
 class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_async_extractor"):
@@ -54,6 +61,13 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_async_extracto
             return response_data
         return []
 
+    @retry(
+        sleep=async_sleep,
+        stop=stop_after_attempt(3),
+        wait=wait_random(min=1, max=4),
+        retry=retry_if_exception_type(httpx.HTTPStatusError),
+        reraise=True,
+    )
     async def __call__(self) -> list[JSON_DATA]:
         results = []
         next_page_url = f"{self.base_url}/{self.endpoint}"

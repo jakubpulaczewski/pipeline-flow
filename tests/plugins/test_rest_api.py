@@ -1,9 +1,12 @@
 # Standad Imports
 
 # Third Party Imports
+import asyncio
+
 import pytest
 from httpx import HTTPStatusError
 from pytest_httpx import HTTPXMock
+from pytest_mock import MockerFixture
 
 # Local Imports
 from pipeline_flow.common.type_def import AsyncPlugin
@@ -85,8 +88,13 @@ async def test_pagination_multiple_pages(api_client: AsyncPlugin, httpx_mock: HT
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status_code", [(403), (404), (429), (500), (502), (503), (504)])
-async def test_api_failure(status_code: int, api_client: AsyncPlugin, httpx_mock: HTTPXMock) -> None:
-    httpx_mock.add_response(status_code)
+async def test_api_failure(
+    status_code: int, api_client: AsyncPlugin, httpx_mock: HTTPXMock, mocker: MockerFixture
+) -> None:
+    asyncio_sleep = mocker.patch("asyncio.sleep")
+    httpx_mock.add_response(status_code=429, is_reusable=True)
 
     with pytest.raises(HTTPStatusError):
         await api_client()
+
+    assert asyncio_sleep.call_count == 2, "The setting is set till 3 retries, so it should be 2"
