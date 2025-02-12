@@ -16,7 +16,7 @@ from pipeline_flow.plugins import (
 
 
 class SQLiteExtractor(IExtractPlugin, plugin_name="sqlite_extractor"):
-    def __init__(self: Self, plugin_id: str, db_uri: str, table_name: str, columns: list[str]):
+    def __init__(self: Self, plugin_id: str, db_uri: str, table_name: str, columns: list[str]) -> None:
         super().__init__(plugin_id)
         self.db_uri = db_uri
         self.table_name = table_name
@@ -34,7 +34,7 @@ class SQLiteExtractor(IExtractPlugin, plugin_name="sqlite_extractor"):
 
 
 class SQLiteInnerMerger(IMergeExtractPlugin, plugin_name="sqlite_inner_merger"):
-    def __init__(self: Self, plugin_id: str, on: str):
+    def __init__(self: Self, plugin_id: str, on: str) -> None:
         super().__init__(plugin_id)
         self.on = on
 
@@ -46,7 +46,7 @@ class SQLiteInnerMerger(IMergeExtractPlugin, plugin_name="sqlite_inner_merger"):
 
 
 class SQLiteLoader(ILoadPlugin, plugin_name="sqlite_loader"):
-    def __init__(self: Self, plugin_id: str, db_uri: str, table: str):
+    def __init__(self: Self, plugin_id: str, db_uri: str, table: str) -> None:
         super().__init__(plugin_id)
         self.db_uri = db_uri
         self.table = table
@@ -57,7 +57,7 @@ class SQLiteLoader(ILoadPlugin, plugin_name="sqlite_loader"):
 
 
 class SQLiteTransformLoader(ITransformLoadPlugin, plugin_name="sqlite_transform_loader"):
-    def __init__(self: Self, plugin_id: str, db_uri: str, query: str):
+    def __init__(self: Self, plugin_id: str, db_uri: str, query: str) -> None:
         super().__init__(plugin_id)
         self.db_uri = db_uri
         self.query = query
@@ -70,7 +70,7 @@ class SQLiteTransformLoader(ITransformLoadPlugin, plugin_name="sqlite_transform_
 
 
 class ColumnDropper(ITransformPlugin, plugin_name="column_dropper"):
-    def __init__(self: Self, plugin_id: str, columns: list[str]):
+    def __init__(self: Self, plugin_id: str, columns: list[str]) -> None:
         super().__init__(plugin_id)
         self.columns = columns
 

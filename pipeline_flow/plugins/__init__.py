@@ -11,9 +11,9 @@ from .base import (
 __all__ = [
     "IExtractPlugin",
     "ILoadPlugin",
+    "IMergeExtractPlugin",
     "IPlugin",
+    "IPreProcessPlugin",
     "ITransformLoadPlugin",
     "ITransformPlugin",
-    "IMergeExtractPlugin",
-    "IPreProcessPlugin",
 ]

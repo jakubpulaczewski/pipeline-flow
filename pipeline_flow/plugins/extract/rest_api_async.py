@@ -37,7 +37,7 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_async_extracto
             plugin_id (str): The unique identifier of the plugin callabe. Often used for logging.
             base_url (str): The base URL of the API e.g. https://api.example.com/v1
             endpoint (str): The endpoint to fetch data from e.g. /users
-            pagination_type (str, optional): The type of pagination strategy to use. Defaults to PaginationTypes.PAGE_BASED.
+            pagination_type (str, optional): The type of pagination strategy to use. Defaults to "page_based".
             headers (dict[str, str] | None, optional): An optional dict of headers. Defaults to None.
 
         """

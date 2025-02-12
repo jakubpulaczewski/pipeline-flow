@@ -88,7 +88,7 @@ async def test_pagination_multiple_pages(api_client: IPlugin, httpx_mock: HTTPXM
 @pytest.mark.parametrize("status_code", [(403), (404), (429), (500), (502), (503), (504)])
 async def test_api_failure(status_code: int, api_client: IPlugin, httpx_mock: HTTPXMock, mocker: MockerFixture) -> None:
     asyncio_sleep = mocker.patch("asyncio.sleep")
-    httpx_mock.add_response(status_code=429, is_reusable=True)
+    httpx_mock.add_response(status_code=status_code, is_reusable=True)
 
     with pytest.raises(HTTPStatusError):
         await api_client()

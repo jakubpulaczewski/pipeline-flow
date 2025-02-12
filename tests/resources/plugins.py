@@ -41,7 +41,7 @@ class SimpleTransformPlugin(ITransformPlugin, plugin_name="simple_transform_plug
         super().__init__(plugin_id)
         self.delay = delay
 
-    def __call__(self: Self, data: str) -> str:  # noqa: ARG002
+    def __call__(self: Self, data: str) -> str:
         time.sleep(self.delay)
         return f"transformed_{data}"
 

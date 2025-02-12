@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 _P = ParamSpec("_P")
 
+_PluginReturn = Any
+
 
 class AsyncAdapterMixin:
     """Mixin class to run sychronous code in a new event loop thread.
@@ -26,7 +28,9 @@ class AsyncAdapterMixin:
     async function.
     """
 
-    async def async_wrap(self: Self, func: Callable[..., Any], *args: _P.args, **kwargs: _P.kwargs) -> Any:
+    async def async_wrap(
+        self: Self, func: Callable[..., _PluginReturn], *args: _P.args, **kwargs: _P.kwargs
+    ) -> _PluginReturn:
         """Wrap synchronous code in an async function."""
         return await asyncio.to_thread(func, *args, **kwargs)
 

@@ -4,10 +4,8 @@ from unittest.mock import MagicMock
 # Third Party
 from pytest_mock import MockerFixture
 
-from pipeline_flow.core import plugin_loader
-
 # Project
-from pipeline_flow.core.models.phases import PipelinePhase
+from pipeline_flow.core import plugin_loader
 from pipeline_flow.core.registry import PluginRegistry
 
 
@@ -34,7 +32,8 @@ def test_load_custom_plugins(mocker: MockerFixture) -> None:
     assert len(mock_load_plugin.mock_calls) == 2
 
 
-# def test_load_core_engine_transformations() -> None:
-#     plugin_loader.load_core_engine_transformations("native")
+def test_load_core_engine_transformations() -> None:
+    assert len(PluginRegistry._registry) == 0
+    plugin_loader.load_core_engine_transformations("native")
 
-#     assert len(PluginRegistry._registry[PipelinePhase.TRANSFORM_PHASE].keys()) > 0
+    # assert len(PluginRegistry._registry) > 0 # noqa: ERA001 - Temporarily disabled as there are no native tf plugins

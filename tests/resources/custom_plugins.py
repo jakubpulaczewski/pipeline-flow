@@ -10,6 +10,6 @@ class CustomExtractor(IExtractPlugin, plugin_name="custom_extract"):
 
 
 class CustomLoader(ILoadPlugin, plugin_name="custom_load"):
-    async def load(self, data: str) -> None:
+    async def load(self, data: str) -> None:  # noqa: ARG002 - Data is a not used becaue it is a fake custom plugin
         # Stimulate loading data
         return
