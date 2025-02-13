@@ -23,17 +23,17 @@ DEFAULT_CONCURRENCY = 2
 DEFAULT_ENGINE = "native"
 
 
-@dataclass
-class YamlConfig(metaclass=SingletonMeta):
-    engine: str = DEFAULT_ENGINE
-    concurrency: int = DEFAULT_CONCURRENCY
-
-
 class YamlAttribute(StrEnum):
     PIPELINES = "pipelines"
     PLUGINS = "plugins"
     ENGINE = "engine"
     CONCURRENCY = "concurrency"
+
+
+@dataclass(frozen=True)
+class YamlConfig(metaclass=SingletonMeta):
+    engine: str = DEFAULT_ENGINE
+    concurrency: int = DEFAULT_CONCURRENCY
 
 
 # Pattern for environment variables, e.g. ${{ env.HOME }}
@@ -95,7 +95,7 @@ ExtendedCoreLoader.add_implicit_resolver(ENV_VAR_YAML_TAG, ENV_VAR_PATTERN, None
 ExtendedCoreLoader.add_constructor(ENV_VAR_YAML_TAG, ExtendedCoreLoader.env_var_parser)
 
 
-@dataclass
+@dataclass(frozen=True)
 class YamlParser:
     content: dict
 
