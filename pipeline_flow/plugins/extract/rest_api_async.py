@@ -33,7 +33,6 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_async_extracto
         """Fetches data asychronously from an API endpoint using the HTTP GET method.
 
         Args:
-            self (Self): An instance of the class.
             plugin_id (str): The unique identifier of the plugin callabe. Often used for logging.
             base_url (str): The base URL of the API e.g. https://api.example.com/v1
             endpoint (str): The endpoint to fetch data from e.g. /users
