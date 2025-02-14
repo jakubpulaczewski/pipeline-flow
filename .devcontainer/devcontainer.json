@@ -1,5 +1,5 @@
 {
-    "name": "Orchestrator Project",
+    "name": "Pipeline Flow Dev Container",
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
 	"features": {
 		"ghcr.io/devcontainers/features/python:1": {
@@ -9,17 +9,18 @@
 		"ghcr.io/devcontainers-extra/features/ruff:1": {
             "version": "latest"
         },
-		"ghcr.io/devcontainers-extra/features/poetry:2": {}
-		// "ghcr.io/devcontainers-contrib/features/spark-sdkman:2": {
-		// 	"version": "3.5.0", // Matrix https://community.cloudera.com/t5/Community-Articles/Spark-Python-Supportability-Matrix/ta-p/379144
-		// 	"jdkVersion": "11"
-		// }
+		"ghcr.io/devcontainers-extra/features/poetry:2": {},
+		"ghcr.io/devcontainers-contrib/features/spark-sdkman:2": {
+            "jdkVersion": "11"
+		}
     },
-
+    
 	"mounts": [
 		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
 	],
-
+    "runArgs": [
+        "--add-host=host.docker.internal:host-gateway"
+    ],
     // Configure tool-specific properties.
 	"customizations": {
 		// Configure properties specific to VS Code.
@@ -48,7 +49,6 @@
                 "charliermarsh.ruff",
                 "ms-pyright.pyright",
                 "tabnine.tabnine-vscode",
-                "github.copilot-chat",
                 "tht13.rst-vscode"
             ]
 		}
