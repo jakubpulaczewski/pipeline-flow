@@ -32,6 +32,7 @@ tenacity = "^9.0.0"
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.38"}
 asyncmy = "^0.2.10"
 cryptography = "^44.0.1"
+boto3 = "^1.36.21"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
@@ -42,6 +43,8 @@ pyright = "^1.1.392.post0"
 ruff = "^0.9.2"
 pandas = "^2.2.3"
 pytest-httpx = "^0.35.0"
+moto = {extras = ["secretsmanager"], version = "^5.0.28"}
+boto3-stubs = {extras = ["secretsmanager"], version = "^1.36.21"}
 
 
 [tool.poetry.group.docs.dependencies]
