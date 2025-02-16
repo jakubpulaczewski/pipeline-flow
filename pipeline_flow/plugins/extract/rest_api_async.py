@@ -77,19 +77,18 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
         retry=retry_if_exception_type(httpx.HTTPStatusError),
         reraise=True,
     )
-    async def __call__(self) -> JSON_DATA:
+    async def __call__(self) -> list[JSON_DATA]:
         """Fetches data from the API endpoin asynchronously.
 
         Returns:
             list[JSON_DATA]: The extracted data from the API.
         """
-        # TODO: Fix the return type to be a list of JSON_DATA
         # TODO: Add supports for multiple endpoints with paginations async.
         results = []
         next_page_url = f"{self.base_url}/{self.endpoint}"
 
         # Fetch API KEY securely
-        api_key = os.getenv("API_KEY", "")  # noqa: F841 # TODO: This needs to be changeable such that AuthPluginInterface could be used.
+        api_key = os.getenv("API_KEY", "")  # noqa: F841 # TODO: This needs to be changeable such that SecretProvider could be used.
 
         # Include API key in request headers
         default_headers = {
