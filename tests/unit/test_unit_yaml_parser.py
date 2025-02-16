@@ -92,6 +92,20 @@ def test_parse_env_variables_in_yaml(monkeypatch: MonkeyPatch) -> None:
     assert parsed_yaml["value2"] == "VALUE_OF_ENV_2"
 
 
+def test_parse_env_variables_multiple_occurrences(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("ENV_VAR1", "VALUE_OF_ENV_1")
+
+    yaml_with_env_vars = """
+    value1: ${{ env.ENV_VAR1 }}
+    value2: ${{ env.ENV_VAR1 }}
+    """
+
+    parsed_yaml = YamlParser.from_text(yaml_with_env_vars).content
+
+    assert parsed_yaml["value1"] == "VALUE_OF_ENV_1"
+    assert parsed_yaml["value2"] == "VALUE_OF_ENV_1"
+
+
 def test_parse_env_variables_without_env_prefix(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("ENV_VAR1", "VALUE_OF_ENV_1")
 
