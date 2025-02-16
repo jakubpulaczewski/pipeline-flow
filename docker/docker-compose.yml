@@ -1,0 +1,19 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "3306:3306"
+
+    # volumes: 
+    #   # Maps (mysql-data) to /var/lib/mysql where data is stored. Ensures persistent storage.
+    #   - ./mysql-data:/var/lib/mysql 
+    # Bind a set of sql in ./init-sql to /docker/entrypoint-initdb.d to automatically run them on startup.
+    # - ./init-sql:/docker-entrypoint-initdb.d

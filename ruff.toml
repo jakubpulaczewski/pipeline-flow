@@ -97,7 +97,8 @@ docstring-code-line-length = "dynamic"
 
 "pipeline_flow/*" = [
     "D100", "D101", "D102", "D103", "D104", "D105", "D107",
-    "D401",
+    "D202", "D205",
+    "D401", "D413",
     "EM101", 
     "FIX002", 
     "TRY003", "TRY400",

@@ -1,4 +1,3 @@
-Whether you're processing big data, building real-time analytics, or designing scalable workflows,
 ``pipeline-flow`` provides a lightweight and extensible solution for managing ELT/ETL/ETLT data pipelines.
 
 ## Why

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-flow"
-version = "0.1.0a4"
+version = "0.1.0a5"
 description = "A framework for building ETL, ELT and ETLT data pipelines dynamically using plugins."
 authors = [
     "Jakub Pulaczewski <jakub.pulaczewski@example.com>"
@@ -26,10 +26,12 @@ python = "^3.12"
 pydantic = "^2.4.2"
 aiofiles = "^24.1.0"
 yamlcore = "^0.0.4"
-furo = "^2024.8.6"
 returns = "^0.24.0"
 httpx = "^0.28.1"
 tenacity = "^9.0.0"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.38"}
+asyncmy = "^0.2.10"
+cryptography = "^44.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
@@ -49,6 +51,8 @@ sphinxcontrib-mermaid = "^1.0.0"
 sphinx-rtd-theme = "^3.0.2"
 myst-parser = "^4.0.0"
 sphinxemoji = "^0.3.1"
+furo = "^2024.8.6"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

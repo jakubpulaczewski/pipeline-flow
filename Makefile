@@ -44,3 +44,9 @@ build-sphinx: ## Build Sphinx documentation
 	cd docs && \
 	make html && \
 	python -m http.server --directory _build/html
+
+
+mysql-soft-restart:
+	@echo "Restarting MySQL..."
+	docker compose -f docker/docker-compose.yml down
+	docker compose -f docker/docker-compose.yml up -d
