@@ -11,7 +11,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ra
 
 # Local Imports
 from pipeline_flow.plugins import IExtractPlugin
-from pipeline_flow.plugins.utils.pagination import PaginationStrategy, PaginationTypes, get_pagination_strategy
+from pipeline_flow.plugins.utils.pagination import PaginationStrategy, PaginationTypes, pagination_factory
 
 JSON_DATA = dict[str, Any]
 
@@ -45,7 +45,7 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
         self.base_url = base_url
         self.endpoint = endpoint
         self.headers = headers
-        self.pagination_strategy: PaginationStrategy = get_pagination_strategy(pagination_type)
+        self.pagination_strategy: PaginationStrategy = pagination_factory(pagination_type)
 
     @staticmethod
     def _extract_data(response_data: dict | list) -> list[JSON_DATA]:

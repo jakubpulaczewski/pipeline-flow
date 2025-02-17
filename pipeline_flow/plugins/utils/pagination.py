@@ -50,7 +50,7 @@ class PaginationTypes(StrEnum):
         raise ValueError(error_msg)
 
 
-def get_pagination_strategy(strategy: str) -> PaginationStrategy:
+def pagination_factory(strategy: str) -> PaginationStrategy:
     """Returns a pagination strategy based on the given string."""
     match PaginationTypes(strategy.lower()):
         case PaginationTypes.PAGE_BASED:
