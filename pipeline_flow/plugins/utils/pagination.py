@@ -47,7 +47,7 @@ class PaginationTypes(StrEnum):
     HATEOAS = "hateoas"
 
     @classmethod
-    def _missing_(cls, value: str) -> PaginationTypes:
+    def _missing_(cls, value: str) -> None:
         error_msg = f"Unknown pagination strategy: {value}. Supported values: {', '.join(s.value for s in cls)}"
         raise ValueError(error_msg)
 
