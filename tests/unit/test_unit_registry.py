@@ -55,7 +55,7 @@ def test_get_nonexistent_plugin() -> None:
 def test_instantiate_plugin_with_optional_id(mocker: MockerFixture, simple_dummy_plugin_mock: MockType) -> None:
     mocker.patch.object(PluginRegistry, "get", return_value=simple_dummy_plugin_mock)
     mock_uuid = mocker.patch("uuid.uuid4")
-    mock_uuid.return_value.hex.return_value = "12345678"
+    mock_uuid.return_value = MagicMock(hex="12345678")
 
     plugin_payload = {
         "plugin": "simple_dummy_plugin",
