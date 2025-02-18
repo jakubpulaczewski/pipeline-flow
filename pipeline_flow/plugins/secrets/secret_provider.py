@@ -1,6 +1,7 @@
 # Standard Imports
+from __future__ import annotations
+
 import logging
-from abc import ABC, abstractmethod
 
 # Third Party Imports
 import boto3
@@ -8,22 +9,15 @@ from botocore import exceptions
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 # Local Imports
+from pipeline_flow.plugins import ISecretProvider
 
 
-class SecretProvider(ABC):
-    """A base class for providing authentication secrets."""
-
-    @abstractmethod
-    def fetch_secret(self, secret_name: str) -> str:
-        """Fetches the secret value by name."""
-        raise NotImplementedError("Subclasses must implement this method.")
-
-
-class AWSSecretManager(SecretProvider):
+class AWSSecretManager(ISecretProvider, plugin_name="aws_secret_manager"):
     """A class for fetching secrets from AWS Secret Manager."""
 
-    def __init__(self, region_name: str):
-        self.client = boto3.client("secretsmanager", region_name=region_name)
+    def __init__(self, plugin_id: str, region: str):
+        super().__init__(plugin_id)
+        self.client = boto3.client("secretsmanager", region_name=region)
 
     @retry(
         retry=retry_if_exception_type(exceptions.EndpointConnectionError),
@@ -31,8 +25,8 @@ class AWSSecretManager(SecretProvider):
         stop=stop_after_attempt(3),
         reraise=True,  # Raise exception if all retries fail
     )
-    def fetch_secret(self, secret_name: str) -> str:
-        """Fetches the secret value by name."""
+    def __call__(self, secret_name: str) -> str:
+        """Fetches the secret value by secret_name."""
 
         try:
             logging.info("Fetching secret %s from AWS Secret Manager.", secret_name)

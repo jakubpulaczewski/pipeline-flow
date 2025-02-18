@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import TextIOWrapper
 from typing import Annotated, Any, TypedDict
 
 from pydantic.dataclasses import dataclass
@@ -12,6 +13,7 @@ type ETLData = UnifiedExtractData | TransformedData
 
 
 type PluginName = str
+type StreamType = str | bytes | TextIOWrapper
 
 
 class CustomPluginRegistryJSON(TypedDict):

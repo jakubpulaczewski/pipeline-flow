@@ -2,26 +2,19 @@
 import logging
 
 # # Project Imports
+from pipeline_flow.common.type_def import StreamType
 from pipeline_flow.common.utils import setup_logger
 from pipeline_flow.core.orchestrator import PipelineOrchestrator
 from pipeline_flow.core.parsers import YamlParser, parse_pipelines
 from pipeline_flow.core.plugin_loader import load_plugins
 
 
-async def start_workflow(yaml_text: str | None = None, file_path: str | None = None) -> bool:
+async def start_workflow(yaml_text: StreamType | None, local_file_path: str | None = None) -> bool:
     # Set up the logger configuration
     setup_logger()
 
-    # Parse YAML and initialize YAML config (engine, concurrency)
-    if yaml_text is None and file_path is None:
-        raise ValueError("Either yaml_text or file_path must be provided.")
-
-    yaml_parser = (
-        await YamlParser.from_file(file_path) if file_path else YamlParser.from_text(yaml_text) if yaml_text else None
-    )
-    if not yaml_parser:
-        raise ValueError("YamlParser could not be initialized.")
-
+    # Parse YAML
+    yaml_parser = YamlParser.from_input(yaml_text, local_file_path)
     yaml_config = yaml_parser.initialize_yaml_config()
     plugins_payload = yaml_parser.get_plugins_dict()
 

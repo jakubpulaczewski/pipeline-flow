@@ -87,9 +87,6 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
         results = []
         next_page_url = f"{self.base_url}/{self.endpoint}"
 
-        # Fetch API KEY securely
-        api_key = os.getenv("API_KEY", "")  # noqa: F841 # TODO: This needs to be changeable such that SecretProvider could be used.
-
         # Include API key in request headers
         default_headers = {
             "Content-Type": "application/json",

@@ -1,16 +1,13 @@
 # Standard Imports
-import os
-import tempfile
-from typing import Generator
 from unittest.mock import Mock
 
 # Third Party Imports
 import pytest
 import yaml
 from _pytest.monkeypatch import MonkeyPatch
-from pytest_mock import MockerFixture
 
 # Project Imports
+from pipeline_flow.core.parsers.secret_parser import SecretPlaceholder
 from pipeline_flow.core.parsers.yaml_parser import ExtendedCoreLoader, YamlParser
 
 
@@ -36,19 +33,6 @@ def yaml_pipeline() -> str:
     """
 
 
-@pytest.fixture(scope="session")
-def temporary_yaml_file(yaml_pipeline: str) -> Generator[str]:
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".yaml") as temp_file:
-        yaml_content = yaml.safe_load(yaml_pipeline)
-
-        with open(temp_file.name, "w") as f:  # noqa: PTH123
-            yaml.dump(yaml_content, f)
-
-        yield temp_file.name
-
-        os.remove(temp_file.name)  # noqa: PTH107
-
-
 def test_parse_invalid_yaml() -> None:
     yaml_content = """
     key1: value1
@@ -59,22 +43,12 @@ def test_parse_invalid_yaml() -> None:
     """
 
     with pytest.raises(yaml.YAMLError):
-        YamlParser.from_text(yaml_content)
+        YamlParser(stream=yaml_content)
 
 
-@pytest.mark.asyncio
-async def test_parse_yaml_file_not_found() -> None:
-    with pytest.raises(FileNotFoundError, match="File not found: not_found.yaml"):
-        await YamlParser.from_file(file_path="not_found.yaml")
-
-
-def test_parse_env_var_name_success() -> None:
-    mock_stream = Mock()
-    match_mock = Mock().return_value
-    match_mock.group.return_value = "${{ env.ENV_VAR1 }}"
-
-    assert ExtendedCoreLoader.parse_env_var_name(mock_stream(), match_mock) == "ENV_VAR1"
-    mock_stream.assert_called_once()
+def test_parse_yaml_file_not_found() -> None:
+    with pytest.raises(FileNotFoundError):
+        YamlParser(stream="not_found.yaml", read_local_file=True)
 
 
 def test_parse_env_variables_in_yaml(monkeypatch: MonkeyPatch) -> None:
@@ -86,7 +60,7 @@ def test_parse_env_variables_in_yaml(monkeypatch: MonkeyPatch) -> None:
     value2: ${{ env.ENV_VAR2 }}
     """
 
-    parsed_yaml = YamlParser.from_text(yaml_with_env_vars).content
+    parsed_yaml = YamlParser(stream=yaml_with_env_vars).content
 
     assert parsed_yaml["value1"] == "VALUE_OF_ENV_1"
     assert parsed_yaml["value2"] == "VALUE_OF_ENV_2"
@@ -100,7 +74,7 @@ def test_parse_env_variables_multiple_occurrences(monkeypatch: MonkeyPatch) -> N
     value2: ${{ env.ENV_VAR1 }}
     """
 
-    parsed_yaml = YamlParser.from_text(yaml_with_env_vars).content
+    parsed_yaml = YamlParser(stream=yaml_with_env_vars).content
 
     assert parsed_yaml["value1"] == "VALUE_OF_ENV_1"
     assert parsed_yaml["value2"] == "VALUE_OF_ENV_1"
@@ -113,23 +87,68 @@ def test_parse_env_variables_without_env_prefix(monkeypatch: MonkeyPatch) -> Non
     value1: ${{ ENV_VAR1 }}
     """
 
-    YamlParser.from_text(yaml_with_env_vars)
+    parsed_yaml = YamlParser(stream=yaml_with_env_vars).content
+
+    # An environment variable without the `env.` prefix should be treated as a string
+    # It does not trigger the substitution of the environment variable
+    assert parsed_yaml["value1"] == "${{ ENV_VAR1 }}"
 
 
-def test_env_var_not_defined(mocker: MockerFixture) -> None:
-    parse_env_mock = mocker.patch.object(ExtendedCoreLoader, "parse_env_var_name", return_value="ENV_VAR1")
-
+def test_env_var_not_defined() -> None:
     yaml_with_env_vars = """
     value1: ${{ env.ENV_VAR1 }}
     """
     with pytest.raises(ValueError, match="Environment variable `ENV_VAR1` is not set."):
-        YamlParser.from_text(yaml_with_env_vars)
+        YamlParser(stream=yaml_with_env_vars)
 
-    parse_env_mock.assert_called_once()
+
+def test_parse_variable_placeholder_success() -> None:
+    yaml_parser = ExtendedCoreLoader(stream=Mock())
+    yaml_parser.variables = {"VAR1": "VALUE_OF_VAR1"}
+
+    result = yaml_parser.substitute_variable_placeholder(node=Mock(value="${{ variables.VAR1 }}"))
+
+    assert result == "VALUE_OF_VAR1"
+
+
+def test_parse_variable_placeholder_with_additional_text() -> None:
+    yaml_parser = ExtendedCoreLoader(stream=Mock())
+    yaml_parser.variables = {"VAR1": "VALUE_OF_VAR1", "VAR2": "VALUE_OF_VAR2"}
+
+    result = yaml_parser.substitute_variable_placeholder(
+        node=Mock(value="This is a test: ${{ variables.VAR1 }} + ${{ variables.VAR2 }}")
+    )
+
+    assert result == "This is a test: VALUE_OF_VAR1 + VALUE_OF_VAR2"
+
+
+def test_parse_variable_placeholder_not_defined() -> None:
+    yaml_parser = ExtendedCoreLoader(stream=Mock())
+    yaml_parser.variables = {"VAR1": "VALUE_OF_VAR1"}
+
+    with pytest.raises(ValueError, match="Variable `VAR2` is not set."):
+        yaml_parser.substitute_variable_placeholder(node=Mock(value="${{ variables.VAR2 }}"))
+
+
+def test_parse_secrets_placeholder_success() -> None:
+    yaml_parser = ExtendedCoreLoader(stream=Mock())
+    yaml_parser.secrets = {"db_password": SecretPlaceholder(secret_name="my-secret-password", secret_provider=Mock())}
+
+    result = yaml_parser.substitute_secret_placeholder(node=Mock(value="${{ secrets.db_password }}"))
+
+    assert repr(result) == "<SecretPlaceholder: my-secret-password (hidden)>"
+
+
+def test_parse_secrets_placeholder_not_defined() -> None:
+    yaml_parser = ExtendedCoreLoader(stream=Mock())
+    yaml_parser.secrets = {}
+
+    with pytest.raises(ValueError, match="Secret `db_password` is not set."):
+        yaml_parser.substitute_secret_placeholder(node=Mock(value="${{ secrets.db_password }}"))
 
 
 def test_parse_yaml_text_success(yaml_pipeline: str) -> None:
-    serialized_yaml = YamlParser.from_text(yaml_pipeline).content
+    serialized_yaml = YamlParser(yaml_pipeline).content
 
     expected_dict = {
         "pipelines": {
@@ -160,9 +179,11 @@ def test_parse_yaml_text_success(yaml_pipeline: str) -> None:
     )
 
 
-@pytest.mark.asyncio
-async def test_parse_yaml_file_success(temporary_yaml_file: str) -> None:
-    serialized_yaml = await YamlParser.from_file(temporary_yaml_file)
+def test_parse_yaml_file_success(yaml_pipeline: str, tmpdir) -> None:
+    file = tmpdir.mkdir("sub").join("data.yaml")
+    file.write_text(yaml_pipeline, encoding="utf-8")
+
+    serialized_yaml = YamlParser(stream=file.strpath, read_local_file=True).content
 
     expected_dict = {
         "pipelines": {
@@ -188,6 +209,6 @@ async def test_parse_yaml_file_success(temporary_yaml_file: str) -> None:
         }
     }
 
-    assert serialized_yaml.content == expected_dict, (
+    assert serialized_yaml == expected_dict, (
         f"Deserialized YAML does not match the expected dictionary. Got: {serialized_yaml}"
     )

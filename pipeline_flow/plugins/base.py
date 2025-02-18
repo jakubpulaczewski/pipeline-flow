@@ -129,3 +129,12 @@ class IPostProcessPlugin(ABC, IPlugin, interface=True):
     async def __call__(self: Self) -> None:
         """Post-process data after main plugin execution."""
         raise NotImplementedError("Post-process plugins must implement __call__()")
+
+
+class ISecretProvider(ABC, IPlugin, interface=True):
+    """A base class for providing authentication secrets."""
+
+    @abstractmethod
+    def __call__(self, secret_name: str) -> str:
+        """A Plugin must implement this method to fetch the secret value by name."""
+        raise NotImplementedError("Subclasses must implement this method.")
