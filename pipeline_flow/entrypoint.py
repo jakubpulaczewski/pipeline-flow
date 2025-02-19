@@ -9,7 +9,7 @@ from pipeline_flow.core.parsers import YamlParser, parse_pipelines
 from pipeline_flow.core.plugin_loader import load_plugins
 
 
-async def start_workflow(yaml_text: StreamType | None, local_file_path: str | None = None) -> bool:
+async def start_orchestration(yaml_text: StreamType | None, local_file_path: str | None = None) -> bool:
     # Set up the logger configuration
     setup_logger()
 

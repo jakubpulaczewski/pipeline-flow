@@ -238,7 +238,7 @@ def test_create_phase_transform_at_load(mocker: MockerFixture) -> None:
             {
                 "id": "mock_transform_loader_id",
                 "plugin": "mock_transformer_loader",
-                "params": {"query": "SELECT 1"},
+                "args": {"query": "SELECT 1"},
             }
         ]
     )

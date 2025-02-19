@@ -52,7 +52,7 @@ def test_parse_transform_load_phase(mocker: MockerFixture) -> None:
             {
                 "id": "mock_id",
                 "plugin": "mock_plugin",
-                "params": {
+                "args": {
                     "query": "SELECT 1",
                 },
             }

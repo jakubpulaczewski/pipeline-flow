@@ -18,7 +18,7 @@ from pipeline_flow.core.parsers import secret_parser
 
 # Type Imports
 if TYPE_CHECKING:
-    from typing import Match, Self
+    from typing import Self
 
     from yaml.nodes import Node
 

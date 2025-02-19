@@ -128,7 +128,7 @@ def test_parse_etl_pipeline_with_extra_phases() -> None:
                         {
                             "id": "mock_transfor_at_load",
                             "plugin": "transform_at_load_plugin",
-                            "params": {"query": "SELECT 13"},
+                            "args": {"query": "SELECT 13"},
                         },
                     ],
                 },
@@ -253,7 +253,7 @@ def test_parse_elt_pipeline() -> None:
                         {
                             "id": "mock_load_transformer1",
                             "plugin": "upsert_transformation",
-                            "params": {"query": "Select 2"},
+                            "args": {"query": "Select 2"},
                         }
                     ]
                 },
@@ -300,7 +300,7 @@ def test_parse_etlt_pipeline() -> None:
                         {
                             "id": "mock_load_transformer1",
                             "plugin": "upsert_transformation",
-                            "params": {"query": "Select 1"},
+                            "args": {"query": "Select 1"},
                         }
                     ]
                 },

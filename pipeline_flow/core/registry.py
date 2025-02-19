@@ -57,6 +57,6 @@ class PluginRegistry(metaclass=SingletonMeta):
         plugin_factory: IPlugin = cls.get(plugin_name)
 
         plugin_id = plugin_data.pop("id", None) or f"{plugin_name}_{uuid.uuid4().hex[:16]}"
-        plugin_params = plugin_data.get("params", {})
+        plugin_params = plugin_data.get("args", {})
 
         return plugin_factory(plugin_id=plugin_id, **plugin_params)
