@@ -2,29 +2,42 @@
 
 Pipeline Orchestration
 ================================
-Pipeline orchestration refers to how different phases of the pipeline are structured and executed. 
-``pipeline-flow`` uses a pipeline configuration file to define the sequence of steps and dependencies in a pipeline.
+Orchestrating data pipelines can be complex but with ``pipeline-flow``, its made easy. By using a simple configuration file, 
+you define the sequence of steps and their dependencies, allowing you to focus on building reliable, efficient workflows.
 
 
-Pipeline phases
------------------
+Pipeline phases: From Raw Data to Insights
+---------------------------------------------
+Every data pipeline is a journey, moving data through various stages of processing.
+In ``pipeline-flow``, each phase represents a key step in this process, ensuring that data flows smoothly from source to destination.
+
+
 A pipeline consists of multiple phases, each representing a stage in the data processing workflow.
 
 The typical phases in a pipeline are:
 
-- Extract: Fetch data from various sources (e.g., databases, APIs).
-- Transform: Process and clean the data.
-- Load: Write the processed data to a target destination (e.g., database, file).
-- Transform at Load: Perform additional transformations before loading the data.
+- Extract: Retrieve data from various sources (e.g., databases, APIs, files).
+- Transform: Process, clean, and enrich the extracted data.
+- Load: Deliver the processed data to its target destination (e.g., data warehouses, files).
+- Transform at Load: Perform additional transformations on the external system for further processing (Type 2 SCD, etc.).
 
-Execution Rules
------------------
-The pipeline execution follows these rules:
+Execution Flow
+---------------------------------------------
+``pipeline-flow`` ensures a balanced approach between speed and data integrity through well-defined execution rules.
 
-- Each phase is executed sequentially.
-- The output of one phase is passed as input to the next phase.
-- A phase can have multiple steps, each representing a specific task or operation.
-- Steps within a phase can be executed in parallel if they are can be run asynchronously.
+- Phases execute sequentially:
+    - The output of one phase becomes the input for the next, preserving data flow consistency.
+
+- Pipelines can run concurrently or sequnetially
+    - Multiple pipelines can execute asynchronously for faster processing, or sequentially if there are dependencies between them that require ordered execution.
+
+- Phases contain multiple steps:
+    - A single phase can include multiple steps, with each step representing a distinct task or operation in the workflow.
+
+- Execution mode depends on the phase type:
+    - Asychronous execution is used where the speed is critical (e.g., Extract and Load phases).
+    - Sychronous execution ensures acccuracy and consistency (e.g., Transform and Transform at Load phases).
+
 
 .. list-table:: Data Execution Rules
    :widths: 25 25 25

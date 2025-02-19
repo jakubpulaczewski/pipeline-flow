@@ -8,10 +8,9 @@ Plugins are reusable components that encapsulate specific functionality and can 
 
 What exactly is a Plugin?
 --------------------------
-A plugin is:
+In ``pipeline-flow``, a plugin is a Python class that implements a specific interface from already defined interfaces. 
+All of these classes behave like functions as they implement the ``__call__`` method. This method is the entry point for the plugin's execution.
 
-#. Any callable Python object that implements the ``__call__`` dunder method. In other words, a plugin is a function or a class with a ``__call__`` method.
-#. Wrapped in a decorator that enables lazy initialization of the plugin and allows the use of custom arguments in addition to arguments specific to a given phase.
 
 Why use Plugins?
 ------------------
@@ -22,6 +21,14 @@ Plugins offer several benefits:
 - **Extensibility**: Users can easily extend the system's functionality by adding custom plugins without modifying the core codebase.
 - **Flexibility**: Plugins can be added or updated dynamically, enabling rapid development and deployment.
 
+Plugin Registry
+----------------
+``pipeline-flow`` uses a plugin registry to act as a central repository to register and access plugins. This registry implements
+a thread-safe singleton pattern to ensure that plugins are registered and accessed correctly. It is important in the simplest terms
+its a dictionary that maps plugin names to their corresponding functions, and therefore each plugin needs to have a unique name
+when creating it, otherwise it will raise an error.
+
+
 Types of Plugins
 -----------------
 There are two types of plugins in ``pipeline-flow``:
@@ -29,30 +36,7 @@ There are two types of plugins in ``pipeline-flow``:
 - **Synchronous Plugins**: Plugins that execute synchronously and are suitable for CPU-bound operations (e.g. Transform and Transform-Load plugins).
 - **Asynchronous Plugins**: Plugins that execute asynchronously and are suitable for I/O-bound operations (e.g. Extract and Load plugins).
 
-For example, the following code snippet demonstrates a simple plugin that converts the string input to uppercase, and
-another plugin that performs an I/O operation:
-
-.. code:: python
-
-  >>> from functools import wraps
-  >>> from pipeline_flow.common.type_def import AsyncPlugin, SyncPlugin
-  >>> from pipeline_flow.core.plugins import plugin
-
-Asynchronous Plugin:
-  >>> def async_plugin() -> AsyncPlugin:
-  >>>   @wraps(custom_plugin)
-  >>>   async def inner(data: str, arg1, arg2) -> None:
-  >>>       # Perform some I/O operation
-  >>>       return  # and return it !
-  >>>   return inner
-
-Synchronous Plugin:
-  >>> def sync_plugin() -> SyncPlugin:
-  >>>   @wraps(custom_plugin)
-  >>>   def inner(data: str, arg1, arg2) -> None:
-  >>>       return data.upper() # Do something with the data
-  >>>   return inner
-
+If you want to find out more about how to create and use plugins, check out the :ref:`Plugin <plugins>` guide.
 
 Next Steps
 -----------------

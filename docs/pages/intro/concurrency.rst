@@ -3,7 +3,7 @@
 
 Concurrency Basics
 ==============================
-In a data pipeline, tasks can be broadly classified into two categories: I/O-bound and CPU-bound.
+In a :ref:`data pipeline <data_pipeline>`, tasks can be broadly classified into two categories: I/O-bound and CPU-bound.
 
 - **I/O-bound tasks**: Tasks that spend most of their time waiting for I/O operations to complete (e.g., reading from a file, making API requests).
 - **CPU-bound tasks**: Tasks that spend most of their time performing computations (e.g., data transformation).
@@ -15,9 +15,12 @@ A common approach to improve the performance of I/O-bound tasks is to use thread
 
 Threading in Python
 ---------------------
-The CPython Implementation of Python uses a Global Interpreter Lock (GIL) that allows only one thread to hold the control of the Python interpreter at a time.
+The CPython implementation of Python uses a Global Interpreter Lock (GIL) that allows only one thread to control
+the Python interpreter at any given time. While it's technically possible to counter this limitation by running multiple processes,
+each with its own Python interpreter on a separate CPU core, this approach is generally not recommended due to 
+the large overhead of managing multiple processes. It's also not a feasible solution for I/O-bound tasks, but rather for CPU-bound tasks.
 
-This prevents multiple threads from executing Python code concurrently, making it challenging to achieve true parallelism with threads, as shown in the illustration below.
+Threading in python can be visualized as follows:
 
 .. figure:: ../../_static/threading_gil.png
    :align: center
@@ -28,10 +31,17 @@ This prevents multiple threads from executing Python code concurrently, making i
 
 Async Programming
 -------------------
-Asynchronous programming focuses on the contept of coroutines, where each task can be paused and resumed during execution. This 
-is managed by an event loop that switches between tasks in a non-blocking way, whenever a task is waiting for I/O operations to complete.
+Asynchronous programming focuses on the concept of using a single thread to manage multiple tasks concurrently. It uses an event loop that 
+is responsible for scheduling and executing tasks in a non-blocking manner. But how does it work, you might ask? It uses the concept
+of coroutines, which are functions that can be paused and resumed at specific points. The event loop manages the execution of these coroutines.
+They are executed until they reach an await statement, at which point they are paused, and the event loop moves on to the next task.
 
-In Python, the `asyncio <https://docs.python.org/3/library/asyncio.html>`_ library provides support for writing concurrent execution of coroutines using the async/await syntax.
+This approach is particularly useful for I/O bound tasks since it allows the system to be lightweight and efficient, 
+while still being able to handle multiple tasks concurrently.
+
+
+In Python, the `asyncio <https://docs.python.org/3/library/asyncio.html>`_ library provides support for writing concurrent 
+execution of coroutines using the async/await syntax.
 
 **Some benefits include:**
 
@@ -40,33 +50,45 @@ In Python, the `asyncio <https://docs.python.org/3/library/asyncio.html>`_ libra
 - **Non-blocking Execution**: Long-running tasks do not block the entire workflow, enabling other tasks to run concurrently.
 
 
-Threading vs Async
--------------------
-Although threads can improve the performance of I/O-bound tasks, it incurs a larger overhead than using coroutines.
-This overhead stems from the cost of creating and managing threads, which can be expensive in terms of both memory and CPU usage.
-Each thread has its own stack, registers, and other resources that must be managed by the underlying OS. Whenever a CPU
-switches between threads, it must save and restore the state of each thread, which can be time-consuming.
+Why Choose Asynchronous Programming Over Threads?
+----------------------------------------------------
+Sure, threads can boost the performance of I/O bound tasks but they come with a larger overhead compared to using coroutines.
+Every thread has its own stack and registers, which the OS needs to manage. When the CPU switches between threads, it has to 
+save and restore the state of each one, causing a performance hit. These context switches, though invisible to the user,
+can be suprisingly time-consuming.
 
-In contrast, asychronous programming is more efficient because it uses a single thread to manage multiple tasks.
-This approach reduces the overhead associated with creating and managing threads, making it more lightweight and scalable.
-It works well with Python for I/O-bound tasks since Python can only execute one thread at a time due to the GIL.
+Now in contrast, asychronous programming can be more efficient because instead of juggling multiple threads, async code
+runs on a single thread while still handling multiple tasks concurrently. No heavy overhead. No constant context switching.
+Just smooth execution.
 
+And here's the kicker: **no race conditions or deadlocks**. With only one thread running, you don't need to lose sleep
+over hard-to-debug concurrency issues that can plague multithreaded applications. Async code lets you focus on building
+features, not untangling-related headeaches.
 
 Concurrency in ``pipeline-flow``
 --------------------------------
-``pipeline-flow`` uses asynchronous programming to execute tasks concurrently, maximizing efficiency and performance.
+``pipeline-flow`` uses async programming to execute tasks concurrently, ensuring maximum efficiency and better
+resource utilisation. By handling I/O-bound and CPU-bound operations differently, it strikes the right balance
+between performance and reliability.
 
-- **Extract and Load Phases**: These phases are I/O-bound and are executed asynchronously to reduce the overall processing time.
-- **Transform and Transform-Load Phases**: These phases are CPU-bound and are executed synchronously to ensure data integrity and consistency.
-They are specifically executed in a different thread to not block the existing asyncio event loop, in which other coroutines are running.
+|:gear:| **How it works**
 
-    |:warning:| As of now, ``pipeline-flow`` does not support synchronous plugins for Extract and Load phases and will block the entire asyncio event loop
-    making the system run sychronously. 
-    
-    This will be updated in the future to support synchronous plugins for Extract and Load phases
-    such that users can run synchronous plugins for I/O-bound operations that do not support async operations natively,
-    e.g. using libraries like ``pandas`` or ``pyspark``.
+- Extract and Load Phases (I/O-bound): Executed asynchronously to reduce the overall processing time, allowing multiple I/O operations to run concurrently.
+- Transform and Transform-Load Phases (CPU-bound): TThese computationally intensive phases are executed sychronously in a separate thread to ensure data
+integrity and consistency. It prevents blocking the existing asyncio event loop, where other coroutines may be running.
 
+.. warning:: **Important to Note**
+    While ``pipeline-flow`` uses async programming for concurrency, it relies on plugins to support async operations natively.
+
+    |:mag_right:| Why this Matters? 
+
+    - Some popular libraries, like ``pandas`` or ``pyspark``, do not support async operations out of the box.
+    - Using such engines will block the asyncio event loop, causing the entire system to run sychronously and defeat the purpose of async programming.
+
+    |:white_check_mark:| Recommendation
+
+    - To avoid blocking the event loop when running multiple tasks concurrently.
+    - Check the :ref:`plugin documentation <sync_to_async_plugins>` for guidance on converting sychronous plugins to async plugins.
 
 
 Next Steps
