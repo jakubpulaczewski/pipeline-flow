@@ -1,5 +1,6 @@
 ``pipeline-flow`` provides a lightweight and extensible solution for managing ELT/ETL/ETLT data pipelines.
 
+## The documentation is coming soon. It's planned to be released by Friday!!!
 ## Why
 
 Managing complex data workflows is a common challenge in data engineering. Traditional tools like **Apache Airflow** and **Luigi** 
