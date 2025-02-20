@@ -31,11 +31,3 @@ def test_load_custom_plugins(mocker: MockerFixture) -> None:
     mock_load_plugin.assert_any_call("file1.py")
     mock_load_plugin.assert_any_call("file2.py")
     assert len(mock_load_plugin.mock_calls) == 2
-
-
-@pytest.mark.usefixtures("restart_plugin_registry")
-def test_load_core_engine_transformations() -> None:
-    assert len(PluginRegistry._registry) == 0
-    plugin_loader.load_core_engine_transformations("native")
-
-    # assert len(PluginRegistry._registry) > 0 # noqa: ERA001 - Temporarily disabled as there are no native tf plugins

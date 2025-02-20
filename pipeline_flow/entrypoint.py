@@ -19,7 +19,7 @@ async def start_orchestration(yaml_text: StreamType | None, local_file_path: str
     plugins_payload = yaml_parser.get_plugins_dict()
 
     # Parse plugins directly within the load_plugins function
-    load_plugins(yaml_config.engine, plugins_payload)
+    load_plugins(plugins_payload)
 
     # Parse pipelines and execute them using the orchestrator
     pipelines = parse_pipelines(yaml_parser.get_pipelines_dict())

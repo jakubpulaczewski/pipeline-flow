@@ -13,7 +13,7 @@ from pipeline_flow.core.parsers.yaml_parser import YamlConfig
 
 @pytest.fixture
 def orchestrator() -> PipelineOrchestrator:
-    config = YamlConfig(engine="native", concurrency=2)
+    config = YamlConfig(concurrency=2)
     return PipelineOrchestrator(config=config)
 
 

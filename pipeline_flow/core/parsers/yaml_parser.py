@@ -18,7 +18,7 @@ from pipeline_flow.core.parsers import secret_parser
 
 # Type Imports
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Match, Self
 
     from yaml.nodes import Node
 
@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 type JSON_DATA = dict
 
 DEFAULT_CONCURRENCY = 2
-DEFAULT_ENGINE = "native"
 
 ENV_VAR_YAML_TAG = "!env_var"
 ENV_VAR_PATTERN = re.compile(r"\${{\s*env\.([^}]+?)\s*}}")
@@ -45,13 +44,11 @@ class YamlAttribute(StrEnum):
     VARIABLES = "variables"
     PIPELINES = "pipelines"
     PLUGINS = "plugins"
-    ENGINE = "engine"
     CONCURRENCY = "concurrency"
 
 
 @dataclass(frozen=True)
 class YamlConfig(metaclass=SingletonMeta):
-    engine: str = DEFAULT_ENGINE
     concurrency: int = DEFAULT_CONCURRENCY
 
 
@@ -120,7 +117,7 @@ class ExtendedCoreLoader(yamlcore.CCoreLoader):
             return self.variables[variable_key]  # Return the original type (int, dict, etc.)
 
         # Use re.sub with a callback for single-pass substitution of variables in strings
-        def replace_match(match):
+        def replace_match(match: Match):
             variable_key = match.group(1)
             if variable_key not in self.variables:
                 raise ValueError(f"Variable `{variable_key}` is not set.")
@@ -220,7 +217,7 @@ class YamlParser:
         if isinstance(source, str):
             if read_local_file:
                 return self._read_file(source)
-            return StringIO(source)
+            return source
         return source
 
     @staticmethod
@@ -270,7 +267,6 @@ class YamlParser:
         """Initialize the YAML Configuration object with the default values or passed in."""
         # Create the map of attributes with their values
         attrs_map = {
-            YamlAttribute.ENGINE: self.content.get(YamlAttribute.ENGINE, DEFAULT_ENGINE),
             YamlAttribute.CONCURRENCY: self.content.get(YamlAttribute.CONCURRENCY, DEFAULT_CONCURRENCY),
         }
 

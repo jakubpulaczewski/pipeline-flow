@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 from pipeline_flow.core.parsers import PluginParser
 
 
-def load_plugins(engine: str, plugins_payload: PluginRegistryJSON | None) -> None:
+def load_plugins(plugins_payload: PluginRegistryJSON | None) -> None:
     """Invoke all methods to load plugins."""
     logging.info("Starting to load plugins...")
 
@@ -21,9 +21,6 @@ def load_plugins(engine: str, plugins_payload: PluginRegistryJSON | None) -> Non
         return
 
     plugin_parser = PluginParser(plugins_payload)
-
-    # Load core engine transformations
-    load_core_engine_transformations(engine)
 
     # Load custom plugins
     custom_files = plugin_parser.fetch_custom_plugin_files()
@@ -66,10 +63,6 @@ def _load_plugin_from_file(plugin_file: str) -> None:
         logging.error(msg)
         raise
 
-
-def load_core_engine_transformations(engine: str) -> None:
-    core_engine_file = f"pipeline_flow/plugins/transform/{engine}.py"
-    _load_plugin_from_file(core_engine_file)
 
 
 def load_custom_plugins(custom_files: set[str]) -> None:
