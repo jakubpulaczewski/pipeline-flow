@@ -3,7 +3,7 @@ from typing import Any, NotRequired, Self, TypedDict
 
 # Local Imports
 from pipeline_flow.core.registry import PluginRegistry
-from pipeline_flow.plugins import ISecretProvider
+from pipeline_flow.plugins import ISecretManager
 
 
 class SecretDocument(TypedDict):
@@ -18,7 +18,7 @@ class SecretDocument(TypedDict):
 class SecretPlaceholder:
     """A class for delaying the resolution of secrets until they are needed."""
 
-    def __init__(self: Self, secret_name: str, secret_provider: ISecretProvider) -> None:
+    def __init__(self: Self, secret_name: str, secret_provider: ISecretManager) -> None:
         self.secret_name = secret_name
         self.secret_provider = secret_provider
 

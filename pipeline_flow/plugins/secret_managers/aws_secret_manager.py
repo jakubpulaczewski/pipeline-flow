@@ -9,10 +9,10 @@ from botocore import exceptions
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 # Local Imports
-from pipeline_flow.plugins import ISecretProvider
+from pipeline_flow.plugins import ISecretManager
 
 
-class AWSSecretManager(ISecretProvider, plugin_name="aws_secret_manager"):
+class AWSSecretManager(ISecretManager, plugin_name="aws_secret_manager"):
     """A class for fetching secrets from AWS Secret Manager."""
 
     def __init__(self, plugin_id: str, region: str):

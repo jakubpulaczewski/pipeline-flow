@@ -131,7 +131,7 @@ class IPostProcessPlugin(ABC, IPlugin, interface=True):
         raise NotImplementedError("Post-process plugins must implement __call__()")
 
 
-class ISecretProvider(ABC, IPlugin, interface=True):
+class ISecretManager(ABC, IPlugin, interface=True):
     """A base class for providing authentication secrets."""
 
     @abstractmethod

@@ -10,7 +10,8 @@ from mypy_boto3_secretsmanager import SecretsManagerClient
 from pytest_mock import MockerFixture
 
 # Project Imports
-from pipeline_flow.plugins.secrets.secret_provider import AWSSecretManager
+from pipeline_flow.core.parsers import YamlParser
+from pipeline_flow.plugins.secret_managers import AWSSecretManager
 
 
 @pytest.fixture(autouse=True)
@@ -47,3 +48,37 @@ def test_secret_not_found(mocker: MockerFixture) -> None:
         AWSSecretManager(plugin_id="plugin_id", region="us-east-1")("nonexistent-secret")
 
     assert boto3_mock.get_secret_value.call_count == 3
+
+
+def test_parse_aws_secret_manager_yaml() -> None:  # TODO: FIX IT
+    yaml_config = """
+    secrets:
+      my_secret:
+        plugin_id: fetch_super secret
+        secret_name: my-secret-name
+        params:
+          region: us-east-1
+    """
+
+    from pipeline_flow.core.registry import PluginRegistry
+
+    print(PluginRegistry._registry)
+    # Ensures Plugin Registry is populated
+    # PluginRegistry._registry = {
+
+    # }
+
+    # Parse the YAML configuration
+    # parsed_yaml = YamlParser(stream=yaml_config).content
+
+    # print(parsed_yaml)
+    # # extract_step = parsed_yaml["extract"]["steps"][0]
+
+    # # Assert that the plugin is correctly parsed
+    # assert extract_step["plugin"] == "rest_api_extractor", "Plugin name did not match 'rest_api_extractor'"
+
+    # # Instantiate the plugin (plugin_id is assigned by `instantiate_plugin` in PluginRegistry)
+    # extractor = RestApiAsyncExtractor(plugin_id="test_plugin", **extract_step["args"])
+
+    # # Verify that the instantiated object is of the correct type
+    # assert isinstance(extractor, RestApiAsyncExtractor), "Extractor instance is not of type RestApiAsyncExtractor"
