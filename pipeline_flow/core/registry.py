@@ -60,3 +60,8 @@ class PluginRegistry(metaclass=SingletonMeta):
         plugin_params = plugin_data.get("args", {})
 
         return plugin_factory(plugin_id=plugin_id, **plugin_params)
+
+
+# Registering plugins after PluginRegistry class definition. This is done to avoid circular imports as
+# the plugins are registed when they are imported from IPlugin interface.
+from pipeline_flow.plugins import extract, load, merge, secret_managers, transform

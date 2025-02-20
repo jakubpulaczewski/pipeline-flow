@@ -2,6 +2,7 @@
 from unittest.mock import MagicMock
 
 # Third Party
+import pytest
 from pytest_mock import MockerFixture
 
 # Project
@@ -32,6 +33,7 @@ def test_load_custom_plugins(mocker: MockerFixture) -> None:
     assert len(mock_load_plugin.mock_calls) == 2
 
 
+@pytest.mark.usefixtures("restart_plugin_registry")
 def test_load_core_engine_transformations() -> None:
     assert len(PluginRegistry._registry) == 0
     plugin_loader.load_core_engine_transformations("native")

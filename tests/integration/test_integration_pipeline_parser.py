@@ -95,6 +95,7 @@ def test_parse_etl_pipeline_with_missing_extract_phase() -> None:
         parse_pipelines(pipeline_data)  # type: ignore[reportFunctionMemberAccess]
 
 
+@pytest.mark.usefixtures("restart_plugin_registry")
 def test_parse_etl_pipeline_with_extra_phases() -> None:
     # Register Plugins
     plugins = [
@@ -143,6 +144,7 @@ def test_parse_etl_pipeline_with_extra_phases() -> None:
         parse_pipelines(pipeline_data)  # type: ignore[reportFunctionMemberAccess]
 
 
+@pytest.mark.usefixtures("restart_plugin_registry")
 def test_parse_etl_pipeline_with_only_mandatory_phases() -> None:
     # Register Plugins
     plugins = [
@@ -180,6 +182,7 @@ def test_parse_etl_pipeline_with_only_mandatory_phases() -> None:
     assert isinstance(pipeline.load.steps[0], SimpleLoaderPlugin)
 
 
+@pytest.mark.usefixtures("restart_plugin_registry")
 def test_parse_etl_multiple_pipelines() -> None:
     # Register Required Plugins
     plugins = [
@@ -232,6 +235,7 @@ def test_parse_etl_multiple_pipelines() -> None:
     assert isinstance(pipelines[1].load.steps[0], SimpleLoaderPlugin)
 
 
+@pytest.mark.usefixtures("restart_plugin_registry")
 def test_parse_elt_pipeline() -> None:
     # Register Required Plugins
     plugins = [
@@ -277,6 +281,7 @@ def test_parse_elt_pipeline() -> None:
     assert isinstance(pipelines[0].load_transform.steps[0], SimpleTransformLoadPlugin)
 
 
+@pytest.mark.usefixtures("restart_plugin_registry")
 def test_parse_etlt_pipeline() -> None:
     # Setup Required Plugins
     plugins = [

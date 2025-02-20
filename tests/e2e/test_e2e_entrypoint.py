@@ -9,6 +9,7 @@ from pipeline_flow.entrypoint import start_orchestration
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("restart_plugin_registry")
 async def test_e2e_etl_pipeline(populate_source_e2e_tables, db_connection: sqlite3.Connection, db_uri: str) -> None:
     yaml_config = f"""
     plugins:
@@ -75,6 +76,7 @@ async def test_e2e_etl_pipeline(populate_source_e2e_tables, db_connection: sqlit
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("restart_plugin_registry")
 async def test_e2e_elt_pipeline(populate_source_e2e_tables, db_connection: sqlite3.Connection, db_uri: str) -> None:
     yaml_config = f"""
     plugins:
@@ -146,6 +148,7 @@ async def test_e2e_elt_pipeline(populate_source_e2e_tables, db_connection: sqlit
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("restart_plugin_registry")
 async def test_e2e_etlt_pipeline(populate_source_e2e_tables, db_connection: sqlite3.Connection, db_uri: str) -> None:
     yaml_config = f"""
     plugins:

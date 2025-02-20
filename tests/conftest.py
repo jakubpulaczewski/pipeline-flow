@@ -30,8 +30,8 @@ def setup_logging_level() -> None:
     setup_logger()
 
 
-@pytest.fixture(autouse=True)
-def plugin_registry_setup() -> Generator[None]:
+@pytest.fixture
+def restart_plugin_registry() -> Generator[None]:
     PluginRegistry._registry = {}  # Ensure a clean state before each test
     yield
     PluginRegistry._registry = {}  # Clean up after each test
