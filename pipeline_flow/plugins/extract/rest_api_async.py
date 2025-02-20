@@ -8,8 +8,6 @@ from typing import Any, Self
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_random
 
-from pipeline_flow.core.parsers.yaml_parser import YamlParser
-
 # Local Imports
 from pipeline_flow.plugins import IExtractPlugin
 from pipeline_flow.plugins.utils.pagination import PaginationStrategy, PaginationTypes, pagination_factory
