@@ -36,6 +36,7 @@ class AsyncSQLAlchemyQueryLoader(ILoadPlugin, plugin_name="sqlalchemy_query_load
 
     def __init__(  # noqa: PLR0913
         self: Self,
+        plugin_id: str,
         db_user: str,
         db_password: str,
         db_host: str,
@@ -46,6 +47,7 @@ class AsyncSQLAlchemyQueryLoader(ILoadPlugin, plugin_name="sqlalchemy_query_load
         batch_size: int = 100000,
         driver: str = "mysql+asyncmy",
     ) -> None:
+        super().__init__(plugin_id)
         self.db_user = db_user
         self.db_password = db_password
 

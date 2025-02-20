@@ -10,6 +10,7 @@ from sqlalchemy import Column, MetaData, String, Table, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Project Imports
+from pipeline_flow.core.parsers import YamlParser
 from pipeline_flow.plugins.load import AsyncSQLAlchemyQueryLoader
 
 
@@ -64,6 +65,7 @@ async def test_async_sqlalchemy_loader(
 
     # Initialize the async SQLAlchemy loader
     load = AsyncSQLAlchemyQueryLoader(
+        plugin_id="test_plugin",
         db_user=db_config["db_user"],
         db_password=db_config["db_password"],
         db_host=db_config["db_host"],
@@ -81,3 +83,31 @@ async def test_async_sqlalchemy_loader(
         result = await session.execute(text("SELECT COUNT(*) FROM t1"))
         row_count = result.scalar()
         assert row_count == 100000
+
+
+def test_parse_sqlalchemy_query_loader_yaml() -> None:
+    yaml_config = """
+    load:
+      steps:
+        - plugin: sqlalchemy_query_loader
+          args:
+            db_user: myuser
+            db_password: mypassword
+            db_host: localhost
+            db_port: 3306
+            db_name: mydatabase
+            query: SELECT 1
+    """
+
+    # Parse the YAML configuration
+    parsed_yaml = YamlParser(stream=yaml_config).content
+    load_step = parsed_yaml["load"]["steps"][0]
+
+    # Assert that the plugin is correctly parsed
+    assert load_step["plugin"] == "sqlalchemy_query_loader", "Plugin name did not match 'sqlalchemy_query_loader'"
+
+    # Instantiate the plugin (plugin_id is assigned by `instantiate_plugin` in PluginRegistry)
+    loader = AsyncSQLAlchemyQueryLoader(plugin_id="test_plugin", **load_step["args"])
+
+    # Verify that the instantiated object is of the correct type
+    assert isinstance(loader, AsyncSQLAlchemyQueryLoader), "Loader instance is not of type AsyncSQLAlchemyQueryLoader"

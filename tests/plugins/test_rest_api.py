@@ -7,6 +7,7 @@ from pytest_httpx import HTTPXMock
 from pytest_mock import MockerFixture
 
 # Local Imports
+from pipeline_flow.core.parsers import YamlParser
 from pipeline_flow.plugins import IPlugin
 from pipeline_flow.plugins.extract import RestApiAsyncExtractor
 
@@ -28,7 +29,12 @@ def test_endpoint() -> str:
 
 @pytest.fixture
 def api_client(test_api_key: str, base_url: str, test_endpoint: str) -> IPlugin:
-    return RestApiAsyncExtractor(test_api_key, base_url, test_endpoint)
+    return RestApiAsyncExtractor(
+        plugin_id="test_api_extractor",
+        base_url=base_url,
+        endpoint=test_endpoint,
+        headers={"Authorization": test_api_key},
+    )
 
 
 @pytest.mark.asyncio
@@ -94,3 +100,29 @@ async def test_api_failure(status_code: int, api_client: IPlugin, httpx_mock: HT
         await api_client()
 
     assert asyncio_sleep.call_count == 2, "The setting is set till 3 retries, so it should be 2"
+
+
+def test_parse_rest_api_extractor_yaml(base_url: str, test_endpoint: str, test_api_key: str) -> None:
+    yaml_config = f"""
+    extract:
+      steps:
+        - plugin: rest_api_extractor
+          args:
+            base_url: {base_url}
+            endpoint: {test_endpoint}
+            headers:
+              Authorization: {test_api_key}
+    """
+
+    # Parse the YAML configuration
+    parsed_yaml = YamlParser(stream=yaml_config).content
+    extract_step = parsed_yaml["extract"]["steps"][0]
+
+    # Assert that the plugin is correctly parsed
+    assert extract_step["plugin"] == "rest_api_extractor", "Plugin name did not match 'rest_api_extractor'"
+
+    # Instantiate the plugin (plugin_id is assigned by `instantiate_plugin` in PluginRegistry)
+    extractor = RestApiAsyncExtractor(plugin_id="test_plugin", **extract_step["args"])
+
+    # Verify that the instantiated object is of the correct type
+    assert isinstance(extractor, RestApiAsyncExtractor), "Extractor instance is not of type RestApiAsyncExtractor"

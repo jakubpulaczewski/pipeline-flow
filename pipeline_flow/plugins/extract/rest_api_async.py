@@ -1,13 +1,14 @@
 # Standard Imports
 import asyncio
 import logging
-import os
 from http import HTTPStatus
 from typing import Any, Self
 
 # Third Party Imports
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_random
+
+from pipeline_flow.core.parsers.yaml_parser import YamlParser
 
 # Local Imports
 from pipeline_flow.plugins import IExtractPlugin
@@ -28,9 +29,8 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
         plugin_id (str): The unique identifier of the plugin callabe. Often used for logging.
         base_url (str): The base URL of the API e.g. https://api.example.com/v1
         endpoint (str): The endpoint to fetch data from e.g. /users
+        headers (dict[str, str]): A dictionary that contains headers e.g. auth token.
         pagination_type (str, optional): The type of pagination strategy to use. Defaults to "page_based".
-        headers (dict[str, str] | None, optional): An optional dict of headers. Defaults to None.
-
     """
 
     def __init__(
@@ -38,14 +38,17 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
         plugin_id: str,
         base_url: str,
         endpoint: str,
+        headers: dict[str, str],
         pagination_type: str = PaginationTypes.PAGE_BASED,
-        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(plugin_id)
         self.base_url = base_url
         self.endpoint = endpoint
         self.headers = headers
         self.pagination_strategy: PaginationStrategy = pagination_factory(pagination_type)
+
+        if not headers:
+            raise ValueError("Headers must be provided for the API request.")
 
     @staticmethod
     def _extract_data(response_data: dict | list) -> list[JSON_DATA]:
@@ -93,8 +96,7 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
             "Accept": "application/json",
         }
 
-        if self.headers:
-            default_headers.update(self.headers)
+        default_headers.update(self.headers)
 
         async with httpx.AsyncClient() as client:
             while next_page_url:
