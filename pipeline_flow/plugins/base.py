@@ -104,15 +104,6 @@ class ITransformLoadPlugin(ABC, IPlugin, interface=True):
         raise NotImplementedError("Transform-load plugins must implement __call__()")
 
 
-class IAuthPlugin(ABC, IPlugin, interface=True):
-    """Abstract base class for authentication plugins."""
-
-    @abstractmethod
-    def __call__(self: Self, secret_name: str) -> str:
-        """Retrieve a secret from a secret store."""
-        raise NotImplementedError("Auth plugins must implement __call__()")
-
-
 class IPreProcessPlugin(ABC, IPlugin, interface=True):
     """Abstract base class for pre-processing plugins."""
 
