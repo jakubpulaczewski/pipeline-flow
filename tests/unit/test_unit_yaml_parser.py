@@ -102,13 +102,40 @@ def test_env_var_not_defined() -> None:
         YamlParser(stream=yaml_with_env_vars)
 
 
-def test_parse_variable_placeholder_success() -> None:
+def test_parse_variable_placeholder_string_success() -> None:
     yaml_parser = ExtendedCoreLoader(stream=Mock())
     yaml_parser.variables = {"VAR1": "VALUE_OF_VAR1"}
 
     result = yaml_parser.substitute_variable_placeholder(node=Mock(value="${{ variables.VAR1 }}"))
 
     assert result == "VALUE_OF_VAR1"
+
+
+def test_parse_variable_placeholder_int_success() -> None:
+    yaml_parser = ExtendedCoreLoader(stream=Mock())
+    yaml_parser.variables = {"VAR1": 123}
+
+    result = yaml_parser.substitute_variable_placeholder(node=Mock(value="${{ variables.VAR1 }}"))
+
+    assert result == 123
+
+
+def test_parse_variable_placeholder_list_success() -> None:
+    yaml_parser = ExtendedCoreLoader(stream=Mock())
+    yaml_parser.variables = {"VAR1": [1, 2, 3]}
+
+    result = yaml_parser.substitute_variable_placeholder(node=Mock(value="${{ variables.VAR1 }}"))
+
+    assert result == [1, 2, 3]
+
+
+def test_parse_variable_placeholder_dict_success() -> None:
+    yaml_parser = ExtendedCoreLoader(stream=Mock())
+    yaml_parser.variables = {"VAR1": {"key1": "value1", "key2": "value2"}}
+
+    result = yaml_parser.substitute_variable_placeholder(node=Mock(value="${{ variables.VAR1 }}"))
+
+    assert result == {"key1": "value1", "key2": "value2"}
 
 
 def test_parse_variable_placeholder_with_additional_text() -> None:

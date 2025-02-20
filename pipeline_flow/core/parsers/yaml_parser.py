@@ -100,6 +100,9 @@ class ExtendedCoreLoader(yamlcore.CCoreLoader):
     def substitute_variable_placeholder(self: Self, node: Node) -> str:
         """Parses a YAML node for a variable reference and replaces it with the value.
 
+        If the value is a single variable, it returns the original type (int, dict, etc.).
+        Else it converts the value to a string for inline substitution.
+
         Args:
             node (Node): A YAML node containing the `!variable` reference added by implicit resolver.
 
@@ -108,22 +111,22 @@ class ExtendedCoreLoader(yamlcore.CCoreLoader):
         """
         value = node.value
 
-        for match in VARIABLE_PATTERN.finditer(value):
-            match_group = match.group()
-            variable_key = match.group(1)
-
+        # Check if the entire value is just a single variable (preserve original type)
+        full_match = VARIABLE_PATTERN.fullmatch(value)
+        if full_match:
+            variable_key = full_match.group(1)
             if variable_key not in self.variables:
-                error_msg = (
-                    f"Variable `{variable_key}` is not set. "
-                    "Ensure that variables/secrets are defined in the first document YAML."
-                )
-                raise ValueError(error_msg)
+                raise ValueError(f"Variable `{variable_key}` is not set.")
+            return self.variables[variable_key]  # Return the original type (int, dict, etc.)
 
-            value = value.replace(match_group, self.variables[variable_key])
+        # Use re.sub with a callback for single-pass substitution of variables in strings
+        def replace_match(match):
+            variable_key = match.group(1)
+            if variable_key not in self.variables:
+                raise ValueError(f"Variable `{variable_key}` is not set.")
+            return str(self.variables[variable_key])  # Convert to string for inline substitution
 
-        return value
-
-        raise ValueError("Invalid variable placeholder: %s", value)
+        return VARIABLE_PATTERN.sub(replace_match, value)
 
     def substitute_secret_placeholder(self: Self, node: Node) -> str:
         """Parses a YAML node for a secret reference and replaces it with the value.
