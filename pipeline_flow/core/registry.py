@@ -3,14 +3,14 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 # Third Party Imports
 # Project Imports
 from pipeline_flow.common.utils import SingletonMeta
 
 if TYPE_CHECKING:
-    from pipeline_flow.common.type_def import PluginName
+    from pipeline_flow.common.type_def import PluginName, PluginPayload
     from pipeline_flow.plugins import IPlugin
 
 
@@ -48,7 +48,7 @@ class PluginRegistry(metaclass=SingletonMeta):
         return plugin_factory
 
     @classmethod
-    def instantiate_plugin(cls: PluginRegistry, plugin_data: dict[str, Any]) -> IPlugin:
+    def instantiate_plugin(cls: PluginRegistry, plugin_data: PluginPayload) -> IPlugin:
         """Resolve and return a single plugin instance."""
         plugin_name = plugin_data.pop("plugin", None)
         if not plugin_name:
@@ -64,4 +64,4 @@ class PluginRegistry(metaclass=SingletonMeta):
 
 # Registering plugins after PluginRegistry class definition. This is done to avoid circular imports as
 # the plugins are registed when they are imported from IPlugin interface.
-from pipeline_flow.plugins import extract, load, merge, secret_managers, transform
+from pipeline_flow.plugins import extract, load, merge, secret_managers, transform, utility

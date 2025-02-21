@@ -1,8 +1,10 @@
+# Standard Imports
 from __future__ import annotations
 
 from io import TextIOWrapper
 from typing import Annotated, Any, TypedDict
 
+# Third Party Imports
 from pydantic.dataclasses import dataclass
 
 type ExtractedData = Any
@@ -14,6 +16,12 @@ type ETLData = UnifiedExtractData | TransformedData
 
 type PluginName = str
 type StreamType = str | bytes | TextIOWrapper
+
+
+class PluginPayload(TypedDict):
+    id: str
+    plugin: PluginName
+    args: dict[str, Any]
 
 
 class CustomPluginRegistryJSON(TypedDict):

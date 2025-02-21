@@ -129,3 +129,12 @@ class ISecretManager(ABC, IPlugin, interface=True):
     def __call__(self, secret_name: str) -> str:
         """A Plugin must implement this method to fetch the secret value by name."""
         raise NotImplementedError("Subclasses must implement this method.")
+
+
+class IPaginationHandler(ABC, IPlugin, interface=True):
+    """A base class for handling pagination in extract plugins."""
+
+    @abstractmethod
+    def __call__(self: Self, response: dict) -> str | None:
+        """Asynchronously fetch data from the API endpoint and handle pagination."""
+        raise NotImplementedError("Subclasses must implement this method.")

@@ -2,6 +2,7 @@ from .base import (
     IExtractPlugin,
     ILoadPlugin,
     IMergeExtractPlugin,
+    IPaginationHandler,
     IPlugin,
     IPreProcessPlugin,
     ISecretManager,
@@ -12,7 +13,9 @@ from .base import (
 __all__ = [
     "IExtractPlugin",
     "ILoadPlugin",
+    "ILoadPlugin",
     "IMergeExtractPlugin",
+    "IPaginationHandler",
     "IPlugin",
     "IPreProcessPlugin",
     "ISecretManager",
