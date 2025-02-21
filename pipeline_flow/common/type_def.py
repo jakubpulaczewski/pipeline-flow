@@ -19,7 +19,7 @@ type StreamType = str | bytes | TextIOWrapper
 
 
 class PluginPayload(TypedDict):
-    id: str
+    plugin_id: str
     plugin: PluginName
     args: dict[str, Any]
 
