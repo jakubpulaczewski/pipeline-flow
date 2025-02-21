@@ -1,5 +1,4 @@
 # Standard Imports
-from typing import Self
 
 # Third Party Imports
 from pytest_mock import MockerFixture
@@ -7,12 +6,7 @@ from pytest_mock import MockerFixture
 # Project Imports
 from pipeline_flow.core.parsers.secret_parser import SecretPlaceholder, secret_parser
 from pipeline_flow.core.registry import PluginRegistry
-from pipeline_flow.plugins import ISecretManager
-
-
-class SimpleSecretPlugin(ISecretManager, plugin_name="simple_secret_plugin"):
-    def __call__(self: Self, secret_name: str) -> str:  # noqa: ARG002 - This is a dummy implementation
-        return "super_secret_value"
+from tests.resources.plugins import SimpleSecretPlugin
 
 
 def test_secret_parser_returns_secret_placeholder(mocker: MockerFixture) -> None:

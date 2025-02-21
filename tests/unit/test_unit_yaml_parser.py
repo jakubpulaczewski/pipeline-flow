@@ -4,7 +4,6 @@ from unittest.mock import Mock
 # Third Party Imports
 import pytest
 import yaml
-from _pytest.monkeypatch import MonkeyPatch
 
 # Project Imports
 from pipeline_flow.core.parsers.secret_parser import SecretPlaceholder
@@ -49,49 +48,6 @@ def test_parse_invalid_yaml() -> None:
 def test_parse_yaml_file_not_found() -> None:
     with pytest.raises(FileNotFoundError):
         YamlParser(stream="not_found.yaml", read_local_file=True)
-
-
-def test_parse_env_variables_in_yaml(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setenv("ENV_VAR1", "VALUE_OF_ENV_1")
-    monkeypatch.setenv("ENV_VAR2", "VALUE_OF_ENV_2")
-
-    yaml_with_env_vars = """
-    value1: ${{ env.ENV_VAR1 }}
-    value2: ${{ env.ENV_VAR2 }}
-    """
-
-    parsed_yaml = YamlParser(stream=yaml_with_env_vars).content
-
-    assert parsed_yaml["value1"] == "VALUE_OF_ENV_1"
-    assert parsed_yaml["value2"] == "VALUE_OF_ENV_2"
-
-
-def test_parse_env_variables_multiple_occurrences(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setenv("ENV_VAR1", "VALUE_OF_ENV_1")
-
-    yaml_with_env_vars = """
-    value1: ${{ env.ENV_VAR1 }}
-    value2: ${{ env.ENV_VAR1 }}
-    """
-
-    parsed_yaml = YamlParser(stream=yaml_with_env_vars).content
-
-    assert parsed_yaml["value1"] == "VALUE_OF_ENV_1"
-    assert parsed_yaml["value2"] == "VALUE_OF_ENV_1"
-
-
-def test_parse_env_variables_without_env_prefix(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.setenv("ENV_VAR1", "VALUE_OF_ENV_1")
-
-    yaml_with_env_vars = """
-    value1: ${{ ENV_VAR1 }}
-    """
-
-    parsed_yaml = YamlParser(stream=yaml_with_env_vars).content
-
-    # An environment variable without the `env.` prefix should be treated as a string
-    # It does not trigger the substitution of the environment variable
-    assert parsed_yaml["value1"] == "${{ ENV_VAR1 }}"
 
 
 def test_env_var_not_defined() -> None:

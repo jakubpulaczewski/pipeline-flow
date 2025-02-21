@@ -11,6 +11,7 @@ from pipeline_flow.plugins import (
     IMergeExtractPlugin,
     IPlugin,
     IPreProcessPlugin,
+    ISecretManager,
     ITransformLoadPlugin,
     ITransformPlugin,
 )
@@ -73,3 +74,8 @@ class SimpleAsyncPrePlugin(IPreProcessPlugin, plugin_name="simple_async_pre_plug
     async def __call__(self: Self) -> str:
         await asyncio.sleep(self.delay)  # Stimulate some delay.
         return "Async result"
+
+
+class SimpleSecretPlugin(ISecretManager, plugin_name="simple_secret_plugin"):
+    def __call__(self: Self, secret_name: str) -> str:  # noqa: ARG002 - This is a dummy implementation
+        return "super_secret_value"
