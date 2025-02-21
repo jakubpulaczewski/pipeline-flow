@@ -16,7 +16,6 @@ We will be adding plugins for common use cases, including:
 - API Connectors (REST, GraphQL, etc.)
 - Data Transformation Plugins (Pandas, PySpark, etc.)
 
-
 .. _plugins_best_practices:
 
 Best Practices

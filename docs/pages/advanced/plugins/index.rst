@@ -8,6 +8,29 @@ modifying the core system.
 
 If you haven't already, check out the :ref:`Plugin Core Concepts <plugin_core_concepts>` to understand the basics of plugins.
 
+We also recommend reading about :ref:`Plugin-in-Plugin <plugin_in_plugin>` technique to learn how to extend the functionality of of existing plugins.
+
+.. _plugin_yaml_structure:
+
+Plugin YAML structure
+-----------------------
+When using a plugin in the YAML configuration file, whether its :ref:`utility plugins <core_utility_plugins>`  
+like :ref:`secrets managers plugins <core_secret_plugins>`, or even :ref:`phase plugins <core_plugins>`, the structure is the same.
+
+Every plugin is defined by a unique name (optional) and a set of arguments that are passed to the plugin. Simple as that!
+
+Here is an example of how to define a plugin in the YAML file:
+
+.. code:: yaml
+
+    plugin_id: some unique id here
+    plugin: PLUGIN_NAMEcore_secret_plugins
+    args:
+      param1: value1
+      param2: value2
+
+
+
 Plugin categories
 -------------------
 There are three types of categories in ``pipeline-flow``:

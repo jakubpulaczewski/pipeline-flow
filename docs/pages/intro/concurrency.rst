@@ -32,9 +32,11 @@ Threading in python can be visualized as follows:
 Async Programming
 -------------------
 Asynchronous programming focuses on the concept of using a single thread to manage multiple tasks concurrently. It uses an event loop that 
-is responsible for scheduling and executing tasks in a non-blocking manner. But how does it work, you might ask? It uses the concept
-of coroutines, which are functions that can be paused and resumed at specific points. The event loop manages the execution of these coroutines.
-They are executed until they reach an await statement, at which point they are paused, and the event loop moves on to the next task.
+is responsible for scheduling and executing tasks in a non-blocking manner.
+
+**But how does it work, you might ask?** It uses the concept of coroutines, which are functions that can be paused and resumed at specific points. 
+The event loop manages the execution of these coroutines. They are executed until they reach an await statement, at which point they are paused,
+and the event loop moves on to the next task.
 
 This approach is particularly useful for I/O bound tasks since it allows the system to be lightweight and efficient, 
 while still being able to handle multiple tasks concurrently.

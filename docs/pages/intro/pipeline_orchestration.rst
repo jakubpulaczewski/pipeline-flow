@@ -16,10 +16,10 @@ A pipeline consists of multiple phases, each representing a stage in the data pr
 
 The typical phases in a pipeline are:
 
-- Extract: Retrieve data from various sources (e.g., databases, APIs, files).
-- Transform: Process, clean, and enrich the extracted data.
-- Load: Deliver the processed data to its target destination (e.g., data warehouses, files).
-- Transform at Load: Perform additional transformations on the external system for further processing (Type 2 SCD, etc.).
+- **Extract:** Retrieve data from various sources (e.g., databases, APIs, files).
+- **Transform:** Process, clean, and enrich the extracted data.
+- **Load:** Deliver the processed data to its target destination (e.g., data warehouses, files).
+- **Transform at Load:** Perform additional transformations on the external system for further processing (Type 2 SCD, etc.).
 
 Execution Flow
 ---------------------------------------------

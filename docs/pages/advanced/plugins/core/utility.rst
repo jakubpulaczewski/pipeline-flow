@@ -1,28 +1,75 @@
-.. _core_misc_plugins:
+.. _core_utility_plugins:
 
 Utility Plugins
 ========================
-``pipeline-flow`` provides a set of utility plugins that are designed to further enhance and extend the functionality
-of the core system.
+Utility Plugins are based on the concept of :ref:`plugin-in-plugin <plugin_in_plugin>` and are designed to further extend
+the functionality of the core system. 
 
+They are often used to handle common tasks like pagination, and other utility functions that can be reused across multiple plugins.
 
+Because they are plugins themselves, they have to be defined in the YAML config file, just like any other plugin.
+However, the difference is that they have to be defined under the specific plugin that they are extending.
 
-Pagination Handlers
-------------------------------------
 
 .. _core_pagination_handlers:
 
-When working with different APIs, you may encounter scenarios where the data is paginated. There are different types
-of pagination mechanism used by APIs. 
+Pagination Handlers
+------------------------------------
+When working with different APIs, you may encounter scenarios where the data is paginated. While pagination is common,
+the challenge arises where each API uses a different pagination mechanism. This can make it difficult to write a generic
+plugin that can handle pagination for all APIs.
 
-Pagitional Handlers are designed to handle these scenarios by enabling the same plugin to fetch data from 
-different paginated APIs.
+Pagination Handlers solve this problem by providing a modular way to handle pagination. Instead of embedding pagination 
+logic within the extraction plugin, you can delegate it to a dedicated pagination handler plugin. 
 
-.. warning::
-   Currently, paginator handlers are hard coded and cannot be extended. We are working on making them to be configurable
-   and extendable in the future releases.
+Below is an example of how to define a utility plugin within the extract phase of the pipeline. In this case, ``SOME_EXTRACT_PLUGIN`` has two arguments:
+
+- `some_arg`: A regular argument passed to the plugin.
+- `pagination`: A plugin-in-plugin that requires a plugin and args to be defined.
 
 
+.. code-block:: yaml
+
+    pipeline:
+      ... # Other pipeline configuration
+      phases:
+        extract:
+          plugin: SOME_EXTRACT_PLUGIN
+          args:
+            some_arg: some_value
+            pagination: 
+              plugin_id: ID to uniquely identify the pagination plugin
+              plugin: SUB_PLUGIN_YOU_WANT_TO_USE
+              args:
+                some_arg: some_value
+
+Page Based Pagination
+^^^^^^^^^^^^^^^^^^^^^
+Page based pagination is the most common type of pagination where the API returns a fixed number of records per page.
+It looks for a ``has_more`` key in the response and if it is present, it fetches the next page by looking for a ``next_page`` key.
+
+The name of this plugin is ``page_based_pagination``.
+
+**Arguments:**  
+There are no arguments required for the page based pagination handler.
+
+
+HATEOAS Based Pagination
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+HATEOAS (Hypermedia as the Engina of Application State) is a RESTful API design principle that allows the API to provide
+links to related resources in the response.
+
+The name of this plugin is ``hateoas_pagination``.
+
+
+This plugin leverages these hypermedia links to handle pagination automatically. It looks for a ``links`` or ``_links`` key in the response.
+If found, it returns the URL for the next page; otherwise, it returns None, indiciating that there are no more pages to fetch.
+
+
+**Arguments:**  
+There are no arguments required for the page based pagination handler.
+
+|br|
 
 Secret Manager
 ------------------------------------
@@ -85,3 +132,8 @@ it is talked about in this :ref:`guide <secrets>`. This guide also explains how 
     pipelines:
       # Your pipeline configuration goes here
       ...
+
+
+.. |br| raw:: html
+
+      <br>

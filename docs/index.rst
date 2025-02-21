@@ -86,7 +86,8 @@ Contents
    :maxdepth: 2
    :caption: Architecture
 
-   pages/advanced/architecture/system_overview.rst
+   pages/architecture/system_overview.rst
+   pages/architecture/plugin-in-plugin.rst
 
 
 .. toctree::

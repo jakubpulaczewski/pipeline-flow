@@ -16,7 +16,7 @@ These pipeline objects are then passed to the pipeline executor which is respons
 acocording to their type.
 
 
-.. figure:: ../../../_static/pipeline_init.png
+.. figure:: ../../_static/pipeline_init.png
    :align: center
    :width: 80% 
    :alt: Plugin Hierachy
@@ -30,14 +30,14 @@ can run concurrently.
 
 Each pipeline is executed according to its pipeline type (e.g. ELT or ETL pipelines).
 
-.. figure:: ../../../_static/pipeline_orchestrator.png
+.. figure:: ../../_static/pipeline_orchestrator.png
    :align: center
    :width: 80% 
 
 
 ETL Pipeline Execution Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. figure:: ../../../_static/etl_executor.png
+.. figure:: ../../_static/etl_executor.png
    :align: center
    :width: 80% 
 
@@ -45,13 +45,13 @@ ETL Pipeline Execution Flow
 ELT Pipeline Execution Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. figure:: ../../../_static/elt_executor.png
+.. figure:: ../../_static/elt_executor.png
    :align: center
    :width: 80% 
 
 ETLT Pipeline Execution Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. figure:: ../../../_static/etlt_executor.png
+.. figure:: ../../_static/etlt_executor.png
    :align: center
    :width: 80% 
