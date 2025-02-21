@@ -75,7 +75,7 @@ between performance and reliability.
 
 - Extract and Load Phases (I/O-bound): Executed asynchronously to reduce the overall processing time, allowing multiple I/O operations to run concurrently.
 - Transform and Transform-Load Phases (CPU-bound): TThese computationally intensive phases are executed sychronously in a separate thread to ensure data
-integrity and consistency. It prevents blocking the existing asyncio event loop, where other coroutines may be running.
+  integrity and consistency. It prevents blocking the existing asyncio event loop, where other coroutines may be running.
 
 .. warning:: **Important to Note**
     While ``pipeline-flow`` uses async programming for concurrency, it relies on plugins to support async operations natively.

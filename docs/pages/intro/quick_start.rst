@@ -35,7 +35,7 @@ After installation, add import two following dependencies to your Python script:
 .. code:: python
 
   >>> import asyncio     # Required for running asynchronous coroutines                                 
-  >>> from pipeline_flow.entrypoint import start_workflow  # Required for running the pipeline
+  >>> from pipeline_flow.entrypoint import start_orchestration  # Required for running the pipeline
 
 
 If you are new to asychronous programming, no need to worrry. Please 
@@ -47,27 +47,29 @@ Please refer to the configuration template below to help you get started.
 
 Running Your First Pipeline
 ----------------------------
-When you have your pipeline configuration ready, you can run your first pipeline using ``start_workflow``
+When you have your pipeline configuration ready, you can run your first pipeline using ``start_orchestration``
 function already imported in the previous step.
 
-To run the pipeline synchronously, you can use the ``asyncio.run`` function to run the ``start_workflow`` function.
+To run the pipeline synchronously, you can use the ``asyncio.run`` function to run the ``start_orchestration`` function.
 
 .. code:: python
 
   >>> import asyncio
-  >>> result = asyncio.run(start_workflow(file_path='YOUR_FILE_PATH_TO_PIPELINE.YAML'))
+  >>> result = asyncio.run(start_orchestration(local_file_path='YOUR_FILE_PATH_TO_PIPELINE.YAML'))
 
-Alternatively, you could call wrap ``start_workflow`` in an async function (coroutine) 
-and use the ``await`` keyword to run the workflow asynchronously.
+Alternatively, you could start the pipeline within an asynchronous function. To do this, you would need to await 
+the ``start_orchestration`` function. 
+
 
 .. code:: python
 
   >>> import asyncio
   
-  >>> async def some_wrapper_function(file_path: str):
-  >>>    result = await start_workflow(file_path)
+  >>> async def some_async_funciton(local_file_path: str):
+  >>>    result = await start_orchestration(local_file_path)
+  >>>    ... # Some other code here
   >>> 
-  >>> asyncio.run(some_wrapper_function('YOUR_FILE_PATH_TO_PIPELINE.YAML'))
+  >>> asyncio.run(some_async_funciton(local_file_path='YOUR_FILE_PATH_TO_PIPELINE.YAML'))
 
 
 Configuration Template
@@ -120,7 +122,7 @@ YAML Configuration Example:
 Next Steps
 -------------
 - Explore the full documentation to learn more about the pipeline configuration and advanced features.
-- Check out the :ref:`Core Concepts <core_concepts>` to understand the basic building blocks of ``pipeline-flow``.
+- Check out the :ref:`Core Concepts <core_concepts>` to understand the core concepts behind ``pipeline-flow``.
 - Learn more about :ref:`Building Custom Plugins <plugin_development>`.
 
 Happy orchestrating! 🚀

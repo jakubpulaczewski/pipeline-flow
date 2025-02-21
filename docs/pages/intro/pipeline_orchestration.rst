@@ -25,18 +25,23 @@ Execution Flow
 ---------------------------------------------
 ``pipeline-flow`` ensures a balanced approach between speed and data integrity through well-defined execution rules.
 
-- Phases execute sequentially:
-    - The output of one phase becomes the input for the next, preserving data flow consistency.
+**Phases execution in a defined sequence**
 
-- Pipelines can run concurrently or sequnetially
-    - Multiple pipelines can execute asynchronously for faster processing, or sequentially if there are dependencies between them that require ordered execution.
+- Each phase runs in order, ensuring the output of one phase seamlessly feeds into the next.
+- This preserves data integrity and ensures that all dependencies between phases are respected.
 
-- Phases contain multiple steps:
-    - A single phase can include multiple steps, with each step representing a distinct task or operation in the workflow.
+**Pipelines can run concurrently or sequnetially**
 
-- Execution mode depends on the phase type:
-    - Asychronous execution is used where the speed is critical (e.g., Extract and Load phases).
-    - Sychronous execution ensures acccuracy and consistency (e.g., Transform and Transform at Load phases).
+- Multiple pipelines can execute asynchronously for faster processing, or sequentially if there are dependencies between them that require ordered execution.
+
+**Phases contain multiple steps**
+
+- A single phase can include multiple steps, with each step representing a distinct task or operation in the workflow.
+
+**Execution mode depends on the phase type**
+
+- Asychronous execution is used where the speed is critical (e.g., Extract and Load phases).
+- Sychronous execution ensures acccuracy and consistency (e.g., Transform and Transform at Load phases).
 
 
 .. list-table:: Data Execution Rules
