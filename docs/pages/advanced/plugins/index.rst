@@ -77,3 +77,4 @@ Reference
    community_plugins
    custom_plugins
    plugin_development
+   sync_to_async_plugins.rst
