@@ -5,6 +5,7 @@ from typing import Self
 
 # Third-party Imports
 # Project Imports
+from pipeline_flow.core.registry import PluginRegistry
 from pipeline_flow.plugins import (
     IExtractPlugin,
     ILoadPlugin,
@@ -79,3 +80,32 @@ class SimpleAsyncPrePlugin(IPreProcessPlugin, plugin_name="simple_async_pre_plug
 class SimpleSecretPlugin(ISecretManager, plugin_name="simple_secret_plugin"):
     def __call__(self: Self, secret_name: str) -> str:  # noqa: ARG002 - This is a dummy implementation
         return "super_secret_value"
+
+
+class NestedPlugin(IPlugin, plugin_name="extended_plugin"):
+    def __init__(self, plugin_id: str, arg1: str, arg2: str) -> None:
+        super().__init__(plugin_id)
+        self.arg1 = arg1
+        self.arg2 = arg2
+
+    def __call__(self) -> str:
+        return "extended_plugin"
+
+
+class SimplePluginWithNestedPlugin(IPlugin, plugin_name="simple_plugin_with_nested_plugin"):
+    def __init__(self, plugin_id: str, pagination: IPlugin | None = None) -> None:
+        super().__init__(plugin_id)
+
+        pagination_payload = pagination or {
+            "id": f"{plugin_id}_default_pagination",
+            "plugin": "extended_plugin",
+            "args": {
+                "arg1": "default_value1",
+                "arg2": "default_value2",
+            },
+        }
+
+        self.pagination = PluginRegistry.instantiate_plugin(pagination_payload)
+
+    def __call__(self) -> str:
+        return "simple_dummy_plugin"

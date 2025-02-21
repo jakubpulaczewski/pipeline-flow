@@ -9,8 +9,9 @@ import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_random
 
 # Local Imports
-from pipeline_flow.plugins import IExtractPlugin
-from pipeline_flow.plugins.utils.pagination import PaginationStrategy, PaginationTypes, pagination_factory
+from pipeline_flow.common.type_def import PluginPayload
+from pipeline_flow.core.registry import PluginRegistry
+from pipeline_flow.plugins import IExtractPlugin, IPaginationHandler
 
 JSON_DATA = dict[str, Any]
 
@@ -28,7 +29,7 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
         base_url (str): The base URL of the API e.g. https://api.example.com/v1
         endpoint (str): The endpoint to fetch data from e.g. /users
         headers (dict[str, str]): A dictionary that contains headers e.g. auth token.
-        pagination_type (str, optional): The type of pagination strategy to use. Defaults to "page_based".
+        pagination (PluginPayload, optional): A dict that contains plugins and args for paginations. Defaults to "page_based_pagination" plugin.
     """
 
     def __init__(
@@ -37,13 +38,21 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
         base_url: str,
         endpoint: str,
         headers: dict[str, str],
-        pagination_type: str = PaginationTypes.PAGE_BASED,
+        pagination: PluginPayload | None = None,
     ) -> None:
         super().__init__(plugin_id)
         self.base_url = base_url
         self.endpoint = endpoint
         self.headers = headers
-        self.pagination_strategy: PaginationStrategy = pagination_factory(pagination_type)
+
+        # Fetches the pagination plugin from the registry
+        # if no pagination plugin is provided, the default is "page_based".
+        pagination_payload = pagination or {
+            "id": f"{plugin_id}_pagination",
+            "plugin": "page_based_pagination",
+        }
+
+        self.pagination_handler: IPaginationHandler = PluginRegistry.instantiate_plugin(pagination_payload)
 
         if not headers:
             raise ValueError("Headers must be provided for the API request.")
@@ -108,8 +117,6 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
                 results.extend(self._extract_data(response_json))
 
                 # Handle Pagination
-                next_page_url = (
-                    self.pagination_strategy.get_next_page(response_json) if isinstance(response_json, dict) else None
-                )
+                next_page_url = self.pagination_handler(response_json) if isinstance(response_json, dict) else None
 
             return results

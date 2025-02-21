@@ -1,4 +1,5 @@
 # Standard Imports
+from collections.abc import Callable
 
 # Third Party Imports
 import pytest
@@ -16,9 +17,13 @@ from tests.resources.plugins import (
 )
 
 
-def setup_plugins(plugins: list[tuple[str, IPlugin]]) -> None:
-    for plugin_name, plugin_callable in plugins:
-        PluginRegistry.register(plugin_name, plugin_callable)
+@pytest.fixture
+def setup_plugins(restart_plugin_registry) -> Callable[[list[tuple[str, IPlugin]]], None]:
+    def _setup(plugins: list[tuple[str, IPlugin]]) -> None:
+        for plugin_name, plugin_callable in plugins:
+            PluginRegistry.register(plugin_name, plugin_callable)
+
+    return _setup
 
 
 def test_parse_pipeline_without_pipelines() -> None:
@@ -57,7 +62,9 @@ def test_parse_pipeline_without_registered_plugins() -> None:
         parse_pipelines(pipeline_data)  # type: ignore[reportFunctionMemberAccess]
 
 
-def test_parse_etl_pipeline_with_missing_extract_phase() -> None:
+def test_parse_etl_pipeline_with_missing_extract_phase(
+    setup_plugins: Callable[[list[tuple[str, IPlugin]]], None],
+) -> None:
     # Register Plugins
     plugins = [
         ("transform_plugin", SimpleTransformPlugin),
@@ -95,8 +102,7 @@ def test_parse_etl_pipeline_with_missing_extract_phase() -> None:
         parse_pipelines(pipeline_data)  # type: ignore[reportFunctionMemberAccess]
 
 
-@pytest.mark.usefixtures("restart_plugin_registry")
-def test_parse_etl_pipeline_with_extra_phases() -> None:
+def test_parse_etl_pipeline_with_extra_phases(setup_plugins: Callable[[list[tuple[str, IPlugin]]], None]) -> None:
     # Register Plugins
     plugins = [
         ("extractor_plugin", SimpleExtractorPlugin),
@@ -144,8 +150,9 @@ def test_parse_etl_pipeline_with_extra_phases() -> None:
         parse_pipelines(pipeline_data)  # type: ignore[reportFunctionMemberAccess]
 
 
-@pytest.mark.usefixtures("restart_plugin_registry")
-def test_parse_etl_pipeline_with_only_mandatory_phases() -> None:
+def test_parse_etl_pipeline_with_only_mandatory_phases(
+    setup_plugins: Callable[[list[tuple[str, IPlugin]]], None],
+) -> None:
     # Register Plugins
     plugins = [
         ("extractor_plugin", SimpleExtractorPlugin),
@@ -182,8 +189,7 @@ def test_parse_etl_pipeline_with_only_mandatory_phases() -> None:
     assert isinstance(pipeline.load.steps[0], SimpleLoaderPlugin)
 
 
-@pytest.mark.usefixtures("restart_plugin_registry")
-def test_parse_etl_multiple_pipelines() -> None:
+def test_parse_etl_multiple_pipelines(setup_plugins: Callable[[list[tuple[str, IPlugin]]], None]) -> None:
     # Register Required Plugins
     plugins = [
         ("extract_plugin1", SimpleExtractorPlugin),
@@ -235,8 +241,7 @@ def test_parse_etl_multiple_pipelines() -> None:
     assert isinstance(pipelines[1].load.steps[0], SimpleLoaderPlugin)
 
 
-@pytest.mark.usefixtures("restart_plugin_registry")
-def test_parse_elt_pipeline() -> None:
+def test_parse_elt_pipeline(setup_plugins: Callable[[list[tuple[str, IPlugin]]], None]) -> None:
     # Register Required Plugins
     plugins = [
         ("extract_plugin1", SimpleExtractorPlugin),
@@ -281,8 +286,7 @@ def test_parse_elt_pipeline() -> None:
     assert isinstance(pipelines[0].load_transform.steps[0], SimpleTransformLoadPlugin)
 
 
-@pytest.mark.usefixtures("restart_plugin_registry")
-def test_parse_etlt_pipeline() -> None:
+def test_parse_etlt_pipeline(setup_plugins: Callable[[list[tuple[str, IPlugin]]], None]) -> None:
     # Setup Required Plugins
     plugins = [
         ("extract_plugin1", SimpleExtractorPlugin),

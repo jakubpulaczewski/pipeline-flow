@@ -38,18 +38,16 @@ def test_register_same_plugin_twice_raise_exception(simple_dummy_plugin_mock: Mo
 
 def test_get_plugin(simple_dummy_plugin_mock: MockType) -> None:
     # Registering the plugin
-    PluginRegistry._registry = {
-        "dummy_plugin": simple_dummy_plugin_mock,
-    }
+    PluginRegistry.register("another_dummy", simple_dummy_plugin_mock)
 
     # Fetch it
-    plugin_class = PluginRegistry.get("dummy_plugin")
+    plugin_class = PluginRegistry.get("another_dummy")
     assert plugin_class is simple_dummy_plugin_mock
 
 
 def test_get_nonexistent_plugin() -> None:
-    with pytest.raises(ValueError, match="Plugin class was not found for following plugin `fake_plugin`."):
-        PluginRegistry.get("fake_plugin")
+    with pytest.raises(ValueError, match="Plugin class was not found for following plugin `nonexistent_plugin`."):
+        PluginRegistry.get("nonexistent_plugin")
 
 
 def test_instantiate_plugin_with_optional_id(mocker: MockerFixture, simple_dummy_plugin_mock: MockType) -> None:

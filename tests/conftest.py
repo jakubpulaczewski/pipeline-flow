@@ -32,9 +32,11 @@ def setup_logging_level() -> None:
 
 @pytest.fixture
 def restart_plugin_registry() -> Generator[None]:
+    # When running multiple tests, the PluginRegistry singleton will retain state between tests.
+    # This fixture ensures that the PluginRegistry is reset before each test, such that
+    # ValueError is not raised when registering the same plugin multiple times.
     PluginRegistry._registry = {}  # Ensure a clean state before each test
     yield
-    PluginRegistry._registry = {}  # Clean up after each test
 
 
 def _pipeline_factory(default_config: dict[str, Any]) -> Callable[..., Pipeline]:

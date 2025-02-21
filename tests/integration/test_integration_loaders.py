@@ -9,7 +9,7 @@ from pipeline_flow.core.registry import PluginRegistry
 @pytest.mark.usefixtures("restart_plugin_registry")
 def test_load_custom_multiple_plugins() -> None:
     # Ensure the registry is empty before loading the plugin
-    assert PluginRegistry._registry == {}
+    assert len(PluginRegistry._registry) == 0
 
     # Load the plugins
     plugins = {"/workspaces/pipeline-flow/tests/resources/custom_plugins.py"}
@@ -28,7 +28,7 @@ def test_load_plugins_empty_set() -> None:
     # Test loading with empty plugin set
     plugins = set()
     load_custom_plugins(plugins)
-    assert PluginRegistry._registry == {}
+    assert len(PluginRegistry._registry) == 0
 
 
 def test_load_plugins_invalid_path() -> None:

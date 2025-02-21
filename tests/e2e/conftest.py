@@ -11,6 +11,8 @@ import pytest
 
 @pytest.fixture
 def db_uri() -> str:
+    # A unique in-memory database URI for each test
+    # This is to ensure that each test has a clean slate
     return f"file:memdb_{uuid4()}?mode=memory&cache=shared"
 
 
