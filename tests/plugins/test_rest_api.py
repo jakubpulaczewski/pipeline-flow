@@ -42,7 +42,7 @@ def api_client(test_api_key: str, base_url: str, test_endpoint: str) -> IPlugin:
 
 
 @pytest.fixture(autouse=True)
-def register_plugins_in_registry(restart_plugin_registry) -> Generator[None]:
+def register_plugins_in_registry(restart_plugin_registry) -> Generator[None]:  # noqa: ARG001 - A fixture is being used.
     # When running the tests, the plugins are already registered in the registry.
     # However, they are overriden by other tests. This fixture is used to re-register the plugins.
     PluginRegistry.register("rest_api_extractor", RestApiAsyncExtractor)

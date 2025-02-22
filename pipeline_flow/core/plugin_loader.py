@@ -64,7 +64,6 @@ def _load_plugin_from_file(plugin_file: str) -> None:
         raise
 
 
-
 def load_custom_plugins(custom_files: set[str]) -> None:
     if not custom_files:
         return

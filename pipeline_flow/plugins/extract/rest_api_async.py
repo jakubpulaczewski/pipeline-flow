@@ -29,7 +29,8 @@ class RestApiAsyncExtractor(IExtractPlugin, plugin_name="rest_api_extractor"):
         base_url (str): The base URL of the API e.g. https://api.example.com/v1
         endpoint (str): The endpoint to fetch data from e.g. /users
         headers (dict[str, str]): A dictionary that contains headers e.g. auth token.
-        pagination (PluginPayload, optional): A dict that contains plugins and args for paginations. Defaults to "page_based_pagination" plugin.
+        pagination (PluginPayload, optional): A dict that contains plugins and args for paginations.
+                                              Defaults to "page_based_pagination" plugin.
     """
 
     def __init__(

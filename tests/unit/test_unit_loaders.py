@@ -2,12 +2,10 @@
 from unittest.mock import MagicMock
 
 # Third Party
-import pytest
 from pytest_mock import MockerFixture
 
 # Project
 from pipeline_flow.core import plugin_loader
-from pipeline_flow.core.registry import PluginRegistry
 
 
 def test_load_plugin_from_file_new_module(mocker: MockerFixture) -> None:

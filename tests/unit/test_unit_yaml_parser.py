@@ -115,7 +115,7 @@ def test_parse_variable_placeholder_not_defined() -> None:
 
 def test_parse_secrets_placeholder_success() -> None:
     yaml_parser = ExtendedCoreLoader(stream=Mock())
-    yaml_parser.secrets = {"db_password": SecretPlaceholder(secret_name="my-secret-password", secret_provider=Mock())}
+    yaml_parser.secrets = {"db_password": SecretPlaceholder(secret_name="my-secret-password", secret_provider=Mock())}  # noqa: S106
 
     result = yaml_parser.substitute_secret_placeholder(node=Mock(value="${{ secrets.db_password }}"))
 

@@ -18,7 +18,7 @@ from tests.resources.plugins import (
 
 
 @pytest.fixture
-def setup_plugins(restart_plugin_registry) -> Callable[[list[tuple[str, IPlugin]]], None]:
+def setup_plugins(restart_plugin_registry) -> Callable[[list[tuple[str, IPlugin]]], None]:  # noqa: ARG001 - A fixture is being used.
     def _setup(plugins: list[tuple[str, IPlugin]]) -> None:
         for plugin_name, plugin_callable in plugins:
             PluginRegistry.register(plugin_name, plugin_callable)

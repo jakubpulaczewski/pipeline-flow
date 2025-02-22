@@ -39,7 +39,7 @@ def test_parse_secrets_with_same_yaml_document() -> None:
     """)
 
     with pytest.raises(ValueError, match="Secret `SECRET1` is not set."):
-        YamlParser(stream=yaml_with_secrets).content
+        _ = YamlParser(stream=yaml_with_secrets).content
 
 
 def test_parse_string_variables_in_yaml() -> None:

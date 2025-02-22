@@ -36,7 +36,7 @@ def restart_plugin_registry() -> Generator[None]:
     # This fixture ensures that the PluginRegistry is reset before each test, such that
     # ValueError is not raised when registering the same plugin multiple times.
     PluginRegistry._registry = {}  # Ensure a clean state before each test
-    yield
+    return
 
 
 def _pipeline_factory(default_config: dict[str, Any]) -> Callable[..., Pipeline]:

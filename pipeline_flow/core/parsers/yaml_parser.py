@@ -6,7 +6,7 @@ import os
 import re
 from dataclasses import dataclass
 from enum import StrEnum
-from io import StringIO
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 # Third Party Imports
@@ -18,6 +18,7 @@ from pipeline_flow.core.parsers import secret_parser
 
 # Type Imports
 if TYPE_CHECKING:
+    from io import StringIO
     from typing import Match, Self
 
     from yaml.nodes import Node
@@ -32,7 +33,7 @@ DEFAULT_CONCURRENCY = 2
 ENV_VAR_YAML_TAG = "!env_var"
 ENV_VAR_PATTERN = re.compile(r"\${{\s*env\.([^}]+?)\s*}}")
 
-SECRET_YAML_TAG = "!secret"
+SECRET_YAML_TAG = "!secret"  # noqa: S105 - False Positive
 SECRET_PATTERN = re.compile(r"\${{\s*secrets\.([^}]+?)\s*}}")
 
 VARIABLE_YAML_TAG = "!variable"
@@ -113,14 +114,16 @@ class ExtendedCoreLoader(yamlcore.CCoreLoader):
         if full_match:
             variable_key = full_match.group(1)
             if variable_key not in self.variables:
-                raise ValueError(f"Variable `{variable_key}` is not set.")
+                msg = f"Variable `{variable_key}` is not set."
+                raise ValueError(msg)
             return self.variables[variable_key]  # Return the original type (int, dict, etc.)
 
         # Use re.sub with a callback for single-pass substitution of variables in strings
-        def replace_match(match: Match):
+        def replace_match(match: Match) -> str:
             variable_key = match.group(1)
             if variable_key not in self.variables:
-                raise ValueError(f"Variable `{variable_key}` is not set.")
+                msg = f"Variable `{variable_key}` is not set."
+                raise ValueError(msg)
             return str(self.variables[variable_key])  # Convert to string for inline substitution
 
         return VARIABLE_PATTERN.sub(replace_match, value)
@@ -204,8 +207,8 @@ class YamlParser:
         """Reads the content of the file and returns it."""
         try:
             # async with aiofiles.open(file_path, encoding="utf-8") as file.
-            # TODO; This works but need to test if async is needed at this point.
-            with open(file_path) as file:
+            # This works but need to test if async is needed at this point.
+            with Path(file_path).open("r") as file:
                 return file.read()
         except FileNotFoundError:
             error_msg = f"File not found: {file_path}"

@@ -21,9 +21,10 @@ def test_secret_parser_returns_secret_placeholder(mocker: MockerFixture) -> None
 
 def test_resolve_secret_placeholder() -> None:
     secret_placeholder = SecretPlaceholder(
-        secret_name="my-secret", secret_provider=SimpleSecretPlugin(plugin_id="test_plugin")
+        secret_name="my-secret",  # noqa: S106
+        secret_provider=SimpleSecretPlugin(plugin_id="test_plugin"),
     )
     secret_value = secret_placeholder.resolve()
 
-    assert secret_value == "super_secret_value"
+    assert secret_value == "super_secret_value"  # noqa: S105
     assert repr(secret_placeholder) == "<SecretPlaceholder: my-secret (hidden)>"

@@ -15,7 +15,7 @@ from pipeline_flow.plugins import ISecretManager
 class AWSSecretManager(ISecretManager, plugin_name="aws_secret_manager"):
     """A class for fetching secrets from AWS Secret Manager."""
 
-    def __init__(self, plugin_id: str, region: str):
+    def __init__(self, plugin_id: str, region: str) -> None:
         super().__init__(plugin_id)
         self.client = boto3.client("secretsmanager", region_name=region)
 

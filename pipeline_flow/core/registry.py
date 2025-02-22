@@ -64,4 +64,4 @@ class PluginRegistry(metaclass=SingletonMeta):
 
 # Registering plugins after PluginRegistry class definition. This is done to avoid circular imports as
 # the plugins are registed when they are imported from IPlugin interface.
-from pipeline_flow.plugins import extract, load, merge, secret_managers, transform, utility
+from pipeline_flow.plugins import *  # noqa: E402, F403
