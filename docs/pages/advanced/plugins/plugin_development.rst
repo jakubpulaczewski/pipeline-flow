@@ -50,7 +50,7 @@ At its core, every plugin must implement ``__call__`` dunder method, which:
 Creating a plugin in ``pipeline-flow`` is **super simple**—it only involves **two steps**.
 
 1. Implement the specific plugin interface.
-2. Define the plugin logic. That's it! 🎉  
+2. Define the plugin logic. That's it! |:tada:| 
 
 **Example**:
 
@@ -154,7 +154,7 @@ Once your plugin is ready, consider sharing it with the community by contributin
 `official plugin repository <https://github.com/jakubpulaczewski/pipeline-flow-community>`_.
 
 
-Happy coding! 🚀
+Happy coding! |:rocket:|
 
 
 .. |br| raw:: html

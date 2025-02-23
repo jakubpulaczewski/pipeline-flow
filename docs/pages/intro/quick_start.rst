@@ -3,7 +3,7 @@
 Quick Start
 ===========
 This guilde will walk you through setting up ``pipeline-flow``, running your first pipeline and understand the 
-basic workflow in less than 5 minutes! 🚀
+basic workflow in less than 5 minutes! |:rocket:|
 
 Prerequisites
 -------------
@@ -125,4 +125,4 @@ Next Steps
 - Check out the :ref:`Core Concepts <core_concepts>` to understand the core concepts behind ``pipeline-flow``.
 - Learn more about :ref:`Building Custom Plugins <plugin_development>`.
 
-Happy orchestrating! 🚀
+Happy orchestrating! |:rocket:|
