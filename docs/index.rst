@@ -12,7 +12,7 @@ It is a lightweight, scalable and extensible platform designed for managing ELT,
 it can run anywhere with a Python environment, offering a simple and yet flexible solution for managing data workflows.
 
 Ideal for small to medium-size data workflows without the overhead of full-scale orchestration tools, ``pipeline-flow`` makes
-building data pipelines smple and accessible. With its YAML-based configuration and plugin-based architecture, you can easily define and run
+building data pipelines simple and accessible. With its YAML-based configuration and plugin-based architecture, you can easily define and run
 data pipelines with minimal effort and maximum flexibility, as well as extend its functionality as needed. Whether you're using Spark, Polaris
 or any other data processing engine, you can easily integrate it with ``pipeline-flow``.
 

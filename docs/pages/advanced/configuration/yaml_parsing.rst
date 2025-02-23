@@ -236,6 +236,7 @@ They work, as follows:
       example_api_key:
         plugin: aws_secrets_manager
         args:
+          secret_name: SUPER_SECRET_API_KEY
           region: us-east-1
 
     ---  # New document for pipeline definition

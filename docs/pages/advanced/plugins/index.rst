@@ -24,7 +24,7 @@ Here is an example of how to define a plugin in the YAML file:
 .. code:: yaml
 
     plugin_id: some unique id here
-    plugin: PLUGIN_NAMEcore_secret_plugins
+    plugin: YOUR_SECRET_PLUGIN_HERE
     args:
       param1: value1
       param2: value2
