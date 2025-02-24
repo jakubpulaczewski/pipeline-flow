@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - main
+    paths:
+      - tests/**
+      - pipeline_flow/**
+      - poetry.lock
+      - pyproject.toml
+      - ruff.toml
+      - pyrightconfig.json
+
     workflow_dispatch:
 
 
