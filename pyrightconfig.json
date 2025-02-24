@@ -22,7 +22,7 @@
     "reportMissingImports": "error",
     "reportMissingTypeStubs": false,
   
-    "pythonVersion": "3.13",
+    "pythonVersion": "3.12",
     "reportCallIssue": {
         "tests/unit/test_unit_executor_concurrency.py": "none" 
       }

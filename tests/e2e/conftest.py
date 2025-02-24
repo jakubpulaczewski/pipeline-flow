@@ -17,7 +17,7 @@ def db_uri() -> str:
 
 
 @pytest.fixture
-def db_connection(db_uri: str) -> Generator[sqlite3.Connection]:
+def db_connection(db_uri: str) -> Generator[sqlite3.Connection, None, None]:
     conn = sqlite3.connect(db_uri, uri=True)
     yield conn
 

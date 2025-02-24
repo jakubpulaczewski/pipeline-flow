@@ -14,7 +14,7 @@ from pipeline_flow.plugins.secret_managers import AWSSecretManager
 
 
 @pytest.fixture(autouse=True)
-def mock_secretmanager() -> Generator[SecretsManagerClient]:
+def mock_secretmanager() -> Generator[SecretsManagerClient, None, None]:
     with mock_aws():
         # Setup the environment for the mock.
         client = boto3.client("secretsmanager", region_name="us-east-1")

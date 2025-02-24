@@ -1,4 +1,6 @@
 # Standard Imports
+from pathlib import Path
+
 import pytest
 
 # Project Imports
@@ -12,8 +14,9 @@ def test_load_custom_multiple_plugins() -> None:
     assert len(PluginRegistry._registry) == 0
 
     # Load the plugins
-    plugins = {"/workspaces/pipeline-flow/tests/resources/custom_plugins.py"}
-    load_custom_plugins(plugins)
+    plugin_path = Path.cwd() / "tests" / "resources" / "custom_plugins.py"
+
+    load_custom_plugins({plugin_path.as_posix()})
 
     # Verify plugins were loaded
     assert len(PluginRegistry._registry) > 0

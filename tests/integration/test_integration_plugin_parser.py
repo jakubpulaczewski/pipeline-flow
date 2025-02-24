@@ -11,7 +11,7 @@ from pipeline_flow.core.parsers import PluginParser
 
 
 @pytest.fixture
-def create_temp_plugin_folder() -> Generator[Path]:
+def create_temp_plugin_folder() -> Generator[Path, None, None]:
     parent_path = Path(__file__).parent.parent
 
     plugins_dir = parent_path / "resources" / "plugins"
@@ -65,7 +65,7 @@ def test_fetch_custom_plugins_with_not_found_folder() -> None:
     assert result == set()
 
 
-def test_fetch_custom_plugin_files_with_dirs_and_files(create_temp_plugin_folder: Generator[Path]) -> None:
+def test_fetch_custom_plugin_files_with_dirs_and_files(create_temp_plugin_folder: Generator[Path, None, None]) -> None:
     # Create plugin
     file_path = create_temp_plugin_folder / "plugin123.py"  # type: ignore[reportOperatorIssue]
     file_path.write_text("")
