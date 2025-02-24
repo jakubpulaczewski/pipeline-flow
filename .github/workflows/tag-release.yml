@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  POETRY_VERSION: "2.1.1"
+
+
+jobs:
+  pypi-publish:
+    name: Publish Artefact to PyPI repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Build and publish to pypi
+        uses: JRubics/poetry-publish@v2.1
+        with:
+          python_version: ${{ env.PYTHON_VERSION}}
+          poetry_version: "==${{ env.POETRY_VERSION }}" # (PIP version specifier syntax)
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
+          
