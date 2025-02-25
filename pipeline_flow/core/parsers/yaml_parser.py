@@ -1,12 +1,10 @@
 # Standard Imports
 from __future__ import annotations
 
-import logging
 import os
 import re
 from dataclasses import dataclass
 from enum import StrEnum
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 # Third Party Imports
@@ -18,8 +16,7 @@ from pipeline_flow.core.parsers import secret_parser
 
 # Type Imports
 if TYPE_CHECKING:
-    from io import StringIO
-    from typing import Match, Self
+    from typing import Generator, Match, Self
 
     from yaml.nodes import Node
 
@@ -172,59 +169,49 @@ class YamlParser:
         - a `str` object
         - a file-like object with its `read` method returning `str`
         - a file-like object with its `read` method returning `unicode`
-        - a file path (automatically read)
     """
 
-    def __init__(self: Self, stream: StreamType, *, read_local_file: bool = False) -> None:
-        converted_stream = self._convert_to_stream(stream, read_local_file=read_local_file)
-        self.content = self.load(converted_stream)
+    def __init__(self: Self, stream: StreamType) -> None:
+        self._stream = stream
 
-    @classmethod
-    def from_input(cls: type[Self], yaml_text: StreamType | None, file_path: str | None) -> Self:
-        """Initializes YamlParser using either a YAML text or a local file path.
+        self._parsed_yaml = self.parse_yaml_with_context(stream)
+
+    @property
+    def yaml_body(self) -> JSON_DATA:
+        """Returns the parsed YAML content as a dictionary with the root document."""
+        return self._parsed_yaml
+
+    @property
+    def pipelines(self) -> JSON_DATA:
+        """Returns the parsed YAML content as a dictionary with pipelines."""
+        return self._parsed_yaml.get(YamlAttribute.PIPELINES, {})
+
+    @property
+    def plugins(self) -> PluginRegistryJSON | None:
+        """Returns the parsed YAML content as a dictionary with plugins."""
+        return self._parsed_yaml.get(YamlAttribute.PLUGINS, {})
+
+    def stream_yaml_documents(self, loader: ExtendedCoreLoader) -> Generator[JSON_DATA, None, None]:
+        """Loads all YAML documents from the stream and returns a generator of parsed data.
 
         Args:
-            yaml_text (StreamType | None): YAML content as a string or stream.
-            file_path (str | None): Local file path to a YAML file.
+            loader (ExtendedCoreLoader): The loader to use for parsing the YAML.
 
-        Returns:
-            YamlParser: An instance of YamlParser.
-
-        Raises:
-            ValueError: If neither yaml_text nor file_path is provided.
+        Yields:
+            JSON_DATA: A dictionary containing the parsed YAML content.
         """
-        if not yaml_text and not file_path:
-            raise ValueError("Either yaml_text or file_path must be provided.")
-        # Prioritize YAML text if provided.
-        stream = yaml_text if yaml_text is not None else file_path
-        read_local_file = file_path is not None and yaml_text is None
-
-        # Initialize YAML parser
-        return cls(stream=stream, read_local_file=read_local_file)
-
-    @staticmethod
-    def _read_file(file_path: str) -> StringIO:
-        """Reads the content of the file and returns it."""
         try:
-            # async with aiofiles.open(file_path, encoding="utf-8") as file.
-            # This works but need to test if async is needed at this point.
-            with Path(file_path).open("r") as file:
-                return file.read()
-        except FileNotFoundError:
-            error_msg = f"File not found: {file_path}"
-            logging.error(error_msg)
-            raise
+            while loader.check_data():
+                yield loader.get_data()
+        finally:
+            loader.dispose()  # Dispose the loader and its state
 
-    def _convert_to_stream(self: Self, source: StreamType, *, read_local_file: bool) -> StreamType:
-        """Converts the content to a stream and returns it."""
-        if isinstance(source, str):
-            if read_local_file:
-                return self._read_file(source)
-            return source
-        return source
+            is_file = bool(hasattr(self._stream, "read") and hasattr(self._stream, "close"))
+            if is_file and not self._stream.closed:
+                # Close the file if it was opened
+                self._stream.close()
 
-    @staticmethod
-    def load(stream: StreamType) -> JSON_DATA:
+    def parse_yaml_with_context(self, stream: StreamType) -> JSON_DATA:
         """Loads the YAML content from the stream and returns the parsed data.
 
         It is a wrapper over yaml.load_all() to handle the secrets and env variables.
@@ -237,40 +224,31 @@ class YamlParser:
         """
         loader = ExtendedCoreLoader(stream)
 
-        try:
-            while loader.check_data():
-                data = loader.get_data()
+        for yaml_doc in self.stream_yaml_documents(loader):
+            if YamlAttribute.SECRETS in yaml_doc:
+                secrets = secret_parser(yaml_doc[YamlAttribute.SECRETS])
+                loader.update_secrets(secrets)
 
-                if YamlAttribute.SECRETS in data:
-                    secrets = secret_parser(data[YamlAttribute.SECRETS])
-                    loader.update_secrets(secrets)
+            if YamlAttribute.VARIABLES in yaml_doc:
+                variables = yaml_doc[YamlAttribute.VARIABLES]
+                loader.update_variables(variables)
 
-                if YamlAttribute.VARIABLES in data:
-                    variables = data[YamlAttribute.VARIABLES]
-                    loader.update_variables(variables)
+            if any(key in yaml_doc for key in [YamlAttribute.SECRETS, YamlAttribute.VARIABLES]):
+                # Skip the document if it contains secrets or variables and move to the next document
+                # to ensure that the secrets and variables are updated before parsing the next document.
+                continue
 
-                if YamlAttribute.SECRETS in data or YamlAttribute.VARIABLES in data:
-                    # Skip the document if it contains secrets or variables and move to the next document
-                    # to ensure that the secrets and variables are updated before parsing the next document.
-                    continue
+            # Return the first document that doesn't contain secrets or variables.
+            return yaml_doc
 
-                return data
-        finally:
-            loader.dispose()
-
-    def get_pipelines_dict(self: Self) -> JSON_DATA:
-        """Return the 'pipelines' section from the parsed YAML."""
-        return self.content.get(YamlAttribute.PIPELINES, {})
-
-    def get_plugins_dict(self: Self) -> PluginRegistryJSON | None:
-        """Return the 'plugins' section from the parsed YAML."""
-        return self.content.get(YamlAttribute.PLUGINS, None)
+        # Return empty dictionary if no document is found
+        return {}
 
     def initialize_yaml_config(self: Self) -> YamlConfig:
         """Initialize the YAML Configuration object with the default values or passed in."""
         # Create the map of attributes with their values
         attrs_map = {
-            YamlAttribute.CONCURRENCY: self.content.get(YamlAttribute.CONCURRENCY, DEFAULT_CONCURRENCY),
+            YamlAttribute.CONCURRENCY: self._parsed_yaml.get(YamlAttribute.CONCURRENCY, DEFAULT_CONCURRENCY),
         }
 
         # Filter out the None values

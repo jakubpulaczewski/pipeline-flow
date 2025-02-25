@@ -9,22 +9,34 @@ from pipeline_flow.core.parsers import YamlParser, parse_pipelines
 from pipeline_flow.core.plugin_loader import load_plugins
 
 
-async def start_orchestration(yaml_text: StreamType | None, local_file_path: str | None = None) -> bool:
+async def start_orchestration(stream: StreamType) -> None:
+    """Main entry point for orchestrating the pipeline flow.
+
+    This function parses the YAML configuration, loads the plugins,
+    and executes the pipelines using the PipelineOrchestrator.
+
+    The Stream must be one of the following types:
+       - `str` object: A string containing the YAML configuration.
+       - 'obj' object: An object containing the YAML configuration.
+       - `file` object: A file object containing the YAML configuration.
+
+    Args:
+        stream (StreamType): A stream containing the YAML configuration.
+    """
     # Set up the logger configuration
     setup_logger()
 
     # Parse YAML
-    yaml_parser = YamlParser.from_input(yaml_text, local_file_path)
-    yaml_config = yaml_parser.initialize_yaml_config()
-    plugins_payload = yaml_parser.get_plugins_dict()
+    yaml_parser = YamlParser(stream)
 
     # Parse plugins directly within the load_plugins function
-    load_plugins(plugins_payload)
+    load_plugins(yaml_parser.plugins)
 
     # Parse pipelines and execute them using the orchestrator
-    pipelines = parse_pipelines(yaml_parser.get_pipelines_dict())
+    pipelines = parse_pipelines(yaml_parser.pipelines)
 
     try:
+        yaml_config = yaml_parser.initialize_yaml_config()
         orchestrator = PipelineOrchestrator(yaml_config)
         await orchestrator.execute_pipelines(pipelines)
 
@@ -32,5 +44,3 @@ async def start_orchestration(yaml_text: StreamType | None, local_file_path: str
         logging.error("The following error occurred: %s", e)
         logging.error("The original cause is: %s", e.__cause__)
         raise
-    else:
-        return True

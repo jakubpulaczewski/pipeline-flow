@@ -65,9 +65,8 @@ async def test_e2e_etl_pipeline(populate_source_e2e_tables, db_connection: sqlit
                   table: customer_orders
     """
 
-    result = await start_orchestration(yaml_text=yaml_config)
+    _ = await start_orchestration(stream=yaml_config)
 
-    assert result is True
     sqlite3_cursor = db_connection.cursor()
     sqlite3_cursor.execute("SELECT * FROM customer_orders")
     results = sqlite3_cursor.fetchall()
@@ -137,9 +136,8 @@ async def test_e2e_elt_pipeline(populate_source_e2e_tables, db_connection: sqlit
                       GROUP BY customer_id, name;
     """
 
-    result = await start_orchestration(yaml_text=yaml_config)
+    _ = await start_orchestration(stream=yaml_config)
 
-    assert result is True
     sqlite3_cursor = db_connection.cursor()
     sqlite3_cursor.execute("SELECT * FROM customer_orders_summary")
     results = sqlite3_cursor.fetchall()
@@ -213,8 +211,7 @@ async def test_e2e_etlt_pipeline(populate_source_e2e_tables, db_connection: sqli
                     SET name = UPPER(name);
     """
 
-    result = await start_orchestration(yaml_text=yaml_config)
-    assert result is True
+    _ = await start_orchestration(stream=yaml_config)
     sqlite3_cursor = db_connection.cursor()
     sqlite3_cursor.execute("SELECT * FROM customer_orders")
     results = sqlite3_cursor.fetchall()

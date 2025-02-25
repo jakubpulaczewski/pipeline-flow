@@ -50,12 +50,29 @@ Running Your First Pipeline
 When you have your pipeline configuration ready, you can run your first pipeline using ``start_orchestration``
 function already imported in the previous step.
 
-To run the pipeline synchronously, you can use the ``asyncio.run`` function to run the ``start_orchestration`` function.
+Another important thing to note is that you ``start_orchestration`` function accepts a stream argument.
+
+The ``stream`` argument can be one of the following:
+
+- A string containing the YAML configuration.
+- An object containing the YAML configuration.
+- A file object containing the YAML configuration.
+
+.. note::
+    Remember to replace the placeholders, such as ``YOUR_FILE_PATH_TO_PIPELINE.YAML``, with the actual path to your YAML configuration file.
+
+
+The ``start_orchestration`` function will read the YAML configuration from the provided stream, 
+and then run the pipeline using the provided information.
+
+
+To run the pipeline, you can use the ``asyncio.run`` function to run the ``start_orchestration`` function. 
 
 .. code:: python
 
   >>> import asyncio
-  >>> result = asyncio.run(start_orchestration(local_file_path='YOUR_FILE_PATH_TO_PIPELINE.YAML'))
+  >>> open_local_file = open('YOUR_FILE_PATH_TO_PIPELINE.YAML')
+  >>> asyncio.run(start_orchestration(stream=open_local_file))
 
 Alternatively, you could start the pipeline within an asynchronous function. To do this, you would need to await 
 the ``start_orchestration`` function. 
@@ -65,11 +82,28 @@ the ``start_orchestration`` function.
 
   >>> import asyncio
   
-  >>> async def some_async_funciton(local_file_path: str):
-  >>>    result = await start_orchestration(local_file_path)
-  >>>    ... # Some other code here
+  >>> async def some_async_func(local_file_path: str):
+  >>>    _ = await start_orchestration(local_file_path)
+  >>>    ... # Some other code here - You can put your code here, if needed.
   >>> 
-  >>> asyncio.run(some_async_funciton(local_file_path='YOUR_FILE_PATH_TO_PIPELINE.YAML'))
+  >>> open_local_file = open('YOUR_FILE_PATH_TO_PIPELINE.YAML')
+  >>> asyncio.run(some_async_func(stream=open_local_file))
+
+
+Using string ``stream`` or object ``stream`` is just as convenient as using file objects. Here is a simple
+example of using a string stream with asyncio.run.
+
+.. code:: python
+
+  >>> import asyncio
+  >>> yaml_str_body = '''
+  >>>   pipelines:
+  >>>     pipeline1:
+  >>>       type: ETL
+  >>>       phases:
+  >>>        ... # Rest of the pipeline configuration here
+  >>> '''
+  >>> asyncio.run(start_orchestration(stream=yaml_str_body))
 
 
 Configuration Template

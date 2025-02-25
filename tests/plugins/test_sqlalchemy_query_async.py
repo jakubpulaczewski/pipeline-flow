@@ -100,7 +100,7 @@ def test_parse_sqlalchemy_query_loader_yaml() -> None:
     """
 
     # Parse the YAML configuration
-    parsed_yaml = YamlParser(stream=yaml_config).content
+    parsed_yaml = YamlParser(stream=yaml_config).yaml_body
     load_step = parsed_yaml["load"]["steps"][0]
 
     # Assert that the plugin is correctly parsed

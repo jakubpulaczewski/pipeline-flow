@@ -1,4 +1,5 @@
 # Standard Imports
+from pathlib import Path
 from unittest.mock import Mock
 
 # Third Party Imports
@@ -43,11 +44,6 @@ def test_parse_invalid_yaml() -> None:
 
     with pytest.raises(yaml.YAMLError):
         YamlParser(stream=yaml_content)
-
-
-def test_parse_yaml_file_not_found() -> None:
-    with pytest.raises(FileNotFoundError):
-        YamlParser(stream="not_found.yaml", read_local_file=True)
 
 
 def test_env_var_not_defined() -> None:
@@ -131,7 +127,7 @@ def test_parse_secrets_placeholder_not_defined() -> None:
 
 
 def test_parse_yaml_text_success(yaml_pipeline: str) -> None:
-    serialized_yaml = YamlParser(yaml_pipeline).content
+    serialized_yaml = YamlParser(yaml_pipeline).yaml_body
 
     expected_dict = {
         "pipelines": {
@@ -166,7 +162,9 @@ def test_parse_yaml_file_success(yaml_pipeline: str, tmpdir) -> None:
     file = tmpdir.mkdir("sub").join("data.yaml")
     file.write_text(yaml_pipeline, encoding="utf-8")
 
-    serialized_yaml = YamlParser(stream=file.strpath, read_local_file=True).content
+    file_obj = Path(file.strpath).open("r")  # noqa: SIM115 - Context Handler exists inside YamlParser
+
+    serialized_yaml = YamlParser(file_obj).yaml_body
 
     expected_dict = {
         "pipelines": {

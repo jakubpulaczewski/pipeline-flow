@@ -132,7 +132,7 @@ def test_parse_rest_api_extractor_with_different_pagination_handler(
     """
 
     # Parse the YAML configuration
-    parsed_yaml = YamlParser(stream=yaml_config).content
+    parsed_yaml = YamlParser(stream=yaml_config).yaml_body
     extract_step = parsed_yaml["extract"]["steps"][0]
 
     # Instantiate the plugin (plugin_id is assigned by `instantiate_plugin` in PluginRegistry)
@@ -157,7 +157,7 @@ def test_parse_rest_api_extractor_yaml(base_url: str, test_endpoint: str, test_a
     """
 
     # Parse the YAML configuration
-    parsed_yaml = YamlParser(stream=yaml_config).content
+    parsed_yaml = YamlParser(stream=yaml_config).yaml_body
     extract_step = parsed_yaml["extract"]["steps"][0]
 
     # Assert that the plugin is correctly parsed
