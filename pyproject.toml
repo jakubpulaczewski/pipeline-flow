@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-flow"
-version = "1.0.0a1"
+version = "1.0.0a2"
 description = "A framework for building ETL, ELT and ETLT data pipelines dynamically using plugins."
 authors = [
     "Jakub Pulaczewski <jakub.pulaczewski@example.com>"
@@ -9,6 +9,11 @@ maintainers = [
    "Jakub Pulaczewski <jakub.pulaczewski@example.com>"
 ]
 license = "BSD-3-Clause"
+readme = "README.md"
+
+repository = "https://github.com/jakubpulaczewski/pipeline-flow"
+homepage = "http://pipeline-flow.readthedocs.io/"
+
 packages = [{ include = "pipeline_flow" }]
 
 keywords = [

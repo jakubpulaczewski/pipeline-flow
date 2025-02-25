@@ -9,7 +9,7 @@
 project = "pipeline-flow"
 copyright = "2025, Jakub Pulaczewski"
 author = "Jakub Pulaczewski"
-release = "1.0.0a1"
+release = "1.0.0a2"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
