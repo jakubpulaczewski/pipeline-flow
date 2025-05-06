@@ -24,7 +24,8 @@ async def start_orchestration(stream: StreamType) -> None:
         stream (StreamType): A stream containing the YAML configuration.
     """
     # Set up the logger configuration
-    setup_logger()
+    if not logging.getLogger().hasHandlers() > 0:
+        setup_logger()
 
     # Parse YAML
     yaml_parser = YamlParser(stream)
