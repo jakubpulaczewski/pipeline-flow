@@ -28,8 +28,7 @@ class PluginRegistry(metaclass=SingletonMeta):
         logging.debug("Registering plugin `%s`.", plugin_name)
         # Check if the plugin has been registered.
         if plugin_name in cls._registry:
-            error_msg = f"Plugin for `{plugin_name}` already exists in PluginRegistry class."
-            raise ValueError(error_msg)
+            logging.warning("Plugin for `%s` already exists in PluginRegistry class.", plugin_name)
 
         cls._registry[plugin_name] = plugin_callable
         logging.debug("Plugin `%s` have been successfully registered. ", plugin_name)

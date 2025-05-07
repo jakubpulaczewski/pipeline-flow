@@ -24,18 +24,6 @@ def test_register_plugin(simple_dummy_plugin_mock: MockType) -> None:
     assert "dummy_plugin" in PluginRegistry._registry
     assert PluginRegistry._registry["dummy_plugin"] is simple_dummy_plugin_mock
 
-
-def test_register_same_plugin_twice_raise_exception(simple_dummy_plugin_mock: MockType) -> None:
-    PluginRegistry.register("fake_plugin", simple_dummy_plugin_mock)
-
-    assert "fake_plugin" in PluginRegistry._registry
-    assert PluginRegistry._registry["fake_plugin"] is simple_dummy_plugin_mock
-
-    # Registering the same plugin should raise a ValueError
-    with pytest.raises(ValueError, match="Plugin for `fake_plugin` already exists in PluginRegistry class."):
-        PluginRegistry.register("fake_plugin", simple_dummy_plugin_mock)
-
-
 def test_get_plugin(simple_dummy_plugin_mock: MockType) -> None:
     # Registering the plugin
     PluginRegistry.register("another_dummy", simple_dummy_plugin_mock)
