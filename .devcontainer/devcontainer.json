@@ -1,11 +1,8 @@
 {
     "name": "Pipeline Flow Dev Container",
-    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "image": "mcr.microsoft.com/devcontainers/python:3.12",
 	"features": {
-		"ghcr.io/devcontainers/features/python:1": {
-			"version": "3.12"
-		},
-		"ghcr.io/devcontainers-contrib/features/pre-commit:2": {},
+		"ghcr.io/prulloac/devcontainer-features/pre-commit:1": {},
 		"ghcr.io/devcontainers-extra/features/ruff:1": {
             "version": "latest"
         },
@@ -14,14 +11,15 @@
         //     "jdkVersion": "11"
 		// },
         // Enable to run create child docker containers inside a container (Docker-in-Docker)
-        // This is useful for running integration tests in a containerized environment. 
+        // This is useful for running integration tests in a containerized environment.
         "ghcr.io/devcontainers/features/docker-in-docker:2": {}
     },
-    
+
 	"mounts": [
 		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
 	],
     "runArgs": [
+        "--privileged",
         "--add-host=host.docker.internal:host-gateway"
     ],
     // Configure tool-specific properties.
@@ -59,5 +57,5 @@
 
 	},
 	"postCreateCommand": "chmod 700 /home/vscode/.ssh && chmod 600 /home/vscode/.ssh/id_rsa",
-  
+
 }

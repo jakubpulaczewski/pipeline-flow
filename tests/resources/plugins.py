@@ -82,6 +82,11 @@ class SimpleSecretPlugin(ISecretManager, plugin_name="simple_secret_plugin"):
         return "super_secret_value"
 
 
+class NestedSecretPlugin(ISecretManager, plugin_name="nested_secret_plugin"):
+    def __call__(self: Self, secret_name: str) -> str:  # noqa: ARG002 - This is a dummy implementation
+        return {"user": "secret_user", "password": "secret_password"}
+
+
 class NestedPlugin(IPlugin, plugin_name="extended_plugin"):
     def __init__(self, plugin_id: str, arg1: str, arg2: str) -> None:
         super().__init__(plugin_id)

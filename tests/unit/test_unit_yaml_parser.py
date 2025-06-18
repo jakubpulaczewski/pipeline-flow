@@ -111,11 +111,16 @@ def test_parse_variable_placeholder_not_defined() -> None:
 
 def test_parse_secrets_placeholder_success() -> None:
     yaml_parser = ExtendedCoreLoader(stream=Mock())
-    yaml_parser.secrets = {"db_password": SecretPlaceholder(secret_name="my-secret-password", secret_provider=Mock())}  # noqa: S106
+    yaml_parser.secrets = {
+        "db_password": SecretPlaceholder(
+            secret_name="my-secret-password",  # noqa: S106
+            secret_provider=Mock(return_value="super_secret"),
+        )
+    }
 
     result = yaml_parser.substitute_secret_placeholder(node=Mock(value="${{ secrets.db_password }}"))
 
-    assert repr(result) == "<SecretPlaceholder: my-secret-password (hidden)>"
+    assert result == "super_secret"
 
 
 def test_parse_secrets_placeholder_not_defined() -> None:
