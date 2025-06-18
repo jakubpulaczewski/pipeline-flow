@@ -9,10 +9,10 @@ from pytest_mock import MockerFixture
 # Project Imports
 from pipeline_flow.core.parsers import YamlParser
 from pipeline_flow.core.registry import PluginRegistry
-from tests.resources.plugins import SimpleSecretPlugin
+from tests.resources.plugins import NestedSecretPlugin, SimpleSecretPlugin
 
 
-def test_parse_secrets_in_yaml(mocker: MockerFixture) -> None:
+def test_parse_simple_secrets_in_yaml(mocker: MockerFixture) -> None:
     mocker.patch.object(PluginRegistry, "get", return_value=SimpleSecretPlugin)
     yaml_with_secrets = textwrap.dedent("""
     secrets:
@@ -25,7 +25,26 @@ def test_parse_secrets_in_yaml(mocker: MockerFixture) -> None:
     """)
 
     parsed_yaml = YamlParser(stream=yaml_with_secrets).yaml_body
-    assert repr(parsed_yaml["key1"]) == "<SecretPlaceholder: my-secret1 (hidden)>"
+    assert parsed_yaml["key1"] == "super_secret_value"
+
+
+def test_parse_nested_secrets_in_yaml(mocker: MockerFixture) -> None:
+    mocker.patch.object(PluginRegistry, "get", return_value=NestedSecretPlugin)
+    yaml_with_secrets = textwrap.dedent("""
+    secrets:
+        SECRET1:
+            plugin: simple_secret_plugin
+            secret_name: my-secret1
+
+    ---
+    user: ${{ secrets.SECRET1.user }}
+    db_password: ${{ secrets.SECRET1.password }}
+
+    """)
+    parsed_yaml = YamlParser(stream=yaml_with_secrets).yaml_body
+
+    assert parsed_yaml["user"] == "secret_user"
+    assert parsed_yaml["db_password"] == "secret_password"  # noqa: S105
 
 
 def test_parse_secrets_with_same_yaml_document() -> None:
