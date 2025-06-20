@@ -2,6 +2,16 @@
 This repository follows Semantic Versioning starting from the 1.0.0 release.
 Minor version increments introduced new features, while patches are reserved for bug fixes.
 
+## Version 1.0.5
+
+### Fixed
+- Fixed the issue were secrets fetched by aws_secret_manager plugin will not parse if its a json string. Otherwise, it will return the response.
+
+## Version 1.0.4
+
+### Fixed
+- Fixd the issue with parsing the actual secrets plugin.
+
 ## Version 1.0.3
 
 ### Fixed

@@ -11,7 +11,8 @@ from tests.resources.plugins import SimpleSecretPlugin
 
 
 @pytest.mark.parametrize(
-    ("secret_identifier", "expected_secret_id", "expected_key_path"), [
+    ("secret_identifier", "expected_secret_id", "expected_key_path"),
+    [
         ("SECRET_IDENTIFIER", "SECRET_IDENTIFIER", None),
         ("SECRET_IDENTIFIER.username", "SECRET_IDENTIFIER", "username"),
     ],
