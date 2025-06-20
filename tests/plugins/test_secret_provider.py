@@ -25,7 +25,7 @@ def mock_secretmanager() -> Generator[SecretsManagerClient, None, None]:
 
 def test_fetch_secret_success() -> None:
     # Call function using mocked AWS client
-    secret_value = AWSSecretManager(plugin_id="plugin_id", region="us-east-1")(secret_name="my-secret-name")  # noqa: S106.
+    secret_value = AWSSecretManager(plugin_id="plugin_id", secret_name="my-secret-name", region="us-east-1")()
 
     assert secret_value == "mock-secret-value"  # noqa: S105
 
@@ -44,6 +44,6 @@ def test_secret_not_found(mocker: MockerFixture) -> None:
 
     with pytest.raises(EndpointConnectionError):
         # ClientError encapsulates `ResourceNotFoundException` when secret does not exist.
-        AWSSecretManager(plugin_id="plugin_id", region="us-east-1")("nonexistent-secret")
+        AWSSecretManager(plugin_id="plugin_id", secret_name="nonexistent-secret", region="us-east-1")()
 
     assert boto3_mock.get_secret_value.call_count == 3

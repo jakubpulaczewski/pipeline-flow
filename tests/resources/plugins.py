@@ -78,12 +78,21 @@ class SimpleAsyncPrePlugin(IPreProcessPlugin, plugin_name="simple_async_pre_plug
 
 
 class SimpleSecretPlugin(ISecretManager, plugin_name="simple_secret_plugin"):
-    def __call__(self: Self, secret_name: str) -> str:  # noqa: ARG002 - This is a dummy implementation
+    def __init__(self: Self, plugin_id: str, secret_name: str, region: str) -> None:
+        super().__init__(plugin_id)
+        self.secret_name = secret_name
+        self.region = region
+
+    def __call__(self: Self) -> str:
         return "super_secret_value"
 
 
 class NestedSecretPlugin(ISecretManager, plugin_name="nested_secret_plugin"):
-    def __call__(self: Self, secret_name: str) -> str:  # noqa: ARG002 - This is a dummy implementation
+    def __init__(self: Self, plugin_id: str, secret_name: str) -> None:
+        super().__init__(plugin_id)
+        self.secret_name = secret_name
+
+    def __call__(self: Self) -> str:
         return {"user": "secret_user", "password": "secret_password"}
 
 

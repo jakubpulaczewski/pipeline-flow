@@ -12,7 +12,7 @@ import yamlcore
 
 # Local Imports
 from pipeline_flow.common.utils import SingletonMeta
-from pipeline_flow.core.parsers import SecretReference, secret_parser
+from pipeline_flow.core.parsers import SecretReference, secret_parser, secret_resolver
 
 # Type Imports
 if TYPE_CHECKING:
@@ -140,13 +140,15 @@ class ExtendedCoreLoader(yamlcore.CCoreLoader):
         secret_expr = match.group(1)
         secret_ref = SecretReference.parse(secret_expr)
 
-        if secret_ref.secret_name not in self.secrets:
+        if secret_ref.secret_id not in self.secrets:
             error_msg = (
-                f"Secret `{secret_ref.secret_name}` is not set. "
+                f"Secret `{secret_ref.secret_id}` is not set. "
                 "Ensure that variables/secrets are defined in the first document YAML."
             )
             raise ValueError(error_msg)
-        return self.secrets[secret_ref.secret_name].resolve(secret_ref.key_path)
+
+        secret_plugin = self.secrets[secret_ref.secret_id]
+        return secret_resolver(secret_plugin, secret_ref)
 
 
 # Register the implicit resolver to detect '${{ env.KEY }}'

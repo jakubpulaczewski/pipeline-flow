@@ -7,8 +7,8 @@ import pytest
 import yaml
 
 # Project Imports
-from pipeline_flow.core.parsers.secret_parser import SecretPlaceholder
 from pipeline_flow.core.parsers.yaml_parser import ExtendedCoreLoader, YamlParser
+from tests.resources.plugins import SimpleSecretPlugin
 
 
 @pytest.fixture(scope="session")
@@ -112,15 +112,14 @@ def test_parse_variable_placeholder_not_defined() -> None:
 def test_parse_secrets_placeholder_success() -> None:
     yaml_parser = ExtendedCoreLoader(stream=Mock())
     yaml_parser.secrets = {
-        "db_password": SecretPlaceholder(
-            secret_name="my-secret-password",  # noqa: S106
-            secret_provider=Mock(return_value="super_secret"),
+        "secret_identifier": SimpleSecretPlugin(
+            plugin_id="test123", secret_name="my-secret-aws-secret", region="aws-region"
         )
     }
 
-    result = yaml_parser.substitute_secret_placeholder(node=Mock(value="${{ secrets.db_password }}"))
+    result = yaml_parser.substitute_secret_placeholder(node=Mock(value="${{ secrets.secret_identifier }}"))
 
-    assert result == "super_secret"
+    assert result == "super_secret_value"
 
 
 def test_parse_secrets_placeholder_not_defined() -> None:

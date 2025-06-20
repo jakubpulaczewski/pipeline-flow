@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pipeline-flow"
-version = "1.0.3"
+version = "1.0.4"
 description = "A framework for building ETL, ELT and ETLT data pipelines dynamically using plugins."
 authors = [
     "Jakub Pulaczewski <jakub.pulaczewski@example.com>"
