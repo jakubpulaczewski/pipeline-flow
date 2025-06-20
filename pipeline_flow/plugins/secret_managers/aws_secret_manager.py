@@ -1,6 +1,7 @@
 # Standard Imports
 from __future__ import annotations
 
+import json
 import logging
 
 # Third Party Imports
@@ -10,6 +11,14 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 # Local Imports
 from pipeline_flow.plugins import ISecretManager
+
+
+def is_json_string(value: str) -> bool:
+    try:
+        parsed = json.loads(value)
+        return isinstance(parsed, dict)  # True if it's a JSON object/dictionary
+    except (json.JSONDecodeError, TypeError):
+        return False
 
 
 class AWSSecretManager(ISecretManager, plugin_name="aws_secret_manager"):
@@ -33,7 +42,6 @@ class AWSSecretManager(ISecretManager, plugin_name="aws_secret_manager"):
             logging.info("Fetching secret %s from AWS Secret Manager.", self.secret_name)
             response = self.client.get_secret_value(SecretId=self.secret_name)
             logging.info("Secret fetched successfully.")
-            return response["SecretString"]
         except exceptions.ClientError as e:
             error_code = e.response["Error"]["Code"]
 
@@ -45,3 +53,10 @@ class AWSSecretManager(ISecretManager, plugin_name="aws_secret_manager"):
                 logging.error(msg)
 
             raise
+        else:
+            secret_value = response["SecretString"]
+
+            if is_json_string(secret_value):
+                return json.loads(secret_value)
+
+            return secret_value

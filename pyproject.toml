@@ -1,12 +1,16 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [ "poetry-core>=1" ]
+
 [tool.poetry]
 name = "pipeline-flow"
-version = "1.0.4"
+version = "1.0.5"
 description = "A framework for building ETL, ELT and ETLT data pipelines dynamically using plugins."
 authors = [
-    "Jakub Pulaczewski <jakub.pulaczewski@example.com>"
+  "Jakub Pulaczewski <jakub.pulaczewski@example.com>",
 ]
 maintainers = [
-   "Jakub Pulaczewski <jakub.pulaczewski@example.com>"
+  "Jakub Pulaczewski <jakub.pulaczewski@example.com>",
 ]
 license = "BSD-3-Clause"
 readme = "README.md"
@@ -14,16 +18,16 @@ readme = "README.md"
 repository = "https://github.com/jakubpulaczewski/pipeline-flow"
 homepage = "http://pipeline-flow.readthedocs.io/"
 
-packages = [{ include = "pipeline_flow" }]
+packages = [ { include = "pipeline_flow" } ]
 
 keywords = [
-    "ETL",
-    "ELT",
-    "ETLT",
-    "data pipelines",
-    "plugins",
-    "asyncio",
-    "data engineering",
+  "ETL",
+  "ELT",
+  "ETLT",
+  "data pipelines",
+  "plugins",
+  "asyncio",
+  "data engineering",
 ]
 
 [tool.poetry.dependencies]
@@ -34,7 +38,7 @@ yamlcore = "^0.0.4"
 returns = "^0.24.0"
 httpx = "^0.28.1"
 tenacity = "^9.0.0"
-sqlalchemy = {extras = ["asyncio"], version = "^2.0.38"}
+sqlalchemy = { extras = [ "asyncio" ], version = "^2.0.38" }
 asyncmy = "^0.2.10"
 cryptography = "^44.0.1"
 boto3 = "^1.36.21"
@@ -48,9 +52,8 @@ pyright = "^1.1.392.post0"
 ruff = "^0.9.2"
 pandas = "^2.2.3"
 pytest-httpx = "^0.35.0"
-moto = {extras = ["secretsmanager"], version = "^5.0.28"}
-boto3-stubs = {extras = ["secretsmanager"], version = "^1.36.21"}
-
+moto = { extras = [ "secretsmanager" ], version = "^5.0.28" }
+boto3-stubs = { extras = [ "secretsmanager" ], version = "^1.36.21" }
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^8.1.3"
@@ -60,8 +63,3 @@ sphinx-rtd-theme = "^3.0.2"
 myst-parser = "^4.0.0"
 sphinxemoji = "^0.3.1"
 furo = "^2024.8.6"
-
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
