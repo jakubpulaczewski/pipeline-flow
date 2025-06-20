@@ -18,7 +18,9 @@ def test_parse_simple_secrets_in_yaml(mocker: MockerFixture) -> None:
     secrets:
         SECRET1:
             plugin: simple_secret_plugin
-            secret_name: my-secret1
+            args:
+                secret_name: my-secret1
+                region: us-east-1
 
     ---
     key1: ${{ secrets.SECRET1 }}
@@ -34,7 +36,8 @@ def test_parse_nested_secrets_in_yaml(mocker: MockerFixture) -> None:
     secrets:
         SECRET1:
             plugin: simple_secret_plugin
-            secret_name: my-secret1
+            args:
+                secret_name: my-secret1
 
     ---
     user: ${{ secrets.SECRET1.user }}
@@ -47,12 +50,39 @@ def test_parse_nested_secrets_in_yaml(mocker: MockerFixture) -> None:
     assert parsed_yaml["db_password"] == "secret_password"  # noqa: S105
 
 
+def test_parse_multiple_secrets_within_same_yaml_document(mocker: MockerFixture) -> None:
+    mocker.patch.object(PluginRegistry, "get", return_value=NestedSecretPlugin)
+    yaml_with_secrets = textwrap.dedent("""
+    secrets:
+        SECRET1:
+          plugin: simple_secret_plugin
+          args:
+            secret_name: my-secret1
+
+        SECRET2:
+          plugin: simple_secret_plugin
+          args:
+            secret_name: my-secret2
+
+    ---
+    user: ${{ secrets.SECRET1.user }}
+    db_password: ${{ secrets.SECRET2.password }}
+
+    """)
+
+    parsed_yaml = YamlParser(stream=yaml_with_secrets).yaml_body
+
+    assert parsed_yaml["user"] == "secret_user"
+    assert parsed_yaml["db_password"] == "secret_password"  # noqa: S105
+
+
 def test_parse_secrets_with_same_yaml_document() -> None:
     yaml_with_secrets = textwrap.dedent("""
     secrets:
         SECRET1:
             plugin: simple_secret_plugin
-            secret_name: my-secret1
+            args:
+                secret_name: my-secret1
 
     key1: ${{ secrets.SECRET1 }}
     """)

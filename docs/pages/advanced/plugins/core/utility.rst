@@ -122,10 +122,11 @@ it is talked about in this :ref:`guide <secrets>`. This guide also explains how 
 .. code-block:: yaml
 
     secrets:
-      plugin: aws_secret_manager
-      args:
-        secret_name: SUPER_SECRET_API_KEY
-        region: us-west-2
+      secret_example:
+        plugin: aws_secrets_manager
+        args:
+          secret_name: SUPER_SECRET_API_KEY
+          region: us-east-1
 
     --- # Separate YAML document
 
