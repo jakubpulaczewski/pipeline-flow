@@ -4,7 +4,7 @@ requires = [ "poetry-core>=1" ]
 
 [tool.poetry]
 name = "pipeline-flow"
-version = "1.0.5"
+version = "1.0.6"
 description = "A framework for building ETL, ELT and ETLT data pipelines dynamically using plugins."
 authors = [
   "Jakub Pulaczewski <jakub.pulaczewski@example.com>",
@@ -63,3 +63,10 @@ sphinx-rtd-theme = "^3.0.2"
 myst-parser = "^4.0.0"
 sphinxemoji = "^0.3.1"
 furo = "^2024.8.6"
+
+[tool.pytest.ini_options]
+markers = [
+  "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+  "unit: marks tests as unit tests",
+  "slow: marks tests as slow running",
+]

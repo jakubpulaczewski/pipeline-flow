@@ -2,7 +2,7 @@
 import asyncio
 import logging
 from http import HTTPStatus
-from typing import Any, Self
+from typing import TYPE_CHECKING, Any, Self
 
 # Third Party Imports
 import httpx
@@ -11,7 +11,10 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ra
 # Local Imports
 from pipeline_flow.common.type_def import PluginPayload
 from pipeline_flow.core.registry import PluginRegistry
-from pipeline_flow.plugins import IExtractPlugin, IPaginationHandler
+from pipeline_flow.plugins import IExtractPlugin
+
+if TYPE_CHECKING:
+    from pipeline_flow.plugins.utility.pagination import IPaginationHandler
 
 JSON_DATA = dict[str, Any]
 

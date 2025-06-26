@@ -56,6 +56,7 @@ async def setup_table(async_session_factory: async_sessionmaker[AsyncSession]) -
         assert conn is not None
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_async_sqlalchemy_loader(
     setup_table, async_session_factory: async_sessionmaker[AsyncSession], db_config: dict[str, str]
