@@ -39,3 +39,11 @@ def test_resolve_secret_placeholder() -> None:
     secret_value = secret_resolver(plugin, secret_ref)
 
     assert secret_value == "super_secret_value"  # noqa: S105
+
+
+def test_resolve_secret_resource_id() -> None:
+    plugin = SimpleSecretPlugin("test_123", "secret_name", "region")
+    secret_ref = SecretReference(secret_id="secret_id123", key_path="resource_id")
+    resource_id = secret_resolver(plugin, secret_ref)
+
+    assert resource_id == "fake_arn_to_secret"

@@ -39,6 +39,12 @@ def test_fetch_secret_str_json_success() -> None:
     assert secret_value == {"username": "user"}
 
 
+def test_fetch_secret_resource_id() -> None:
+    secret_value = AWSSecretManager(plugin_id="plugin_id", secret_name="json-secret", region="us-east-1")
+
+    assert "arn:aws:secretsmanager:us-east-1:123456789012:secret:json-secret" in secret_value.resource_id
+
+
 def test_secret_not_found(mocker: MockerFixture) -> None:
     mocker.patch("time.sleep")
     boto3_mock = mocker.patch(

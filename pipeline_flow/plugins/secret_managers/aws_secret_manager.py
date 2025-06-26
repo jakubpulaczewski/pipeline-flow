@@ -29,6 +29,29 @@ class AWSSecretManager(ISecretManager, plugin_name="aws_secret_manager"):
         self.client = boto3.client("secretsmanager", region_name=region)
         self.secret_name = secret_name
 
+    @property
+    def resource_id(self) -> str:
+        """Get the ARN of the secret from AWS Secrets Manager."""
+        try:
+            response = self.client.describe_secret(SecretId=self.secret_name)
+            arn = response["ARN"]
+        except exceptions.ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            if error_code == "ResourceNotFoundException":
+                msg = f"Secret {self.secret_name} not found when retrieving ARN."
+                logging.error(msg)
+                raise
+            elif error_code == "AccessDeniedException":  # noqa: RET506
+                msg = "Permission denied when retrieving ARN. Check IAM roles."
+                logging.error(msg)
+                raise
+            else:
+                logging.error("Error retrieving ARN for secret %s: %s", self.secret_name, str(e))
+                raise
+        else:
+            logging.info("Retrieved ARN for secret %s: %s", self.secret_name, arn)
+            return arn
+
     @retry(
         retry=retry_if_exception_type(exceptions.EndpointConnectionError),
         wait=wait_exponential(multiplier=1, min=2, max=10),  # Exponential backoff (2s, 4s, 8s...)

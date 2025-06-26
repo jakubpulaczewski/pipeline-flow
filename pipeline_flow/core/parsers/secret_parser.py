@@ -32,6 +32,10 @@ class SecretReference:
 
 def secret_resolver(secret_provider: ISecretManager, secret_ref: SecretReference) -> str:
     """Fetches the secret value by secret_name."""
+
+    if secret_ref.key_path is not None and secret_ref.key_path.lower() == "resource_id":
+        # Fetch the
+        return secret_provider.resource_id
     try:
         reference = secret_provider()
     except Exception as e:
