@@ -13,6 +13,7 @@ from tests.resources.plugins import (
     IPlugin,
     SimpleExtractorPlugin,
     SimpleLoaderPlugin,
+    SimplePostPlugin,
     SimpleTransformLoadPlugin,
     SimpleTransformPlugin,
 )
@@ -42,6 +43,25 @@ def test_parse_phase(
 
     assert len(parsed_phase.steps) == 1
     assert isinstance(parsed_phase, expected)
+
+
+def test_parse_load_phase_with_post_processing(mocker: MockerFixture) -> None:
+    mocker.patch.object(PluginRegistry, "get", side_effect=[SimpleLoaderPlugin, SimplePostPlugin])
+    phase_details = {
+        "steps": [
+            {
+                "id": "mock_id",
+                "plugin": "mock_plugin",
+            }
+        ],
+        "post": [{"id": "post_plugin", "plugin": "simple_post_plugin"}],
+    }
+    parsed_phase = pipeline_parser._parse_phase("load", phase_details)
+
+    assert len(parsed_phase.steps) == 1
+    assert isinstance(parsed_phase, LoadPhase)
+    assert isinstance(parsed_phase.steps[0], SimpleLoaderPlugin)
+    assert isinstance(parsed_phase.post[0], SimplePostPlugin)
 
 
 def test_parse_transform_load_phase(mocker: MockerFixture) -> None:

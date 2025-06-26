@@ -1,6 +1,8 @@
 # Standard Imports
 
 # Third-party Imports
+from unittest.mock import call
+
 import pytest
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
@@ -21,6 +23,7 @@ from tests.resources.plugins import (
     SimpleExtractorPlugin,
     SimpleLoaderPlugin,
     SimpleMergePlugin,
+    SimplePostPlugin,
     SimpleTransformLoadPlugin,
     SimpleTransformPlugin,
 )
@@ -228,6 +231,21 @@ def test_create_phase_load(mocker: MockerFixture) -> None:
     assert isinstance(loader, LoadPhase)
     assert isinstance(loader.steps[0], SimpleLoaderPlugin)
     assert loader.steps[0].id == "loader_id"
+
+
+def test_create_phase_load_with_post_processing(mocker: MockerFixture) -> None:
+    registry_mock = mocker.patch.object(PluginRegistry, "get", side_effect=[SimpleLoaderPlugin, SimplePostPlugin])
+
+    loader = LoadPhase(
+        steps=[{"id": "loader_id", "plugin": "mock_loader"}],
+        post=[{"id": "post_processing", "plugin": "simple_async_post_plugin"}],
+    )  # type: ignore[reportArgumentType] - The dict is parsed into Plugin object
+
+    assert registry_mock.mock_calls == [call("mock_loader"), call("simple_async_post_plugin")]
+
+    assert isinstance(loader, LoadPhase)
+    assert isinstance(loader.steps[0], SimpleLoaderPlugin)
+    assert isinstance(loader.post[0], SimplePostPlugin)
 
 
 def test_create_phase_transform_at_load(mocker: MockerFixture) -> None:

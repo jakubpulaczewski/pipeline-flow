@@ -19,7 +19,8 @@ from pipeline_flow.plugins import (  # noqa: TC001 - False Positive. These are r
     IExtractPlugin,
     ILoadPlugin,
     IMergeExtractPlugin,
-    IPlugin,
+    IPostProcessPlugin,
+    IPreProcessPlugin,
     ITransformLoadPlugin,
     ITransformPlugin,
 )
@@ -47,7 +48,12 @@ class ExtractPhase(BaseModel):
         AfterValidator(unique_id_validator),
     ]
     pre: Annotated[
-        list[IPlugin] | None,
+        list[IPreProcessPlugin] | None,
+        BeforeValidator(serialize_plugins),
+    ] = None
+
+    post: Annotated[
+        list[IPostProcessPlugin] | None,
         BeforeValidator(serialize_plugins),
     ] = None
 
@@ -83,12 +89,12 @@ class LoadPhase(BaseModel):
         BeforeValidator(serialize_plugins),
     ]
     pre: Annotated[
-        list[IPlugin] | None,
+        list[IPreProcessPlugin] | None,
         BeforeValidator(serialize_plugins),
     ] = None
 
     post: Annotated[
-        list[IPlugin] | None,
+        list[IPostProcessPlugin] | None,
         BeforeValidator(serialize_plugins),
     ] = None
 

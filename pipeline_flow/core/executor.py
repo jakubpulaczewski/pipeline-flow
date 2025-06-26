@@ -32,17 +32,19 @@ if TYPE_CHECKING:
     from pipeline_flow.plugins import IPlugin
 
 
+@sync_time_it
 def plugin_sync_executor(plugin: IPlugin, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
-    logging.debug("Executing plugin `%s`", plugin.id)
+    logging.info("Executing plugin ", extra={"plugin_id": plugin.id})
     result = plugin(*pipeline_args, **pipeline_kwargs)
-    logging.debug("Finished executing plugin `%s`", plugin.id)
+    logging.info("Finished executing plugin", extra={"plugin_id": plugin.id})
     return result
 
 
+@async_time_it
 async def plugin_async_executor(plugin: IPlugin, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
-    logging.debug("Executing plugin `%s`", plugin.id)
+    logging.info("Executing plugin `%s`", plugin.id)
     result = await plugin(*pipeline_args, **pipeline_kwargs)
-    logging.debug("Finished executing plugin `%s`", plugin.id)
+    logging.info("Finished executing plugin `%s`", plugin.id)
     return result
 
 
@@ -106,7 +108,7 @@ async def run_loader(data: ExtractedData | TransformedData, destinations: LoadPh
         await task_group_executor(destinations.steps, data=data)
 
         if destinations.post:
-            await task_group_executor(destinations.post)
+            await task_group_executor(destinations.post, data=data)
     except Exception as e:
         error_message = "Load Phase Error"
         raise LoadError(error_message, e) from e

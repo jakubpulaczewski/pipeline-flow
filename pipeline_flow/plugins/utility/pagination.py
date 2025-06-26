@@ -1,11 +1,21 @@
 # Standard Imports
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Self
 
 # Third Party Imports
 # Local Imports
-from pipeline_flow.plugins import IPaginationHandler
+from pipeline_flow.plugins import IPlugin
+
+
+class IPaginationHandler(ABC, IPlugin, interface=True):
+    """A base class for handling pagination in extract plugins."""
+
+    @abstractmethod
+    def __call__(self: Self, response: dict) -> str | None:
+        """Asynchronously fetch data from the API endpoint and handle pagination."""
+        raise NotImplementedError("Subclasses must implement this method.")
 
 
 class PageBasedPagination(IPaginationHandler, plugin_name="page_based_pagination"):

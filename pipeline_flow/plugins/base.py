@@ -117,7 +117,7 @@ class IPostProcessPlugin(ABC, IPlugin, interface=True):
     """Abstract base class for post-processing plugins."""
 
     @abstractmethod
-    async def __call__(self: Self) -> None:
+    async def __call__(self: Self, data: UnifiedExtractData | TransformedData) -> None:
         """Post-process data after main plugin execution."""
         raise NotImplementedError("Post-process plugins must implement __call__()")
 
@@ -125,16 +125,11 @@ class IPostProcessPlugin(ABC, IPlugin, interface=True):
 class ISecretManager(ABC, IPlugin, interface=True):
     """A base class for providing authentication secrets."""
 
+    @property
+    def resource_id(self) -> str:
+        raise NotImplementedError("Subclasses must implement this method.")
+
     @abstractmethod
     def __call__(self, secret_name: str) -> str:
         """A Plugin must implement this method to fetch the secret value by name."""
-        raise NotImplementedError("Subclasses must implement this method.")
-
-
-class IPaginationHandler(ABC, IPlugin, interface=True):
-    """A base class for handling pagination in extract plugins."""
-
-    @abstractmethod
-    def __call__(self: Self, response: dict) -> str | None:
-        """Asynchronously fetch data from the API endpoint and handle pagination."""
         raise NotImplementedError("Subclasses must implement this method.")

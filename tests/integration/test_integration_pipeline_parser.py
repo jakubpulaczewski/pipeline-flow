@@ -12,6 +12,8 @@ from pipeline_flow.plugins import IPlugin
 from tests.resources.plugins import (
     SimpleExtractorPlugin,
     SimpleLoaderPlugin,
+    SimplePostPlugin,
+    SimplePrePlugin,
     SimpleTransformLoadPlugin,
     SimpleTransformPlugin,
 )
@@ -187,6 +189,51 @@ def test_parse_etl_pipeline_with_only_mandatory_phases(
 
     assert len(pipeline.load.steps) == 1
     assert isinstance(pipeline.load.steps[0], SimpleLoaderPlugin)
+
+
+def test_parse_simple_etl_pipeline_with_pre_and_post_processing(
+    setup_plugins: Callable[[list[tuple[str, IPlugin]]], None],
+) -> None:
+    # Register Plugins
+    plugins = [
+        ("extractor_plugin", SimpleExtractorPlugin),
+        ("load_plugin", SimpleLoaderPlugin),
+        ("pre_plugin", SimplePrePlugin),
+        ("post_plugin", SimplePostPlugin),
+    ]
+
+    setup_plugins(plugins)
+
+    pipeline_data = {
+        "pipeline1": {
+            "type": "ETL",
+            "phases": {
+                "extract": {
+                    "steps": [{"id": "mock_extract1", "plugin": "extractor_plugin"}],
+                },
+                "load": {
+                    "pre": [{"id": "mock_pre", "plugin": "pre_plugin"}],
+                    "steps": [{"id": "mock_load1", "plugin": "load_plugin"}],
+                    "post": [{"id": "mock_pre", "plugin": "post_plugin"}],
+                },
+            },
+        }
+    }
+    pipelines = parse_pipelines(pipeline_data)  # type: ignore[reportFunctionMemberAccess]
+
+    pipeline = pipelines[0]
+
+    assert len(pipelines) == 1
+    assert isinstance(pipeline, Pipeline)
+    assert pipeline.name == "pipeline1"
+
+    assert len(pipeline.extract.steps) == 1
+    assert isinstance(pipeline.extract.steps[0], SimpleExtractorPlugin)
+
+    assert len(pipeline.load.steps) == 1
+    assert isinstance(pipeline.load.steps[0], SimpleLoaderPlugin)
+    assert isinstance(pipeline.load.pre[0], SimplePrePlugin)
+    assert isinstance(pipeline.load.post[0], SimplePostPlugin)
 
 
 def test_parse_etl_multiple_pipelines(setup_plugins: Callable[[list[tuple[str, IPlugin]]], None]) -> None:

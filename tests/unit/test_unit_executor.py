@@ -19,6 +19,7 @@ from tests.resources.plugins import (
     SimpleExtractorPlugin,
     SimpleLoaderPlugin,
     SimpleMergePlugin,
+    SimplePostPlugin,
     SimpleTransformLoadPlugin,
     SimpleTransformPlugin,
 )
@@ -84,7 +85,25 @@ async def test_run_loader_without_delay(mocker: MockerFixture) -> None:
 
     await executor.run_loader("TRANSFORMED_DATA", destinations)
 
-    spy.assert_called_once_with(loader_plugin, data="TRANSFORMED_DATA")  # loader_plugin operates as "self" in the call
+    # loader_plugin operates as "self" in the call
+    spy.assert_called_once_with(loader_plugin, data="TRANSFORMED_DATA")
+
+
+@pytest.mark.asyncio
+async def test_run_loader_without_delay_with_post_processing(mocker: MockerFixture) -> None:
+    loader_plugin = SimpleLoaderPlugin(plugin_id="loader_id")
+    post_plugin = SimplePostPlugin(plugin_id="post_id")
+    destinations = LoadPhase.model_construct(steps=[loader_plugin], post=[post_plugin])
+
+    spy = mocker.spy(SimpleLoaderPlugin, "__call__")
+
+    post_spy = mocker.spy(SimplePostPlugin, "__call__")
+
+    await executor.run_loader("TRANSFORMED_DATA", destinations)
+
+    # loader_plugin operates as "self" in the call
+    spy.assert_called_once_with(loader_plugin, data="TRANSFORMED_DATA")
+    post_spy.assert_called_once_with(post_plugin, data="TRANSFORMED_DATA")
 
 
 @pytest.mark.asyncio
@@ -117,7 +136,8 @@ def test_run_transformer_after_load(mocker: MockerFixture) -> None:
     )
     executor.run_transformer_after_load(transformations)
 
-    spy.assert_called_once_with(tf_load_plugin)  # tf_load_plugin operates as "self" in the call
+    # tf_load_plugin operates as "self" in the call
+    spy.assert_called_once_with(tf_load_plugin)
 
 
 def test_run_transformer_after_load_multiple(mocker: MockerFixture) -> None:

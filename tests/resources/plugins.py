@@ -11,6 +11,7 @@ from pipeline_flow.plugins import (
     ILoadPlugin,
     IMergeExtractPlugin,
     IPlugin,
+    IPostProcessPlugin,
     IPreProcessPlugin,
     ISecretManager,
     ITransformLoadPlugin,
@@ -77,11 +78,31 @@ class SimpleAsyncPrePlugin(IPreProcessPlugin, plugin_name="simple_async_pre_plug
         return "Async result"
 
 
+class SimplePrePlugin(IPreProcessPlugin, plugin_name="simple_post_plugin"):
+    def __init__(self: Self, plugin_id: str) -> None:
+        super().__init__(plugin_id)
+
+    async def __call__(self: Self) -> str:
+        return "Something"
+
+
+class SimplePostPlugin(IPostProcessPlugin, plugin_name="simple_post_plugin"):
+    def __init__(self: Self, plugin_id: str) -> None:
+        super().__init__(plugin_id)
+
+    async def __call__(self: Self, data: str) -> str:
+        return f"Async result: {data}"
+
+
 class SimpleSecretPlugin(ISecretManager, plugin_name="simple_secret_plugin"):
     def __init__(self: Self, plugin_id: str, secret_name: str, region: str) -> None:
         super().__init__(plugin_id)
         self.secret_name = secret_name
         self.region = region
+
+    @property
+    def resource_id(self) -> str:
+        return "fake_arn_to_secret"
 
     def __call__(self: Self) -> str:
         return "super_secret_value"
