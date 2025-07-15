@@ -34,9 +34,9 @@ if TYPE_CHECKING:
 
 @sync_time_it
 def plugin_sync_executor(plugin: IPlugin, *pipeline_args: Any, **pipeline_kwargs: Any) -> ETLData:  # noqa: ANN401
-    logging.info("Executing plugin ", extra={"plugin_id": plugin.id})
+    logging.info("Executing plugin `%s`", plugin.id)
     result = plugin(*pipeline_args, **pipeline_kwargs)
-    logging.info("Finished executing plugin", extra={"plugin_id": plugin.id})
+    logging.info("Finished executing plugin `%s`", plugin.id)
     return result
 
 
