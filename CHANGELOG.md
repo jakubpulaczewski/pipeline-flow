@@ -2,6 +2,13 @@
 This repository follows Semantic Versioning starting from the 1.0.0 release.
 Minor version increments introduced new features, while patches are reserved for bug fixes.
 
+## Verrsion 1.0.8
+- Integrate Post Requisite Plugins with Extract Phase.
+    - It can now return dataframes from post requisite plugins.
+
+- Made some other changes to Makefile.
+
+
 ## Version 1.0.7
 - Reverted the issue by removing extra argument from logging to using %s.
 

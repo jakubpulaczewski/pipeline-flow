@@ -17,10 +17,13 @@ clean: ## Remove build outputs, test outputs and cached files.
 	@rm -rf .pytest_cache .coverage
 	@echo "Clean succeeded"
 
+isort: ## Sort imports
+	ruff check --select I --fix .
+
 format: ## Reformat source code
 	@ruff format ${src_dir} ${tests_dir} -v
-	
-precommit: format build test ## Running Precommit checks.
+
+precommit: format build test-fast ## Running Precommit checks.
 	@echo "Pre-commit checks completed successfully."
 
 poetry-publish: ## Publish to PyPI
@@ -38,6 +41,10 @@ setup: ## Setup or update local env
 
 test:
 	poetry run pytest
+
+test-fast: ## Run only pytest test cases excluding slow ones.
+	pytest -m "not slow"
+
 
 build-sphinx: ## Build Sphinx documentation
 	rm -rf docs/_build && \

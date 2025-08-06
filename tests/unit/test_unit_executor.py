@@ -7,6 +7,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 # Project Imports
+from pipeline_flow.common.exceptions import ExtractError
 from pipeline_flow.core import executor
 from pipeline_flow.core.models import Pipeline
 from pipeline_flow.core.models.phases import (
@@ -45,6 +46,38 @@ async def test_run_extractor_multiple_without_delay() -> None:
 
     result = await executor.run_extractor(extracts)
     assert result == "merged_data"
+
+
+@pytest.mark.asyncio
+async def test_run_extractor_with_post_processing(mocker: MockerFixture) -> None:
+    extract = ExtractPhase.model_construct(
+        steps=[SimpleExtractorPlugin(plugin_id="extractor_id")],
+        post=[SimplePostPlugin(plugin_id="post_id")],
+    )
+
+    spy = mocker.spy(SimpleExtractorPlugin, "__call__")
+    post_spy = mocker.spy(SimplePostPlugin, "__call__")
+
+    result = await executor.run_extractor(extract)
+
+    assert result == "Async result: extracted_data"
+
+    assert spy.call_count == 1, "Extractor should be called once"
+    assert post_spy.call_count == 1, "Post-processing should be called once"
+
+
+@pytest.mark.asyncio
+async def test_run_extractor_with_multiple_post_processing() -> None:
+    extract = ExtractPhase.model_construct(
+        steps=[SimpleExtractorPlugin(plugin_id="extractor_id")],
+        post=[
+            SimplePostPlugin(plugin_id="post_id"),
+            SimplePostPlugin(plugin_id="post_id_2"),
+        ],
+    )
+
+    with pytest.raises(ExtractError, match="Multiple post-processing steps are not supported yet."):
+        await executor.run_extractor(extract)
 
 
 def test_run_transformer_with_zero_transformation() -> None:
