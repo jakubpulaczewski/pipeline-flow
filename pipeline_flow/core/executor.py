@@ -72,16 +72,27 @@ async def run_extractor(extracts: ExtractPhase) -> ExtractedData:
 
         results = await task_group_executor(extracts.steps)
 
-        # Return the single result directly.
-        if len(extracts.steps) == 1:
-            return results[extracts.steps[0].id]
+        # If there's only one step, we can return its result directly.
+        # Or if there's a merge step, we can return the merged result.
+        df_result = (
+            results.get(extracts.steps[0].id)
+            if len(extracts.steps) == 1
+            else plugin_sync_executor(extracts.merge, extracted_data=results)
+        )
 
-        # Merge data if multiple steps exist.
-        return plugin_sync_executor(extracts.merge, extracted_data=results)  # type: ignore[reportArgumentType] - merge will always be populated when more than 2 extracts are provided
+        if extracts.post:
+            if len(extracts.post) == 1:
+                # If there's only one post-processing step, we can run it directly.
+                df_result = await plugin_async_executor(extracts.post[0], data=df_result)
+            else:
+                raise NotImplementedError("Multiple post-processing steps are not supported yet. ")  # noqa: TRY301 - Temporarily disabled for simplicity
 
     except Exception as e:
         error_message = "Extraction Phase Error"
         raise ExtractError(error_message, e) from e
+
+    else:
+        return df_result
 
 
 @sync_time_it

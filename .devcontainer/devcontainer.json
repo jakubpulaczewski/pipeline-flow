@@ -49,7 +49,6 @@
                 "njpwerner.autodocstring",
                 "charliermarsh.ruff",
                 "ms-pyright.pyright",
-                "tabnine.tabnine-vscode",
                 "tht13.rst-vscode"
             ]
 		}
